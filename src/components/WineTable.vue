@@ -1,0 +1,395 @@
+<script setup>
+import { ref, onMounted } from "vue";
+import { getAllWines, deleteWine, updateWine } from "../services/db";
+import {
+  ClockIcon,
+  Cog6ToothIcon,
+  MinusCircleIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/vue/24/outline";
+import AddWineForm from "./AddWineForm.vue";
+import WineDetail from "./WineDetail.vue";
+import EditWineForm from "./EditWineForm.vue";
+import { useEscapeKey } from "../composables/useEscapeKey";
+
+const wines = ref([]);
+const showDetailModal = ref(false);
+const showAddModal = ref(false);
+const showEditModal = ref(false);
+const showSettingsModal = ref(false);
+const selectedWine = ref(null);
+
+const emit = defineEmits(["showSettings"]);
+
+// Handle escape key for closing modals
+useEscapeKey(() => {
+  if (showDetailModal.value) {
+    showDetailModal.value = false;
+  } else if (showAddModal.value) {
+    showAddModal.value = false;
+  } else if (showEditModal.value) {
+    showEditModal.value = false;
+  }
+});
+
+onMounted(async () => {
+  await loadWines();
+});
+
+async function loadWines() {
+  wines.value = await getAllWines();
+}
+
+async function handleDelete(id, event) {
+  event.stopPropagation();
+  if (confirm("Are you sure you want to delete this wine?")) {
+    await deleteWine(id);
+    await loadWines();
+  }
+}
+
+function handleEdit(wine, event) {
+  // Only stop propagation if event exists (clicked from table)
+  if (event) {
+    event.stopPropagation();
+  }
+  selectedWine.value = wine;
+  showEditModal.value = true;
+}
+
+function handleRowClick(wine) {
+  selectedWine.value = wine;
+  showDetailModal.value = true;
+}
+
+function handleAddNew() {
+  const openaiKey = localStorage.getItem("openai_api_key");
+  if (!openaiKey) {
+    emit("showSettings");
+  } else {
+    showAddModal.value = true;
+  }
+}
+
+async function handleDrink(wine, event) {
+  event.stopPropagation();
+  if (!wine.inventory) {
+    wine.inventory = { bottles: 0 };
+  }
+  if (wine.inventory.bottles > 0) {
+    wine.inventory.bottles--;
+    await updateWine(wine);
+    await loadWines();
+  }
+}
+</script>
+
+<template>
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div
+      class="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0"
+    >
+      <div>
+        <h1
+          class="text-3xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent"
+        >
+          CellarSense
+        </h1>
+        <p class="text-gray-600 mt-1">
+          Snap a label, let OpenAI parse it — CellarSense catalogues your cellar
+          in seconds.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <button
+          @click="emit('showSettings')"
+          class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="Settings"
+        >
+          <Cog6ToothIcon class="h-5 w-5 mr-2" />
+          Settings
+        </button>
+        <button
+          @click="handleAddNew"
+          class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-xl shadow-md transform transition-all hover:shadow-lg hover:scale-105"
+        >
+          <PlusIcon class="h-5 w-5 mr-2" />
+          Add New Wine
+        </button>
+      </div>
+    </div>
+
+    <!-- Responsive Table/List Section -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Desktop Table -->
+      <div class="hidden sm:block">
+        <table class="min-w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-purple-50 to-purple-100">
+              <th
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+              >
+                Name
+              </th>
+              <th
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+              >
+                Vintner
+              </th>
+              <th
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+              >
+                Vintage
+              </th>
+              <th
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+              >
+                Color
+              </th>
+              <th
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+              >
+                Region
+              </th>
+              <th
+                class="py-3 px-4 text-center text-xs font-semibold text-purple-900"
+              >
+                Bottles
+              </th>
+              <th class="py-3 px-4 w-28"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr v-if="wines.length === 0">
+              <td colspan="7" class="py-8 px-6 text-center text-gray-500">
+                <div
+                  class="flex flex-col items-center justify-center space-y-3"
+                >
+                  <ClockIcon class="h-12 w-12 text-gray-400" />
+                  <p class="text-lg font-medium">No wines in inventory</p>
+                  <p class="text-sm text-gray-400">
+                    Add your first wine to get started
+                  </p>
+                </div>
+              </td>
+            </tr>
+            <tr
+              v-for="wine in wines"
+              :key="wine.id"
+              class="group hover:bg-purple-50 transition-colors cursor-pointer"
+              :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
+              @click="handleRowClick(wine)"
+            >
+              <td class="py-3 px-4 font-medium text-gray-900">
+                {{ wine.name }}
+              </td>
+              <td class="py-3 px-4 text-gray-600">{{ wine.vintner }}</td>
+              <td class="py-3 px-4 text-gray-600">{{ wine.vintage }}</td>
+              <td class="py-3 px-4">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-red-100 text-red-800': wine.color === 'Red',
+                    'bg-yellow-100 text-yellow-800': wine.color === 'White',
+                    'bg-pink-100 text-pink-800': wine.color === 'Rosé',
+                    'bg-amber-100 text-amber-800': wine.color === 'Orange',
+                    'bg-blue-100 text-blue-800': wine.color === 'Sparkling',
+                    'bg-purple-100 text-purple-800': wine.color === 'Dessert',
+                    'bg-gray-100 text-gray-800': wine.color === 'Other',
+                  }"
+                >
+                  {{ wine.color }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-gray-600">{{ wine.region }}</td>
+              <td class="py-3 px-4">
+                <div class="flex justify-center">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+                      'bg-emerald-100 text-emerald-800':
+                        wine.inventory?.bottles > 3,
+                      'bg-yellow-100 text-yellow-800':
+                        wine.inventory?.bottles > 0 &&
+                        wine.inventory?.bottles <= 3,
+                      'bg-gray-100 text-gray-800': !wine.inventory?.bottles,
+                    }"
+                  >
+                    {{ wine.inventory?.bottles || 0 }}
+                  </span>
+                </div>
+              </td>
+              <td class="py-3 px-4">
+                <div
+                  class="flex justify-end items-center space-x-2 opacity-40 group-hover:opacity-80 transition-opacity"
+                >
+                  <button
+                    v-if="wine.inventory?.bottles > 0"
+                    @click="handleDrink(wine, $event)"
+                    class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded-lg transition-colors"
+                    :aria-label="'Drink a bottle of ' + wine.name"
+                    :title="
+                      'Mark one bottle as consumed (' +
+                      (wine.inventory?.bottles || 0) +
+                      ' remaining)'
+                    "
+                  >
+                    <MinusCircleIcon class="h-5 w-5" />
+                  </button>
+                  <button
+                    @click="handleEdit(wine, $event)"
+                    class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-lg transition-colors"
+                    :aria-label="'Edit ' + wine.name"
+                    :title="'Edit details for ' + wine.name"
+                  >
+                    <PencilSquareIcon class="h-5 w-5" />
+                  </button>
+                  <button
+                    @click="handleDelete(wine.id, $event)"
+                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                    :aria-label="'Delete ' + wine.name"
+                    :title="'Delete ' + wine.name + ' from inventory'"
+                  >
+                    <TrashIcon class="h-5 w-5" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Mobile Card/List -->
+      <div class="sm:hidden">
+        <div
+          v-if="wines.length === 0"
+          class="py-8 px-4 text-center text-gray-500"
+        >
+          <div class="flex flex-col items-center justify-center space-y-3">
+            <ClockIcon class="h-12 w-12 text-gray-400" />
+            <p class="text-lg font-medium">No wines in inventory</p>
+            <p class="text-sm text-gray-400">
+              Add your first wine to get started
+            </p>
+          </div>
+        </div>
+        <ul v-else class="divide-y divide-gray-100">
+          <li
+            v-for="wine in wines"
+            :key="wine.id"
+            class="group px-3 py-3 flex flex-col gap-1 bg-white hover:bg-purple-50 transition-colors cursor-pointer relative"
+            :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
+            @click="handleRowClick(wine)"
+          >
+            <div class="flex items-center justify-between">
+              <div class="font-semibold text-gray-900 text-base">
+                {{ wine.name }}
+              </div>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                :class="{
+                  'bg-emerald-100 text-emerald-800':
+                    wine.inventory?.bottles > 3,
+                  'bg-yellow-100 text-yellow-800':
+                    wine.inventory?.bottles > 0 && wine.inventory?.bottles <= 3,
+                  'bg-gray-100 text-gray-800': !wine.inventory?.bottles,
+                }"
+              >
+                {{ wine.inventory?.bottles || 0 }}
+              </span>
+            </div>
+            <div
+              class="flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-600 mt-1"
+            >
+              <span>{{ wine.vintner }}</span>
+              <span>•</span>
+              <span>{{ wine.vintage }}</span>
+              <span>•</span>
+              <span>{{ wine.region }}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                :class="{
+                  'bg-red-100 text-red-800': wine.color === 'Red',
+                  'bg-yellow-100 text-yellow-800': wine.color === 'White',
+                  'bg-pink-100 text-pink-800': wine.color === 'Rosé',
+                  'bg-amber-100 text-amber-800': wine.color === 'Orange',
+                  'bg-blue-100 text-blue-800': wine.color === 'Sparkling',
+                  'bg-purple-100 text-purple-800': wine.color === 'Dessert',
+                  'bg-gray-100 text-gray-800': wine.color === 'Other',
+                }"
+              >
+                {{ wine.color }}
+              </span>
+              <div class="flex-1"></div>
+              <div
+                class="flex items-center space-x-1 opacity-40 group-hover:opacity-80 transition-opacity"
+              >
+                <button
+                  v-if="wine.inventory?.bottles > 0"
+                  @click.stop="handleDrink(wine, $event)"
+                  class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded-lg transition-colors"
+                  :aria-label="'Drink a bottle of ' + wine.name"
+                  :title="
+                    'Mark one bottle as consumed (' +
+                    (wine.inventory?.bottles || 0) +
+                    ' remaining)'
+                  "
+                >
+                  <MinusCircleIcon class="h-5 w-5" />
+                </button>
+                <button
+                  @click.stop="handleEdit(wine, $event)"
+                  class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-lg transition-colors"
+                  :aria-label="'Edit ' + wine.name"
+                  :title="'Edit details for ' + wine.name"
+                >
+                  <PencilSquareIcon class="h-5 w-5" />
+                </button>
+                <button
+                  @click.stop="handleDelete(wine.id, $event)"
+                  class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                  :aria-label="'Delete ' + wine.name"
+                  :title="'Delete ' + wine.name + ' from inventory'"
+                >
+                  <TrashIcon class="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <Teleport to="body">
+      <WineDetail
+        v-if="selectedWine"
+        v-model:show="showDetailModal"
+        :wine="selectedWine"
+        @edit="handleEdit"
+      />
+      <AddWineForm
+        v-model:show="showAddModal"
+        @wine-added="loadWines"
+        @missing-api-key="emit('showSettings')"
+      />
+      <EditWineForm
+        v-if="selectedWine"
+        v-model:show="showEditModal"
+        :wine="selectedWine"
+        @wine-updated="loadWines"
+      />
+    </Teleport>
+  </div>
+</template>
+
+<style scoped>
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+</style>
