@@ -48,6 +48,8 @@ npm run dev
 
 Open `http://localhost:5173` and hack away! Hot-reload included.
 
+Or just use the [hosted version](https://michielryvers.github.io/cellar-sense/) 
+
 ---
 
 ## 🛠 Scripts
