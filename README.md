@@ -82,8 +82,6 @@ Or just use the [hosted version](https://michielryvers.github.io/cellar-sense/)
 
 ## 🔑 OpenAI Setup
 
-The AI bits are **opt-in** and run entirely client-side.
-
 1. Get an API key from https://platform.openai.com/account/api-keys
 2. In the app, open **Settings → AI** and paste your key.
    - Stored in `localStorage`, never leaves the device.
