@@ -1,19 +1,36 @@
 import Dexie, { type Table } from "dexie";
+import dexieCloud from "dexie-cloud-addon";
 import type { Wine } from "../shared/Wine";
 
+const DEXIE_CLOUD_URL = localStorage.getItem("DEXIE_CLOUD_URL") || "";
+
 // Define the database
+
 class WineventoryDB extends Dexie {
-  wines!: Table<Wine, number>; // 'wines' is the table name, 'Wine' is the type of object stored, 'number' is the type of the primary key
+  wines!: Table<Wine, number>;
 
   constructor() {
-    super("cellar-sense-db"); // Database name
-    this.version(1).stores({
-      wines: "++id, name, vintage, color", // Primary key 'id' (auto-incremented), and an index on 'name', 'vintage', 'color'
-    });
+    if (DEXIE_CLOUD_URL) {
+      super("cellar-sense-db", { addons: [dexieCloud] });
+      this.version(1).stores({
+        wines: "@id, name, vintage, color",
+      });
+      this.cloud.configure({
+        databaseUrl: DEXIE_CLOUD_URL,
+        requireAuth: true,
+      });
+    } else {
+      super("cellar-sense-db");
+      this.version(1).stores({
+        wines: "++id, name, vintage, color",
+      });
+    }
   }
 }
 
 export const db = new WineventoryDB();
+
+// Use these variables wherever Dexie Cloud configuration is needed
 
 /**
  * Add a new wine to the database

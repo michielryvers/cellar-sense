@@ -72,7 +72,7 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
-  const apiKeyRaw = localStorage.getItem("openai_api_key");
+  const apiKeyRaw = localStorage.getItem("OPENAI_SDK_KEY");
   const apiKey: string = apiKeyRaw || "";
   if (!apiKey) {
     error.value = "OpenAI API key is required";

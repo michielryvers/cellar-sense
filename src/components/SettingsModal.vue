@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, Ref } from "vue";
+import { ref, onMounted, Ref, reactive } from "vue";
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import {
@@ -17,21 +17,10 @@ const importInput = ref<HTMLInputElement | null>(null);
 const isExporting = ref<boolean>(false);
 const isImporting = ref<boolean>(false);
 
-onMounted(() => {
-  // Pre-fill input if key exists
-  apiKey.value = localStorage.getItem("openai_api_key") || "";
+const settings = reactive({
+  DEXIE_CLOUD_URL: localStorage.getItem("DEXIE_CLOUD_URL") || "",
+  OPENAI_SDK_KEY: localStorage.getItem("OPENAI_SDK_KEY") || "",
 });
-
-function handleSave(): void {
-  const key = apiKey.value.trim();
-  if (key) {
-    localStorage.setItem("openai_api_key", key);
-  } else {
-    localStorage.removeItem("openai_api_key");
-  }
-  emit("save");
-  closeModal();
-}
 
 function closeModal(): void {
   emit("update:show", false);
@@ -85,6 +74,18 @@ async function handleImportFile(e: Event): Promise<void> {
     if (importInput.value) importInput.value.value = "";
   }
 }
+
+function saveSettings() {
+  const prevCloudUrl = localStorage.getItem("DEXIE_CLOUD_URL") || "";
+  localStorage.setItem("DEXIE_CLOUD_URL", settings.DEXIE_CLOUD_URL);
+  localStorage.setItem("OPENAI_SDK_KEY", settings.OPENAI_SDK_KEY);
+  emit("save");
+  closeModal();
+  // If DEXIE_CLOUD_URL changed, reload the page to re-init DB
+  if (settings.DEXIE_CLOUD_URL !== prevCloudUrl) {
+    window.location.reload();
+  }
+}
 </script>
 <template>
   <Teleport to="body">
@@ -93,9 +94,15 @@ async function handleImportFile(e: Event): Promise<void> {
       class="fixed inset-0 z-50 flex items-center justify-center bg-gray-400 bg-opacity-40"
       @click="handleOutsideClick"
     >
-      <div class="bg-white rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200">
-        <div class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100">
-          <h2 class="text-lg font-semibold text-purple-900 tracking-tight">Settings</h2>
+      <div
+        class="bg-white rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200"
+      >
+        <div
+          class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100"
+        >
+          <h2 class="text-lg font-semibold text-purple-900 tracking-tight">
+            Settings
+          </h2>
           <button
             @click="closeModal"
             class="text-gray-400 hover:text-purple-600 transition-colors rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-300"
@@ -114,18 +121,31 @@ async function handleImportFile(e: Event): Promise<void> {
             </label>
             <input
               id="openaiKeyInput"
-              v-model="apiKey"
+              v-model="settings.OPENAI_SDK_KEY"
               type="password"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
               placeholder="sk-..."
               autocomplete="off"
-              @keyup.enter="handleSave"
+            />
+          </div>
+          <div class="mb-6">
+            <label
+              class="block mb-1 text-xs font-semibold text-gray-600 tracking-wide uppercase"
+              for="DEXIE_CLOUD_URL"
+            >
+              Dexie Cloud URL
+            </label>
+            <input
+              id="DEXIE_CLOUD_URL"
+              v-model="settings.DEXIE_CLOUD_URL"
+              type="text"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
             />
           </div>
           <div class="flex flex-col gap-4">
             <div class="flex gap-2">
               <button
-                @click="handleSave"
+                @click="saveSettings"
                 class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex-1 transition-colors shadow-sm"
               >
                 Save
@@ -138,14 +158,37 @@ async function handleImportFile(e: Event): Promise<void> {
               </button>
             </div>
             <div class="mt-5">
-              <h3 class="text-xs font-semibold text-gray-600 tracking-wide uppercase mb-2 px-1">Import / Export</h3>
+              <h3
+                class="text-xs font-semibold text-gray-600 tracking-wide uppercase mb-2 px-1"
+              >
+                Import / Export
+              </h3>
               <div class="grid grid-cols-2 gap-2 w-full">
                 <button
                   @click="handleExport"
                   :disabled="isExporting"
                   class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-60 flex items-center justify-center gap-2 transition-colors shadow-sm w-full"
                 >
-                  <svg v-if="isExporting" class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                  <svg
+                    v-if="isExporting"
+                    class="animate-spin h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    ></path>
+                  </svg>
                   <span>{{ isExporting ? "Exporting…" : "Export Data" }}</span>
                 </button>
                 <label class="w-full cursor-pointer">
@@ -161,12 +204,35 @@ async function handleImportFile(e: Event): Promise<void> {
                     class="block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-center cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 transition-colors shadow-sm w-full"
                     :class="{ 'opacity-60 pointer-events-none': isImporting }"
                   >
-                    <svg v-if="isImporting" class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    <span>{{ isImporting ? "Importing…" : "Import Data" }}</span>
+                    <svg
+                      v-if="isImporting"
+                      class="animate-spin h-4 w-4 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                      ></circle>
+                      <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      ></path>
+                    </svg>
+                    <span>{{
+                      isImporting ? "Importing…" : "Import Data"
+                    }}</span>
                   </span>
                 </label>
               </div>
-              <div class="flex gap-2 text-xs text-gray-400 justify-between px-1 mt-1">
+              <div
+                class="flex gap-2 text-xs text-gray-400 justify-between px-1 mt-1"
+              >
                 <span>Export: Download a backup of your wines</span>
                 <span>Import: Restore from backup</span>
               </div>
