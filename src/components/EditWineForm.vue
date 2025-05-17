@@ -54,7 +54,6 @@ const formData = ref({
   drink_until: props.wine.drink_until || "",
   price: props.wine.price || "",
   sulfites: props.wine.sulfites || "",
-  collaboration: props.wine.collaboration || "",
   label_art: props.wine.label_art || "",
   images: props.wine.images || { front: null, back: null },
 });
@@ -138,7 +137,6 @@ async function handleSubmit() {
       drink_until: cleanFormData.drink_until,
       price: cleanFormData.price,
       sulfites: cleanFormData.sulfites,
-      collaboration: cleanFormData.collaboration,
       label_art: cleanFormData.label_art,
       images: cleanFormData.images,
     };
@@ -676,22 +674,6 @@ function handleOutsideClick(e) {
                   v-model="formData.sulfites"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="e.g., Low-sulfite"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="collaboration"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Collaboration
-                </label>
-                <input
-                  type="text"
-                  id="collaboration"
-                  v-model="formData.collaboration"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Any special collaboration"
                 />
               </div>
 

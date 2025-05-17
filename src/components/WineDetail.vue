@@ -327,12 +327,6 @@ function handleOutsideClick(e) {
                 <span class="text-sm font-medium text-gray-600">Sulfites</span>
                 <p class="text-gray-800">{{ wine.sulfites || "-" }}</p>
               </div>
-              <div>
-                <span class="text-sm font-medium text-gray-600"
-                  >Collaboration</span
-                >
-                <p class="text-gray-800">{{ wine.collaboration || "-" }}</p>
-              </div>
               <div class="md:col-span-2">
                 <span class="text-sm font-medium text-gray-600">Label Art</span>
                 <p class="text-gray-800">{{ wine.label_art || "-" }}</p>

@@ -41,7 +41,6 @@ export const wineSchema = {
     drink_until: { type: "integer" },
     price: { type: "string" },
     sulfites: { type: "string" },
-    collaboration: { type: "string" },
     label_art: { type: "string" },
   },
   required: [
@@ -61,7 +60,6 @@ export const wineSchema = {
     "drink_until",
     "price",
     "sulfites",
-    "collaboration",
     "label_art",
   ],
   additionalProperties: false,
