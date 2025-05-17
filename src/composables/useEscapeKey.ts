@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted } from "vue";
 
-export function useEscapeKey(callback) {
-  function handleEscape(event) {
+export function useEscapeKey(callback: () => void) {
+  function handleEscape(event: { key: string }) {
     if (event.key === "Escape") {
       callback();
     }

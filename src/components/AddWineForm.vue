@@ -1,5 +1,5 @@
-<script setup>
-import { ref } from "vue";
+<script setup lang="ts">
+import { ref, Ref } from "vue";
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { extractWineData } from "../services/openai";
@@ -10,27 +10,25 @@ import {
   createImagePreview,
 } from "../utils/imageHelpers";
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true,
-  },
-});
+const props = defineProps<{ show: boolean }>();
+const emit = defineEmits<{
+  (e: "update:show", value: boolean): void;
+  (e: "wine-added"): void;
+  (e: "missing-api-key"): void;
+}>();
 
-const emit = defineEmits(["update:show", "wine-added"]);
+const frontLabelInput = ref<HTMLInputElement | null>(null);
+const backLabelInput = ref<HTMLInputElement | null>(null);
+const frontLabelFile = ref<File | null>(null);
+const backLabelFile = ref<File | null>(null);
+const frontPreview = ref<string>("");
+const backPreview = ref<string>("");
+const purchaseLocation = ref<string>("");
+const numberOfBottles = ref<number>(1);
+const isLoading = ref<boolean>(false);
+const error = ref<string>("");
 
-const frontLabelInput = ref(null);
-const backLabelInput = ref(null);
-const frontLabelFile = ref(null);
-const backLabelFile = ref(null);
-const frontPreview = ref("");
-const backPreview = ref("");
-const purchaseLocation = ref("");
-const numberOfBottles = ref(1);
-const isLoading = ref(false);
-const error = ref("");
-
-function closeModal() {
+function closeModal(): void {
   emit("update:show", false);
   // Reset form
   frontLabelFile.value = null;
@@ -45,14 +43,15 @@ function closeModal() {
 // Use escape key to close modal
 useEscapeKey(closeModal);
 
-function handleOutsideClick(e) {
+function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
 }
 
-async function handleImageChange(event, isBack = false) {
-  const file = event.target.files?.[0];
+async function handleImageChange(event: Event, isBack = false): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
 
   const previewTarget = isBack ? backPreview : frontPreview;
@@ -67,13 +66,14 @@ async function handleImageChange(event, isBack = false) {
   }
 }
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   if (!frontLabelFile.value) {
     error.value = "Front label image is required";
     return;
   }
 
-  const apiKey = localStorage.getItem("openai_api_key");
+  const apiKeyRaw = localStorage.getItem("openai_api_key");
+  const apiKey: string = apiKeyRaw || "";
   if (!apiKey) {
     error.value = "OpenAI API key is required";
     emit("missing-api-key");
@@ -84,35 +84,42 @@ async function handleSubmit() {
   isLoading.value = true;
 
   try {
-    const frontBase64 = await resizeImageToBase64(frontLabelFile.value);
-    const backBase64 = await resizeImageToBase64(backLabelFile.value);
-    const frontBlob = await resizeImageToBlob(frontLabelFile.value);
-    const backBlob = await resizeImageToBlob(backLabelFile.value);
+    const frontFile: File = frontLabelFile.value!;
+    const backFile: File | null = backLabelFile.value;
+    const frontBase64Result = await resizeImageToBase64(frontFile);
+    const backBase64 = backFile ? await resizeImageToBase64(backFile) : "";
+    const frontBlob = await resizeImageToBlob(frontFile);
+    const backBlob = backFile ? await resizeImageToBlob(backFile) : null;
+
+    if (frontBase64Result === null) {
+      throw new Error("Failed to process front label image");
+    }
+
     const wineData = await extractWineData({
       apiKey,
       purchaseLocation: purchaseLocation.value,
-      frontBase64,
+      frontBase64: frontBase64Result,
       backBase64,
     });
 
     // Add inventory information
-    wineData.inventory = {
+    (wineData as any).inventory = {
       bottles: numberOfBottles.value,
       purchaseDate: new Date().toISOString(),
       purchaseLocation: purchaseLocation.value,
     };
 
     // Attach resized images as blobs for local storage
-    wineData.images = {
-      front: frontBlob || null,
-      back: backBlob || null,
+    (wineData as any).images = {
+      front: frontBlob ?? null,
+      back: backBlob ?? null,
     };
 
     await addWine(wineData);
     emit("wine-added");
     closeModal();
-  } catch (err) {
-    error.value = err.message || "Failed to process wine information";
+  } catch (err: any) {
+    error.value = err?.message || "Failed to process wine information";
     console.error("Error adding wine:", err);
   } finally {
     isLoading.value = false;
@@ -177,7 +184,7 @@ async function handleSubmit() {
               />
               <div
                 class="relative cursor-pointer"
-                @click="frontLabelInput.click()"
+                @click="frontLabelInput && frontLabelInput.click()"
               >
                 <div
                   v-if="!frontPreview"
@@ -230,7 +237,7 @@ async function handleSubmit() {
               />
               <div
                 class="relative cursor-pointer"
-                @click="backLabelInput.click()"
+                @click="backLabelInput && backLabelInput.click()"
               >
                 <div
                   v-if="!backPreview"

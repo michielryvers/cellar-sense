@@ -91,7 +91,7 @@ interface ExtractWineDataParams {
   apiKey: string;
   purchaseLocation?: string;
   frontBase64: string;
-  backBase64?: string;
+  backBase64: string | null;
 }
 
 /**
@@ -169,7 +169,7 @@ export async function extractWineData({
 
   function getInputImages(
     frontBase64: string,
-    backBase64: string | undefined
+    backBase64: string | null
   ): ResponseInputImage[] {
     const images: ResponseInputImage[] = [
       { type: "input_image", image_url: frontBase64, detail: "auto" },
