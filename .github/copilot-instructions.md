@@ -1,19 +1,16 @@
 # CellarSense – Copilot Instructions 🍷🤖
 
 A mobile-first Progressive Web App that lets wine lovers catalogue their cellar completely offline.  
-Users snap both label sides, optional store info, and—if they like—let OpenAI ✨ pre-fill all metadata.
+Users snap both label sides, optional store info, and let OpenAI ✨ pre-fill all metadata.
 
 ---
 
 ## 🖼 Project Snapshot
 
-| Goal                                  | Status |
-| ------------------------------------- | ------ |
-| 100 % offline-first (PWA + IndexedDB) | ✅     |
-| Zero back-end / zero auth             | ✅     |
-| Tailwind CSS UI                       | ✅     |
-| OpenAI auto-fill (opt-in)             | ⏳     |
-| Feature-by-feature, atomic commits    | 🚧     |
+| Goal             | Status |
+| ---------------- | ------ |
+| Tailwind CSS UI  | ✅     |
+| OpenAI auto-fill | ✅     |
 
 ---
 
@@ -28,7 +25,7 @@ Users snap both label sides, optional store info, and—if they like—let OpenA
 | Storage   | IndexedDB via `idb`                  |
 | AI (opt)  | OpenAI API (client-side fetch)       |
 | Tooling   | TypeScript, ESLint, Prettier, Vitest |
-| Deploy    | GitHub Pages (`gh-pages` branch)     |
+| Deploy    | GitHub Pages                         |
 
 ---
 
@@ -71,7 +68,6 @@ Users snap both label sides, optional store info, and—if they like—let OpenA
   "drink_until": 2026,
   "price": "€10.50",
   "sulfites": "Low-sulfite",
-  "collaboration": "Special collaboration between Pur Jus and Les Vignerons d’Estézargues",
   "label_art": "Abstract design with expressive character",
   "images": {
     "front": "blob-url-or-base64",
@@ -84,13 +80,13 @@ Users snap both label sides, optional store info, and—if they like—let OpenA
 
 ## 🗺 Feature Roadmap (one commit each)
 
-1. Local storage layer (IndexedDB wrapper + wine model)
-2. Add-wine form (front/back image, store field) with preview
-3. Optional OpenAI integration to populate metadata
-4. Wine list view with filters (color, vintage, name)
-5. Detailed wine modal/page
-6. Mark wine as “drunk” (archive)
-7. JSON backup & restore (optional)
+1. Local storage layer (IndexedDB wrapper + wine model) ✅
+2. Add-wine form (front/back image, store field) with preview ✅
+3. OpenAI integration to populate metadata ✅
+4. Wine list view with filters (color, vintage, name) 🕒
+5. Detailed wine modal/page ✅
+6. Mark wine as “drunk” (archive) ✅
+7. JSON backup & restore (optional) ✅
 
 ---
 
