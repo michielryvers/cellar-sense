@@ -17,9 +17,7 @@ import type { Wine } from "../shared/Wine";
 
 const wines: Ref<Wine[]> = ref([]);
 const showDetailModal = ref(false);
-const showAddModal = ref(false);
 const showEditModal = ref(false);
-const showSettingsModal = ref(false);
 const selectedWine: Ref<Wine | null> = ref(null);
 
 const emit = defineEmits(["showSettings"]);
@@ -28,8 +26,6 @@ const emit = defineEmits(["showSettings"]);
 useEscapeKey(() => {
   if (showDetailModal.value) {
     showDetailModal.value = false;
-  } else if (showAddModal.value) {
-    showAddModal.value = false;
   } else if (showEditModal.value) {
     showEditModal.value = false;
   }
@@ -65,15 +61,6 @@ function handleRowClick(wine: Wine): void {
   showDetailModal.value = true;
 }
 
-function handleAddNew(): void {
-  const openaiKey = localStorage.getItem("openai_api_key");
-  if (!openaiKey) {
-    emit("showSettings");
-  } else {
-    showAddModal.value = true;
-  }
-}
-
 async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
   if (!wine.inventory) {
@@ -89,40 +76,6 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <!-- Header Section -->
-    <div
-      class="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0"
-    >
-      <div>
-        <h1
-          class="text-3xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent"
-        >
-          CellarSense
-        </h1>
-        <p class="text-gray-600 mt-1">
-          Snap a label, let OpenAI parse it — CellarSense catalogues your cellar
-          in seconds.
-        </p>
-      </div>
-      <div class="flex gap-3">
-        <button
-          @click="emit('showSettings')"
-          class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-xl shadow-sm transition-all hover:shadow-md"
-          title="Settings"
-        >
-          <Cog6ToothIcon class="h-5 w-5 mr-2" />
-          Settings
-        </button>
-        <button
-          @click="handleAddNew"
-          class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-xl shadow-md transform transition-all hover:shadow-lg hover:scale-105"
-        >
-          <PlusIcon class="h-5 w-5 mr-2" />
-          Add New Wine
-        </button>
-      </div>
-    </div>
-
     <!-- Responsive Table/List Section -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
       <!-- Desktop Table -->
@@ -372,11 +325,6 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
         v-model:show="showDetailModal"
         :wine="selectedWine"
         @edit="handleEdit"
-      />
-      <AddWineForm
-        v-model:show="showAddModal"
-        @wine-added="loadWines"
-        @missing-api-key="emit('showSettings')"
       />
       <EditWineForm
         v-if="selectedWine"
