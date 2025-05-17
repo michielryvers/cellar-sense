@@ -1,20 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 import { XMarkIcon, PencilIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
+import { Wine } from "../shared/Wine";
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true,
-  },
-  wine: {
-    type: Object,
-    required: true,
-  },
-});
-
-const emit = defineEmits(["update:show", "edit"]);
+const props = defineProps<{ show: boolean; wine: Wine }>();
+const emit = defineEmits<{
+  (e: "update:show", value: boolean): void;
+  (e: "edit", wine: Wine): void;
+}>();
 
 const grapesList = computed(() => {
   if (!props.wine.grapes) return [];
@@ -60,19 +54,19 @@ const vinificationSteps = computed(() => {
   }));
 });
 
-function handleEdit() {
+function handleEdit(): void {
   emit("edit", props.wine);
   emit("update:show", false);
 }
 
-function closeModal() {
+function closeModal(): void {
   emit("update:show", false);
 }
 
 // Use escape key to close modal
 useEscapeKey(closeModal);
 
-function handleOutsideClick(e) {
+function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }

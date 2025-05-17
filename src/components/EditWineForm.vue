@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from "vue";
 import {
   XMarkIcon,
@@ -6,21 +6,21 @@ import {
   MinusCircleIcon,
 } from "@heroicons/vue/24/outline";
 import { updateWine } from "../services/db";
+import type { GrapeEntry, VinificationStep, Wine } from "../shared/Wine";
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true,
-  },
-  wine: {
-    type: Object,
-    required: true,
-  },
-});
+interface EditWineFormProps {
+  show: boolean;
+  wine: Wine;
+}
 
-const emit = defineEmits(["update:show", "wine-updated"]);
+const props = defineProps<EditWineFormProps>();
 
-const formData = ref({
+const emit = defineEmits<{
+  "update:show": [show: boolean];
+  "wine-updated": [];
+}>();
+
+const formData = ref<Wine>({
   id: props.wine.id,
   name: props.wine.name || "",
   vintner: props.wine.vintner || "",
@@ -36,16 +36,20 @@ const formData = ref({
     purchaseDate: props.wine.inventory?.purchaseDate || "",
     purchaseLocation: props.wine.inventory?.purchaseLocation || "",
   },
-  grapes: Object.entries(props.wine.grapes || {}).map(([name, percentage]) => ({
-    name,
-    percentage: Number(percentage),
-  })),
-  vinification: Object.entries(props.wine.vinification || {}).map(
-    ([step, description]) => ({
-      step,
-      description,
-    })
-  ),
+  grapes: Array.isArray(props.wine.grapes)
+    ? [...props.wine.grapes] // already an array
+    : props.wine.grapes // object → array
+    ? (Object.entries(props.wine.grapes) as [string, number][]).map(
+        ([name, percentage]) => ({ name, percentage })
+      )
+    : [],
+  vinification: Array.isArray(props.wine.vinification)
+    ? [...props.wine.vinification] // already an array
+    : props.wine.vinification // object → array
+    ? (Object.entries(props.wine.vinification) as [string, string][]).map(
+        ([step, description]) => ({ step, description })
+      )
+    : [],
   tasting_notes: {
     nose: props.wine.tasting_notes?.nose || [],
     palate: props.wine.tasting_notes?.palate || [],
@@ -55,13 +59,16 @@ const formData = ref({
   price: props.wine.price || "",
   sulfites: props.wine.sulfites || "",
   label_art: props.wine.label_art || "",
-  images: props.wine.images || { front: null, back: null },
+  images: {
+    front: props.wine.images.front,
+    back: props.wine.images.back,
+  },
 });
 
-const error = ref("");
-const isLoading = ref(false);
+const error = ref<string>("");
+const isLoading = ref<boolean>(false);
 
-const wineColors = [
+const wineColors: string[] = [
   "Red",
   "White",
   "Rosé",
@@ -71,39 +78,38 @@ const wineColors = [
   "Other",
 ];
 
-function addGrape() {
+function addGrape(): void {
   formData.value.grapes.push({ name: "", percentage: 0 });
 }
 
-function removeGrape(index) {
+function removeGrape(index: number): void {
   formData.value.grapes.splice(index, 1);
 }
 
-function addVinificationStep() {
+function addVinificationStep(): void {
   formData.value.vinification.push({ step: "", description: "" });
 }
 
-function removeVinificationStep(index) {
+function removeVinificationStep(index: number): void {
   formData.value.vinification.splice(index, 1);
 }
 
-function addTastingNote(type) {
+function addTastingNote(type: "nose" | "palate"): void {
   formData.value.tasting_notes[type].push("");
 }
 
-function removeTastingNote(type, index) {
+function removeTastingNote(type: "nose" | "palate", index: number): void {
   formData.value.tasting_notes[type].splice(index, 1);
 }
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   try {
     isLoading.value = true;
     error.value = "";
 
     // Create a clean, non-reactive object for storage
-    const cleanFormData = JSON.parse(JSON.stringify(formData.value));
-
-    const wineData = {
+    const cleanFormData = JSON.parse(JSON.stringify(formData.value)) as Wine; // Convert FormWine to Wine by cleaning up empty values
+    const wineData: Wine = {
       id: cleanFormData.id,
       name: cleanFormData.name,
       vintner: cleanFormData.vintner,
@@ -119,15 +125,9 @@ async function handleSubmit() {
         purchaseDate: cleanFormData.inventory.purchaseDate,
         purchaseLocation: cleanFormData.inventory.purchaseLocation,
       },
-      grapes: Object.fromEntries(
-        cleanFormData.grapes
-          .filter((g) => g.name && g.percentage)
-          .map((g) => [g.name, g.percentage])
-      ),
-      vinification: Object.fromEntries(
-        cleanFormData.vinification
-          .filter((v) => v.step && v.description)
-          .map((v) => [v.step, v.description])
+      grapes: cleanFormData.grapes.filter((g) => g.name && g.percentage > 0),
+      vinification: cleanFormData.vinification.filter(
+        (v) => v.step && v.description
       ),
       tasting_notes: {
         nose: cleanFormData.tasting_notes.nose.filter((note) => note),
@@ -138,13 +138,16 @@ async function handleSubmit() {
       price: cleanFormData.price,
       sulfites: cleanFormData.sulfites,
       label_art: cleanFormData.label_art,
-      images: cleanFormData.images,
+      images: {
+        front: cleanFormData.images.front,
+        back: cleanFormData.images.back,
+      },
     };
 
     await updateWine(wineData);
     emit("wine-updated");
     closeModal();
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || "Failed to update wine";
     console.error("Error updating wine:", err);
   } finally {
@@ -152,11 +155,11 @@ async function handleSubmit() {
   }
 }
 
-function closeModal() {
+function closeModal(): void {
   emit("update:show", false);
 }
 
-function handleOutsideClick(e) {
+function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
@@ -398,7 +401,7 @@ function handleOutsideClick(e) {
             <div class="space-y-3">
               <div
                 v-for="(grape, index) in formData.grapes"
-                :key="index"
+                :key="'grape-' + index"
                 class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
               >
                 <input
@@ -444,7 +447,7 @@ function handleOutsideClick(e) {
             <div class="space-y-3">
               <div
                 v-for="(step, index) in formData.vinification"
-                :key="index"
+                :key="'vinification-' + index"
                 class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
               >
                 <input
@@ -488,7 +491,7 @@ function handleOutsideClick(e) {
               <div class="space-y-3">
                 <div
                   v-for="(note, index) in formData.tasting_notes.nose"
-                  :key="index"
+                  :key="'nose-' + index"
                   class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
                 >
                   <input
@@ -524,7 +527,7 @@ function handleOutsideClick(e) {
               <div class="space-y-3">
                 <div
                   v-for="(note, index) in formData.tasting_notes.palate"
-                  :key="index"
+                  :key="'palate-' + index"
                   class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
                 >
                   <input
