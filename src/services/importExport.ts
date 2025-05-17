@@ -33,7 +33,7 @@ export async function exportWinesToJSON() {
  * @param {Array} winesData - Array of wine objects (from JSON)
  * @returns {Promise<void>}
  */
-export async function importWinesFromJSON(winesData) {
+export async function importWinesFromJSON(winesData: any) {
   // Export current data if any
   const existing = await getAllWines();
   if (existing.length > 0) {
@@ -72,7 +72,7 @@ export async function importWinesFromJSON(winesData) {
 }
 
 // Helpers
-function blobToBase64(blob) {
+function blobToBase64(blob: Blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
@@ -81,10 +81,11 @@ function blobToBase64(blob) {
   });
 }
 
-function base64ToBlob(base64) {
+function base64ToBlob(base64: string) {
   // base64 may be a data URL
   const parts = base64.split(",");
-  const mime = parts[0].match(/:(.*?);/)[1];
+  const matches = parts[0].match(/:(.*?);/);
+  const mime = matches ? matches[1] : "application/octet-stream";
   const bstr = atob(parts[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);

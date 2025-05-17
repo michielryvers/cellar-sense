@@ -23,7 +23,7 @@ async function initDB() {
  * @param {Object} wineData - The wine data to store
  * @returns {Promise<number>} The ID of the newly added wine
  */
-export async function addWine(wineData) {
+export async function addWine(wineData: any) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);
@@ -50,7 +50,7 @@ export async function getAllWines() {
  * @param {number} id - The ID of the wine to delete
  * @returns {Promise<void>}
  */
-export async function deleteWine(id) {
+export async function deleteWine(id: IDBValidKey | IDBKeyRange) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   await tx.objectStore(STORE_NAME).delete(id);
@@ -62,7 +62,7 @@ export async function deleteWine(id) {
  * @param {number} id - The ID of the wine to retrieve
  * @returns {Promise<Object|undefined>} The wine object if found
  */
-export async function getWine(id) {
+export async function getWine(id: IDBValidKey | IDBKeyRange) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readonly");
   const wine = await tx.objectStore(STORE_NAME).get(id);
@@ -75,7 +75,7 @@ export async function getWine(id) {
  * @param {Object} wineData - The wine data to update (must include id)
  * @returns {Promise<Object>} The updated wine data
  */
-export async function updateWine(wineData) {
+export async function updateWine(wineData: any) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);

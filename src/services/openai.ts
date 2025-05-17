@@ -1,4 +1,8 @@
 import { OpenAI } from "openai";
+import {
+  ResponseInput,
+  ResponseInputImage,
+} from "openai/resources/responses/responses";
 
 /**
  * JSON Schema for wine entry validation
@@ -71,7 +75,7 @@ export const wineSchema = {
  * @param {string} [params.purchaseLocation] - Optional location where the wine was purchased
  * @returns {string} The formatted system prompt
  */
-function buildPrompt({ purchaseLocation }) {
+function buildPrompt(purchaseLocation: string | undefined) {
   return `
 You are a wine label data extraction assistant. Your job is to extract all possible wine metadata from the provided label images and purchase location. 
 If any required information is missing from the label, do a web search for additional info. Prefer the purchase location as a main source of truth. 
@@ -81,6 +85,13 @@ Always return a single, complete JSON object (do not include any images fields).
 - Do not emit anything except the JSON object.
 - Use the purchase location as a hint if provided: "${purchaseLocation || ""}".
 `;
+}
+
+interface ExtractWineDataParams {
+  apiKey: string;
+  purchaseLocation?: string;
+  frontBase64: string;
+  backBase64?: string;
 }
 
 /**
@@ -98,7 +109,7 @@ export async function extractWineData({
   purchaseLocation,
   frontBase64,
   backBase64,
-}) {
+}: ExtractWineDataParams) {
   if (!apiKey) {
     throw new Error("OpenAI API key is required");
   }
@@ -110,17 +121,14 @@ export async function extractWineData({
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
   // Prepare the input for the OpenAI API
-  const input = [
+  const input: ResponseInput = [
     {
       role: "system",
-      content: buildPrompt({ purchaseLocation }),
+      content: buildPrompt(purchaseLocation),
     },
     {
       role: "user",
-      content: [
-        { type: "input_image", image_url: frontBase64 },
-        ...(backBase64 ? [{ type: "input_image", image_url: backBase64 }] : []),
-      ],
+      content: getInputImages(frontBase64, backBase64),
     },
   ];
 
@@ -147,9 +155,34 @@ export async function extractWineData({
     return json;
   } catch (error) {
     console.error("OpenAI API error:", error);
-    throw new Error(
-      error.response?.data?.error?.message ||
-        "Failed to extract wine data from images"
-    );
+    let message = "Failed to extract wine data from images";
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as any).response?.data?.error?.message === "string"
+    ) {
+      message = (error as any).response.data.error.message;
+    }
+    throw new Error(message);
+  }
+
+  function getInputImages(
+    frontBase64: string,
+    backBase64: string | undefined
+  ): ResponseInputImage[] {
+    const images: ResponseInputImage[] = [
+      { type: "input_image", image_url: frontBase64, detail: "auto" },
+    ];
+
+    if (backBase64) {
+      images.push({
+        type: "input_image",
+        image_url: backBase64,
+        detail: "auto",
+      });
+    }
+
+    return images;
   }
 }
