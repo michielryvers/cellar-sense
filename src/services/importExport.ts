@@ -1,5 +1,5 @@
 // Data import/export service for wineventory, including images
-import { getAllWines, addWine, deleteAllWines } from "./db";
+import { getAllWines, addWine, deleteAllWines } from "./dexie-db";
 
 /**
  * Export all wine data (including images) as a downloadable JSON file
@@ -72,10 +72,10 @@ export async function importWinesFromJSON(winesData: any) {
 }
 
 // Helpers
-function blobToBase64(blob: Blob) {
+function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
+    reader.onloadend = () => resolve(reader.result as string);
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });

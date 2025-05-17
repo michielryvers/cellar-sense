@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted, Ref } from "vue";
-import { getAllWines, deleteWine, updateWine } from "../services/db";
+import { ref, Ref, onUnmounted } from "vue";
+import { deleteWine, updateWine, db } from "../services/dexie-db";
 import {
   ClockIcon,
-  Cog6ToothIcon,
   MinusCircleIcon,
   PencilSquareIcon,
-  PlusIcon,
   TrashIcon,
 } from "@heroicons/vue/24/outline";
-import AddWineForm from "./AddWineForm.vue";
 import WineDetail from "./WineDetail.vue";
 import EditWineForm from "./EditWineForm.vue";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import type { Wine } from "../shared/Wine";
+import { liveQuery } from "dexie";
 
 const wines: Ref<Wine[]> = ref([]);
+let subscription: any;
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
 const selectedWine: Ref<Wine | null> = ref(null);
@@ -31,19 +30,33 @@ useEscapeKey(() => {
   }
 });
 
-onMounted(async () => {
-  await loadWines();
+// liveQuery subscription for real-time updates
+function loadWines(): void {
+  // No-op, kept for compatibility with EditWineForm and others
+}
+
+subscription = liveQuery(() => db.wines.toArray()).subscribe({
+  next: (result: Wine[]) => {
+    wines.value = result;
+  },
+  error: (err: any) => {
+    console.error("liveQuery error", err);
+  },
 });
 
-async function loadWines(): Promise<void> {
-  wines.value = await getAllWines();
-}
+onUnmounted(() => {
+  if (subscription) {
+    subscription.unsubscribe();
+  }
+});
+
+defineExpose({ loadWines });
 
 async function handleDelete(id: string | number, event: Event): Promise<void> {
   event.stopPropagation();
   if (confirm("Are you sure you want to delete this wine?")) {
     await deleteWine(id);
-    await loadWines();
+    // No need to reload, liveQuery will update automatically
   }
 }
 
@@ -61,15 +74,26 @@ function handleRowClick(wine: Wine): void {
   showDetailModal.value = true;
 }
 
+// Utility function for deep cloning
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
-  if (!wine.inventory) {
-    wine.inventory = { bottles: 0, purchaseDate: "", purchaseLocation: "" };
+  // Use deepClone to ensure no Proxy objects are passed
+  const plainWine = deepClone(wine);
+  if (!plainWine.inventory) {
+    plainWine.inventory = {
+      bottles: 0,
+      purchaseDate: "",
+      purchaseLocation: "",
+    };
   }
-  if (wine.inventory.bottles > 0) {
-    wine.inventory.bottles--;
-    await updateWine(wine);
-    await loadWines();
+  if (plainWine.inventory.bottles > 0) {
+    plainWine.inventory.bottles--;
+    await updateWine(plainWine);
+    // No need to reload, liveQuery will update automatically
   }
 }
 </script>

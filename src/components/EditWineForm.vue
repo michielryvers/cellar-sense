@@ -5,7 +5,7 @@ import {
   PlusIcon,
   MinusCircleIcon,
 } from "@heroicons/vue/24/outline";
-import { updateWine } from "../services/db";
+import { updateWine } from "../services/dexie-db";
 import type { GrapeEntry, VinificationStep, Wine } from "../shared/Wine";
 
 interface EditWineFormProps {

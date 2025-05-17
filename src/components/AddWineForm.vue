@@ -3,7 +3,7 @@ import { ref, Ref } from "vue";
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { extractWineData } from "../services/openai";
-import { addWine } from "../services/db";
+import { addWine } from "../services/dexie-db";
 import {
   resizeImageToBase64,
   resizeImageToBlob,
