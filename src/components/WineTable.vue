@@ -1,5 +1,5 @@
-<script setup>
-import { ref, onMounted } from "vue";
+<script setup lang="ts">
+import { ref, onMounted, Ref } from "vue";
 import { getAllWines, deleteWine, updateWine } from "../services/db";
 import {
   ClockIcon,
@@ -13,13 +13,14 @@ import AddWineForm from "./AddWineForm.vue";
 import WineDetail from "./WineDetail.vue";
 import EditWineForm from "./EditWineForm.vue";
 import { useEscapeKey } from "../composables/useEscapeKey";
+import type { Wine } from "../shared/Wine";
 
-const wines = ref([]);
+const wines: Ref<Wine[]> = ref([]);
 const showDetailModal = ref(false);
 const showAddModal = ref(false);
 const showEditModal = ref(false);
 const showSettingsModal = ref(false);
-const selectedWine = ref(null);
+const selectedWine: Ref<Wine | null> = ref(null);
 
 const emit = defineEmits(["showSettings"]);
 
@@ -38,11 +39,11 @@ onMounted(async () => {
   await loadWines();
 });
 
-async function loadWines() {
+async function loadWines(): Promise<void> {
   wines.value = await getAllWines();
 }
 
-async function handleDelete(id, event) {
+async function handleDelete(id: string | number, event: Event): Promise<void> {
   event.stopPropagation();
   if (confirm("Are you sure you want to delete this wine?")) {
     await deleteWine(id);
@@ -50,7 +51,7 @@ async function handleDelete(id, event) {
   }
 }
 
-function handleEdit(wine, event) {
+function handleEdit(wine: Wine, event?: Event): void {
   // Only stop propagation if event exists (clicked from table)
   if (event) {
     event.stopPropagation();
@@ -59,12 +60,12 @@ function handleEdit(wine, event) {
   showEditModal.value = true;
 }
 
-function handleRowClick(wine) {
+function handleRowClick(wine: Wine): void {
   selectedWine.value = wine;
   showDetailModal.value = true;
 }
 
-function handleAddNew() {
+function handleAddNew(): void {
   const openaiKey = localStorage.getItem("openai_api_key");
   if (!openaiKey) {
     emit("showSettings");
@@ -73,10 +74,10 @@ function handleAddNew() {
   }
 }
 
-async function handleDrink(wine, event) {
+async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
   if (!wine.inventory) {
-    wine.inventory = { bottles: 0 };
+    wine.inventory = { bottles: 0, purchaseDate: "", purchaseLocation: "" };
   }
   if (wine.inventory.bottles > 0) {
     wine.inventory.bottles--;
