@@ -95,12 +95,18 @@ async function handleSubmit(): Promise<void> {
       throw new Error("Failed to process front label image");
     }
 
-    const wineData = await extractWineData({
+    const wineDataResult = await extractWineData({
       apiKey,
       purchaseLocation: purchaseLocation.value,
       frontBase64: frontBase64Result,
       backBase64,
     });
+
+    // Parse the result if it's a string, otherwise use as is
+    const wineData =
+      typeof wineDataResult === "string"
+        ? JSON.parse(wineDataResult)
+        : wineDataResult;
 
     // Add inventory information
     (wineData as any).inventory = {
