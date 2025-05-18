@@ -226,12 +226,12 @@ async function handleSubmit(): Promise<void> {
               >
                 Front Label Image
                 <span class="text-red-500">*</span>
-              </label>
-              <input
+              </label>              <input
                 type="file"
                 id="frontLabelImage"
                 ref="frontLabelInput"
                 accept="image/*"
+                capture="environment"
                 @change="handleImageChange($event, false)"
                 class="hidden"
               />
@@ -279,12 +279,12 @@ async function handleSubmit(): Promise<void> {
               >
                 Back Label Image
                 <span class="text-gray-400">(Optional)</span>
-              </label>
-              <input
+              </label>              <input
                 type="file"
                 id="backLabelImage"
                 ref="backLabelInput"
                 accept="image/*"
+                capture="environment"
                 @change="handleImageChange($event, true)"
                 class="hidden"
               />
