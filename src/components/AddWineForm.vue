@@ -355,24 +355,6 @@ async function handleSubmit(): Promise<void> {
                     class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-purple-600 hover:text-white transition-colors"
                   >
                     {{ location }}
-                    <span
-                      v-if="location === purchaseLocation"
-                      class="absolute inset-y-0 left-0 flex items-center pl-3"
-                    >
-                      <svg
-                        class="w-5 h-5 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12l2 2 4-4"
-                        />
-                      </svg>
-                    </span>
                   </li>
                 </ul>
               </div>

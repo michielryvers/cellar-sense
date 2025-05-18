@@ -148,7 +148,7 @@ export async function extractWineData({
 
   try {
     const response = await openai.responses.create({
-      model: "gpt-4.1",
+      model: "gpt-4.1-mini",
       input,
       tools: [{ type: "web_search_preview", search_context_size: "medium" }],
       text: {

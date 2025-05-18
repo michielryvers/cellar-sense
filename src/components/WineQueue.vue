@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import { Subscription, combineLatest } from "rxjs";
-import { getAllWineQueries, wineQueries$ } from "../services/winequeries-idb";
+import { ref, onMounted, computed, watchEffect, onUnmounted } from "vue";
+import { wineQueries$ } from "../services/winequeries-idb";
 import { isOnline$ } from "../services/network-status";
 import { processingStatus$ } from "../services/openai-background";
 import {
@@ -11,15 +10,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from "@heroicons/vue/24/outline";
-
-interface WineQuery {
-  id?: number;
-  frontBase64: string;
-  backBase64: string | null;
-  purchaseLocation?: string;
-  bottles: number;
-  createdAt: number;
-}
+import { WineQuery } from "../services/winequeries-idb";
 
 const loading = ref(true);
 const wineQueries = ref<WineQuery[]>([]);
@@ -29,43 +20,45 @@ const processingStatus = ref({
   isOnline: navigator.onLine,
   hasApiKey: false,
 });
+const lastStatusType = ref("");
 
-let subscriptions: Subscription[] = [];
+// Store subscription cleanup functions
+const unsubscribeHandlers: Array<() => void> = [];
 
-async function loadInitialQueue() {
+onMounted(() => {
   loading.value = true;
-  // This will initialize the observable if needed
-  await getAllWineQueries();
-  loading.value = false;
-}
 
-onMounted(async () => {
-  await loadInitialQueue();
-
-  // Subscribe to wine queries
-  const queriesSub = wineQueries$.subscribe((queries) => {
+  // Subscribe to Dexie's liveQuery for wine queries
+  const unsubWineQueries = wineQueries$.subscribe((queries) => {
     wineQueries.value = queries;
+    loading.value = false;
   });
-  subscriptions.push(queriesSub);
 
-  // Subscribe to network status
+  // In Dexie's liveQuery, the subscribe method returns a function to unsubscribe
+  if (typeof unsubWineQueries === "function") {
+    unsubscribeHandlers.push(unsubWineQueries);
+  }
+
+  // Subscribe to network status from RxJS observable
   const onlineSub = isOnline$.subscribe((status) => {
     isOnline.value = status;
   });
-  subscriptions.push(onlineSub);
 
-  // Subscribe to processing status
+  // RxJS returns a Subscription object with an unsubscribe method
+  unsubscribeHandlers.push(() => onlineSub.unsubscribe());
+
+  // Subscribe to processing status from RxJS observable
   const processingSub = processingStatus$.subscribe((status) => {
     processingStatus.value = status;
   });
-  subscriptions.push(processingSub);
+
+  // RxJS returns a Subscription object with an unsubscribe method
+  unsubscribeHandlers.push(() => processingSub.unsubscribe());
 });
 
 onUnmounted(() => {
   // Clean up all subscriptions
-  subscriptions.forEach((sub) => {
-    if (sub) sub.unsubscribe();
-  });
+  unsubscribeHandlers.forEach((unsubscribe) => unsubscribe());
 });
 
 // Computed properties for status display
@@ -92,15 +85,22 @@ const statusMessage = computed(() => {
 });
 
 const statusType = computed(() => {
+  let newStatus;
+
   if (!isOnline.value || !processingStatus.value.hasApiKey) {
-    return "warning";
+    newStatus = "warning";
+  } else if (processingStatus.value.isRunning) {
+    newStatus = "processing";
+  } else {
+    newStatus = wineQueries.value.length > 0 ? "pending" : "success";
   }
 
-  if (processingStatus.value.isRunning) {
-    return "processing";
+  // Only update if it's different from the last value
+  if (newStatus !== lastStatusType.value) {
+    lastStatusType.value = newStatus;
   }
 
-  return wineQueries.value.length > 0 ? "pending" : "success";
+  return lastStatusType.value;
 });
 </script>
 
@@ -112,7 +112,6 @@ const statusType = computed(() => {
       <QueueListIcon class="h-6 w-6 text-purple-500" />
       Processing Queue
     </h3>
-
     <!-- Status Banner -->
     <div
       class="mb-4 p-3 rounded-lg flex items-center gap-3"
@@ -122,6 +121,7 @@ const statusType = computed(() => {
         'bg-blue-50 text-blue-700': statusType === 'processing',
         'bg-purple-50 text-purple-700': statusType === 'pending',
       }"
+      :key="statusType"
     >
       <SignalSlashIcon v-if="!isOnline" class="h-5 w-5 flex-shrink-0" />
       <KeyIcon

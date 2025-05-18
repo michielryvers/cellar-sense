@@ -1,10 +1,7 @@
-// src/services/winequeries-idb.ts
-// IndexedDB wrapper for winequeries table using idb
-import { openDB, DBSchema } from "idb";
-import { BehaviorSubject, Observable } from "rxjs";
+import Dexie, { liveQuery, type Table } from "dexie";
 import { ref, Ref } from "vue";
 
-interface WineQuery {
+export interface WineQuery {
   id?: number;
   frontBase64: string;
   backBase64: string | null;
@@ -13,94 +10,68 @@ interface WineQuery {
   createdAt: number;
 }
 
-interface WineQueryDB extends DBSchema {
-  winequeries: {
-    key: number;
-    value: WineQuery;
-    indexes: { createdAt: number };
-  };
+class WineQueryDB extends Dexie {
+  winequeries!: Table<WineQuery, number>;
+
+  constructor() {
+    super("cellar-sense-queries");
+    this.version(1).stores({
+      winequeries: "++id, createdAt",
+    });
+  }
 }
 
-const DB_NAME = "cellar-sense-queries";
-const DB_VERSION = 1;
+export const db = new WineQueryDB();
 
-// RxJS Observable for wine queries
-const wineQueriesSubject = new BehaviorSubject<WineQuery[]>([]);
-export const wineQueries$: Observable<WineQuery[]> =
-  wineQueriesSubject.asObservable();
+// Use Dexie's liveQuery instead of RxJS BehaviorSubject
+export const wineQueries$ = liveQuery(() => db.winequeries.toArray());
 
-// For backward compatibility - create a Vue reactive state that stays in sync with RxJS
+// For backward compatibility - create a Vue reactive state that stays in sync with liveQuery
 export const wineQueriesState: Ref<WineQuery[]> = ref([]);
 
-// Keep the Vue ref in sync with the RxJS subject
-wineQueriesSubject.subscribe((queries) => {
+// Keep the Vue ref in sync with liveQuery
+wineQueries$.subscribe((queries) => {
   wineQueriesState.value = queries;
 });
 
-// Initialize the observable
-let initialized = false;
-
-async function initializeObservable() {
-  if (initialized) return;
-
-  const queries = await getAllWineQueriesInternal();
-  wineQueriesSubject.next(queries);
-  initialized = true;
-}
-
-// Internal function to get all queries
-async function getAllWineQueriesInternal() {
-  const db = await getWineQueryDB();
-  return db.getAll("winequeries");
-}
-
-export async function getWineQueryDB() {
-  return openDB<WineQueryDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains("winequeries")) {
-        const store = db.createObjectStore("winequeries", {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-        store.createIndex("createdAt", "createdAt");
-      }
-    },
-  });
-}
-
 export async function addWineQuery(query: Omit<WineQuery, "id" | "createdAt">) {
-  const db = await getWineQueryDB();
-  const id = await db.add("winequeries", { ...query, createdAt: Date.now() });
-
-  // Update the observable state
-  const queries = await getAllWineQueriesInternal();
-  wineQueriesSubject.next(queries);
-
-  return id;
-}
-
-export async function getAllWineQueries() {
-  // Initialize if needed
-  if (!initialized) {
-    await initializeObservable();
+  try {
+    const id = await db.winequeries.add({
+      ...query,
+      createdAt: Date.now(),
+    });
+    return id;
+  } catch (error) {
+    console.error("Failed to add wine query:", error);
+    throw error;
   }
-  return wineQueriesSubject.value;
 }
 
-export async function deleteWineQuery(id: number) {
-  const db = await getWineQueryDB();
-  await db.delete("winequeries", id);
+export async function getAllWineQueries(): Promise<WineQuery[]> {
+  try {
+    return await db.winequeries.toArray();
+  } catch (error) {
+    console.error("Failed to get all wine queries:", error);
+    throw error;
+  }
+}
 
-  // Update the observable state
-  const queries = await getAllWineQueriesInternal();
-  wineQueriesSubject.next(queries);
+export async function deleteWineQuery(id: number): Promise<void> {
+  try {
+    await db.winequeries.delete(id);
+  } catch (error) {
+    console.error(`Failed to delete wine query with id ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function getNextWineQuery(): Promise<WineQuery | undefined> {
-  const db = await getWineQueryDB();
-  const tx = db.transaction("winequeries", "readonly");
-  const store = tx.objectStore("winequeries");
-  const index = store.index("createdAt");
-  const cursor = await index.openCursor();
-  return cursor?.value;
+  try {
+    // Get the first item ordered by createdAt
+    const query = await db.winequeries.orderBy("createdAt").first();
+    return query;
+  } catch (error) {
+    console.error("Failed to get next wine query:", error);
+    throw error;
+  }
 }
