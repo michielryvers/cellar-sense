@@ -179,7 +179,7 @@ function handleOutsideClick(e: MouseEvent): void {
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-400 bg-opacity-40"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm"
       @click="handleOutsideClick"
     >
       <div

@@ -1,5 +1,6 @@
 import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
+import { saveRecommendation } from "./recommendations-idb";
 
 export interface RecommendationOption {
   id: string;
@@ -73,7 +74,7 @@ export async function getWineRecommendations({
   const model = localStorage.getItem("OPENAI_MODEL") || "gpt-4.1";
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
+    model: model,
     messages,
     response_format: { type: "json_object" },
     max_tokens: 800,
@@ -90,10 +91,26 @@ export async function getWineRecommendations({
       result = content;
     }
 
-    if (Array.isArray(result)) return result;
-    if (result && "recommendations" in result) return result.recommendations;
-    if (result && "results" in result) return result.results;
-    throw new Error("Invalid recommendation format");
+    let recs: RecommendationOption[];
+    if (Array.isArray(result)) {
+      recs = result;
+    } else if (result && "recommendations" in result) {
+      recs = result.recommendations;
+    } else if (result && "results" in result) {
+      recs = result.results;
+    } else {
+      throw new Error("Invalid recommendation format");
+    }
+
+    // Save to recommendations history DB
+    try {
+      await saveRecommendation(userQuery, recs);
+    } catch (err) {
+      // Non-fatal, just log
+      console.warn("Failed to save recommendation history", err);
+    }
+
+    return recs;
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : String(e);
     throw new Error("Failed to parse recommendations: " + errorMessage);

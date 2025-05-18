@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, Ref, onUnmounted } from "vue";
+import { ref, Ref, onUnmounted, computed } from "vue";
 import { deleteWine, updateWine, db, drinkBottle } from "../services/dexie-db";
 import {
   ClockIcon,
@@ -14,6 +14,33 @@ import type { Wine } from "../shared/Wine";
 import { liveQuery } from "dexie";
 
 const wines: Ref<Wine[]> = ref([]);
+const filterVintner = ref<string>("");
+const filterColor = ref<string>("");
+
+// Compute unique vintners and colors for dropdowns
+const vintnerOptions = computed(() => {
+  const set = new Set<string>();
+  wines.value.forEach((w) => {
+    if (w.vintner) set.add(w.vintner);
+  });
+  return Array.from(set).sort();
+});
+const colorOptions = computed(() => {
+  const set = new Set<string>();
+  wines.value.forEach((w) => {
+    if (w.color) set.add(w.color);
+  });
+  return Array.from(set).sort();
+});
+
+const filteredWines = computed(() => {
+  return wines.value.filter((wine) => {
+    const vintnerMatch =
+      !filterVintner.value || wine.vintner === filterVintner.value;
+    const colorMatch = !filterColor.value || wine.color === filterColor.value;
+    return vintnerMatch && colorMatch; // UPDATED
+  });
+});
 let subscription: any;
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
@@ -104,7 +131,17 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
               >
-                Vintner
+                <div class="flex items-center gap-1">
+                  <select
+                    v-model="filterVintner"
+                    class="ml-1 px-2 py-0.5 border rounded text-xs"
+                  >
+                    <option value="">Vintner</option>
+                    <option v-for="v in vintnerOptions" :key="v" :value="v">
+                      {{ v }}
+                    </option>
+                  </select>
+                </div>
               </th>
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
@@ -114,7 +151,17 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
               >
-                Color
+                <div class="flex items-center gap-1">
+                  <select
+                    v-model="filterColor"
+                    class="ml-1 px-2 py-0.5 border rounded text-xs"
+                  >
+                    <option value="">Color</option>
+                    <option v-for="c in colorOptions" :key="c" :value="c">
+                      {{ c }}
+                    </option>
+                  </select>
+                </div>
               </th>
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
@@ -126,11 +173,22 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
               >
                 Bottles
               </th>
-              <th class="py-3 px-4 w-28"></th>
+              <th class="py-3 px-4 w-28">
+                <button
+                  v-if="filterVintner || filterColor"
+                  @click="
+                    filterVintner = '';
+                    filterColor = '';
+                  "
+                  class="text-xs text-gray-500 underline"
+                >
+                  Clear
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-if="wines.length === 0">
+            <tr v-if="filteredWines.length === 0">
               <td colspan="7" class="py-8 px-6 text-center text-gray-500">
                 <div
                   class="flex flex-col items-center justify-center space-y-3"
@@ -144,7 +202,7 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
               </td>
             </tr>
             <tr
-              v-for="wine in wines"
+              v-for="wine in filteredWines"
               :key="wine.id"
               class="group hover:bg-purple-50 transition-colors cursor-pointer"
               :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
@@ -244,7 +302,7 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
         </div>
         <ul v-else class="divide-y divide-gray-100">
           <li
-            v-for="wine in wines"
+            v-for="wine in filteredWines"
             :key="wine.id"
             class="group px-3 py-3 flex flex-col gap-1 bg-white hover:bg-purple-50 transition-colors cursor-pointer relative"
             :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
@@ -348,10 +406,3 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
     </Teleport>
   </div>
 </template>
-
-<style scoped>
-.bg-clip-text {
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-</style>

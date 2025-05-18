@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import type { Wine } from "./shared/Wine";
 import WineTable from "./components/WineTable.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import AddWineForm from "./components/AddWineForm.vue";
 import WineQueue from "./components/WineQueue.vue";
 import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
+import type { RecommendationHistoryEntry } from "./services/recommendations-idb";
+import WineDetail from "./components/WineDetail.vue";
 import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
 import {
@@ -19,14 +22,17 @@ const showRecommendModal = ref(false);
 const recommendLoading = ref(false);
 const recommendError = ref("");
 const recommendResults = ref<RecommendationOption[] | null>(null);
+const recommendQuery = ref<string>("");
 const showRecommendationsResultModal = ref(false);
+
+const showDetailModal = ref(false);
+const selectedWine = ref<Wine | null>(null);
 
 function handleShowSettings() {
   showSettings.value = true;
 }
 
 function handleSettingsSave() {
-  // You can add any additional logic here if needed when settings are saved
   showSettings.value = false;
 }
 
@@ -41,6 +47,7 @@ function handleAddNew() {
 
 function handleShowRecommend() {
   recommendResults.value = null;
+  recommendQuery.value = "";
   recommendError.value = "";
   showRecommendModal.value = true;
 }
@@ -49,6 +56,7 @@ async function handleSubmitRecommendQuery(query: string) {
   recommendLoading.value = true;
   recommendError.value = "";
   recommendResults.value = null;
+  recommendQuery.value = query;
   try {
     const apiKey = localStorage.getItem("OPENAI_SDK_KEY") || "";
     if (!apiKey) throw new Error("OpenAI API key is required");
@@ -69,6 +77,24 @@ async function handleSubmitRecommendQuery(query: string) {
     recommendError.value = err?.message || "Failed to get recommendations";
   } finally {
     recommendLoading.value = false;
+  }
+}
+
+function handleShowPastRecommendation(rec: RecommendationHistoryEntry) {
+  recommendResults.value = rec.results;
+  recommendQuery.value = rec.query;
+  showRecommendModal.value = false;
+  showRecommendationsResultModal.value = true;
+}
+
+async function handleShowRecommendationDetail(wineId: string) {
+  // Find the wine in the user's cellar by id
+  const wines = await getAllWines();
+  const wine = wines.find((w) => w.id === wineId);
+  if (wine) {
+    selectedWine.value = wine;
+    showDetailModal.value = true;
+    showRecommendationsResultModal.value = false;
   }
 }
 </script>
@@ -132,11 +158,20 @@ async function handleSubmitRecommendQuery(query: string) {
       :loading="recommendLoading"
       :error="recommendError"
       @submit-query="handleSubmitRecommendQuery"
+      @show-past-result="handleShowPastRecommendation"
     />
     <RecommendationsResultModal
       :show="showRecommendationsResultModal"
       :results="recommendResults || []"
+      :query="recommendQuery"
       @close="showRecommendationsResultModal = false"
+      @show-detail="handleShowRecommendationDetail"
+    />
+    <WineDetail
+      v-if="selectedWine"
+      v-model:show="showDetailModal"
+      :wine="selectedWine"
+      @edit="() => {}"
     />
     <SettingsModal v-model:show="showSettings" @save="handleSettingsSave" />
   </div>
