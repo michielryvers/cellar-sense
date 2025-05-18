@@ -10,9 +10,20 @@ import { BehaviorSubject } from "rxjs";
 let isProcessing = false;
 
 /**
- * Convert a base64 string to a Blob
- * @param base64 The base64 string to convert
- * @returns A Blob representation of the base64 string
+ * Convert a Blob/File to a base64 data-URL string
+ */
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Convert a base64 string to a Blob                                   ← kept for
+ * (legacy queries that still store base64)                            ← fallback
  */
 async function base64ToBlob(base64: string): Promise<Blob> {
   // Check if this is a data URL and extract the actual base64 part
@@ -79,12 +90,23 @@ export async function processNextWineQuery() {
       return;
     }
 
+    // Prepare data for OpenAI – support both legacy (base64) and new (Blob) formats
+    const frontBase64 =
+      "frontImage" in query
+        ? await blobToBase64(query.frontImage as Blob)
+        : (query as any).frontBase64;
+
+    const backBase64 =
+      "backImage" in query && query.backImage
+        ? await blobToBase64(query.backImage as Blob)
+        : (query as any).backBase64 || null;
+
     // Call OpenAI
     const extractedData = await extractWineData({
       apiKey,
       purchaseLocation: query.purchaseLocation,
-      frontBase64: query.frontBase64,
-      backBase64: query.backBase64,
+      frontBase64,
+      backBase64,
     });
 
     // Parse the extracted data as Wine type
@@ -99,28 +121,25 @@ export async function processNextWineQuery() {
       purchaseLocation: query.purchaseLocation || "",
     };
 
-    // Convert base64 images to blobs and add them to the wine data
+    // Attach original images (prefer blobs; fall back to converting base64)
     try {
-      // For front image (required)
-      if (query.frontBase64) {
-        const frontBlob = await base64ToBlob(query.frontBase64);
-        wineData.images = {
-          ...wineData.images,
-          front: frontBlob,
-        };
+      const images: Record<string, Blob | null> = {};
+
+      if ("frontImage" in query) {
+        images.front = query.frontImage;
+      } else if ((query as any).frontBase64) {
+        images.front = await base64ToBlob((query as any).frontBase64);
       }
 
-      // For back image (optional)
-      if (query.backBase64) {
-        const backBlob = await base64ToBlob(query.backBase64);
-        wineData.images = {
-          ...wineData.images,
-          back: backBlob,
-        };
+      if ("backImage" in query && query.backImage) {
+        images.back = query.backImage;
+      } else if ((query as any).backBase64) {
+        images.back = await base64ToBlob((query as any).backBase64);
       }
+
+      wineData.images = { ...wineData.images, ...images };
     } catch (imageErr) {
-      console.error("Error converting images to blobs:", imageErr);
-      // If conversion fails, ensure we at least have a valid images object
+      console.error("Error attaching images:", imageErr);
       wineData.images = wineData.images || { front: null };
     }
 

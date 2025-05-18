@@ -50,26 +50,21 @@ export async function resizeImageToBase64(
  * @returns {Promise<Blob|null>} Blob of the resized image
  */
 export async function resizeImageToBlob(
-  file: Blob,
+  file: File,
   maxSize: number = 1024
-): Promise<Blob | null> {
-  if (!file) return null;
+): Promise<Blob> {
+  // Re-use the same compression strategy as resizeImageToBase64
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: maxSize,
+    useWebWorker: true,
+    fileType: file.type || "image/jpeg",
+  };
 
-  try {
-    // Use the browser-image-compression library directly
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: maxSize,
-      useWebWorker: true,
-      fileType: file.type || "image/jpeg",
-    };
+  const compressedFile = await imageCompression(file, options);
 
-    // This returns the compressed blob directly
-    return await imageCompression(file as File, options);
-  } catch (error) {
-    console.error("Error compressing image to blob:", error);
-    return null;
-  }
+  // imageCompression returns a File which is also a Blob
+  return compressedFile as Blob;
 }
 
 /**

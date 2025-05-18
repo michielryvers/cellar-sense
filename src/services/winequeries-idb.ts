@@ -3,8 +3,8 @@ import { ref, Ref } from "vue";
 
 export interface WineQuery {
   id?: number;
-  frontBase64: string;
-  backBase64: string | null;
+  frontImage: Blob; // resized JPEG blob
+  backImage: Blob | null; // optional
   purchaseLocation?: string;
   bottles: number;
   createdAt: number;
@@ -35,13 +35,16 @@ wineQueries$.subscribe((queries) => {
 });
 
 export async function addWineQuery(query: Omit<WineQuery, "id" | "createdAt">) {
+  console.time("Dexie ‑ addWineQuery"); // ⏱ start
   try {
     const id = await db.winequeries.add({
       ...query,
       createdAt: Date.now(),
     });
+    console.timeEnd("Dexie ‑ addWineQuery"); // ⏱ stop
     return id;
   } catch (error) {
+    console.timeEnd("Dexie ‑ addWineQuery"); // ensure timer ends on error
     console.error("Failed to add wine query:", error);
     throw error;
   }

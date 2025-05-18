@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { XMarkIcon, SignalSlashIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { addWineQuery } from "../services/winequeries-idb";
-import { resizeImageToBase64, createImagePreview } from "../utils/imageHelpers";
+import { resizeImageToBlob, createImagePreview } from "../utils/imageHelpers";
 import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";
 import { getDistinctPurchaseLocations } from "../services/dexie-db";
@@ -123,10 +123,12 @@ async function handleImageChange(event: Event, isBack = false): Promise<void> {
 
   // Store the original file for now
   fileTarget.value = file;
-  
+
   // Show loading state while processing
-  error.value = isBack ? "Processing back label..." : "Processing front label...";
-  
+  error.value = isBack
+    ? "Processing back label..."
+    : "Processing front label...";
+
   try {
     // Generate optimized preview immediately
     previewTarget.value = await createImagePreview(file);
@@ -139,6 +141,7 @@ async function handleImageChange(event: Event, isBack = false): Promise<void> {
 }
 
 async function handleSubmit(): Promise<void> {
+  console.time("🟣 handleSubmit — total"); // 1️⃣ start overall timer
   if (!frontLabelFile.value) {
     error.value = "Front label image is required";
     return;
@@ -146,8 +149,10 @@ async function handleSubmit(): Promise<void> {
 
   // If online, check for API key. If offline, we can still queue without a key
   if (isOnline.value) {
+    console.time("🔑 check-api-key");
     const apiKeyRaw = localStorage.getItem("OPENAI_SDK_KEY");
     const apiKey: string = apiKeyRaw || "";
+    console.timeEnd("🔑 check-api-key");
     if (!apiKey) {
       error.value = "OpenAI API key is required";
       emit("missing-api-key");
@@ -157,42 +162,36 @@ async function handleSubmit(): Promise<void> {
 
   error.value = "";
   isLoading.value = true;
+  await nextTick(); // 2️⃣ make sure spinner is painted
 
   try {
-    // Start processing the images in the background while showing the loading state
-    const processImagePromises: Promise<any>[] = [];
-    
-    // Process front image (required)
+    console.time("🖼 image-processing");
+    // Process images
     const frontFile: File = frontLabelFile.value!;
-    const frontBase64Promise = resizeImageToBase64(frontFile);
-    processImagePromises.push(frontBase64Promise);
-    
-    // Process back image (optional)
-    let backBase64Promise: Promise<string | null> | null = null;
-    if (backLabelFile.value) {
-      backBase64Promise = resizeImageToBase64(backLabelFile.value);
-      processImagePromises.push(backBase64Promise);
-    }
-    
-    // Wait for all image processing to complete
-    const [frontBase64, backBase64] = await Promise.all([
-      frontBase64Promise,
-      backBase64Promise || Promise.resolve(null)
-    ]);
+    const frontBlobPromise = resizeImageToBlob(frontFile);
+    const backBlobPromise = backLabelFile.value
+      ? resizeImageToBlob(backLabelFile.value)
+      : null;
 
-    if (frontBase64 === null) {
+    const [frontImage, backImage] = await Promise.all([
+      frontBlobPromise,
+      backBlobPromise || Promise.resolve(null),
+    ]);
+    console.timeEnd("🖼 image-processing");
+
+    if (!frontImage) {
       throw new Error("Failed to process front label image");
     }
 
-    // Add the query to the background processing queue
+    console.time("💾 addWineQuery");
     await addWineQuery({
-      frontBase64,
-      backBase64,
+      frontImage,
+      backImage,
       purchaseLocation: purchaseLocation.value,
       bottles: numberOfBottles.value,
     });
+    console.timeEnd("💾 addWineQuery");
 
-    // Let the user know their wine is being processed
     emit("wine-added");
     closeModal();
   } catch (err: any) {
@@ -200,6 +199,7 @@ async function handleSubmit(): Promise<void> {
     console.error("Error adding wine query:", err);
   } finally {
     isLoading.value = false;
+    console.timeEnd("🟣 handleSubmit — total"); // 3️⃣ stop overall timer
   }
 }
 </script>
@@ -397,7 +397,7 @@ async function handleSubmit(): Promise<void> {
               <input
                 type="number"
                 id="numberOfBottles"
-                v-model="numberOfBottles"
+                v-model.number="numberOfBottles"
                 min="1"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
               />
