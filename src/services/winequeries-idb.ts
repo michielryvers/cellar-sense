@@ -7,7 +7,9 @@ export interface WineQuery {
   backImage: Blob | null; // optional
   purchaseLocation?: string;
   bottles: number;
+  needsResize: boolean;
   createdAt: number;
+  status: "pending" | "done";
 }
 
 class WineQueryDB extends Dexie {

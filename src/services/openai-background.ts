@@ -2,10 +2,11 @@
 // Background processor for OpenAI wine queries
 import { extractWineData } from "./openai";
 import { addWine } from "./dexie-db";
-import { getNextWineQuery, deleteWineQuery } from "./winequeries-idb";
+import { getNextWineQuery, deleteWineQuery, db } from "./winequeries-idb";
 import { getOnlineStatus } from "./network-status";
 import { Wine } from "../shared/Wine";
 import { BehaviorSubject } from "rxjs";
+import { resizeImageToBlob } from "../utils/imageHelpers";
 
 let isProcessing = false;
 
@@ -88,6 +89,21 @@ export async function processNextWineQuery() {
         hasApiKey,
       });
       return;
+    }
+
+    if (query.needsResize) {
+      query.frontImage = await resizeImageToBlob(query.frontImage);
+      if (query.backImage) {
+        query.backImage = await resizeImageToBlob(query.backImage);
+      }
+      query.needsResize = false;
+      if (query.id !== undefined) {
+        await db.winequeries.update(query.id, {
+          frontImage: query.frontImage,
+          backImage: query.backImage,
+          needsResize: false,
+        });
+      }
     }
 
     // Prepare data for OpenAI – support both legacy (base64) and new (Blob) formats

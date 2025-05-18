@@ -165,30 +165,14 @@ async function handleSubmit(): Promise<void> {
   await nextTick(); // 2️⃣ make sure spinner is painted
 
   try {
-    console.time("🖼 image-processing");
-    // Process images
-    const frontFile: File = frontLabelFile.value!;
-    const frontBlobPromise = resizeImageToBlob(frontFile);
-    const backBlobPromise = backLabelFile.value
-      ? resizeImageToBlob(backLabelFile.value)
-      : null;
-
-    const [frontImage, backImage] = await Promise.all([
-      frontBlobPromise,
-      backBlobPromise || Promise.resolve(null),
-    ]);
-    console.timeEnd("🖼 image-processing");
-
-    if (!frontImage) {
-      throw new Error("Failed to process front label image");
-    }
-
     console.time("💾 addWineQuery");
     await addWineQuery({
-      frontImage,
-      backImage,
+      frontImage: frontLabelFile.value as Blob,
+      backImage: backLabelFile.value as Blob | null,
       purchaseLocation: purchaseLocation.value,
       bottles: numberOfBottles.value,
+      needsResize: true,
+      status: "pending",
     });
     console.timeEnd("💾 addWineQuery");
 

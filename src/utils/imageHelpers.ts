@@ -50,7 +50,7 @@ export async function resizeImageToBase64(
  * @returns {Promise<Blob|null>} Blob of the resized image
  */
 export async function resizeImageToBlob(
-  file: File,
+  file: File | Blob,
   maxSize: number = 1024
 ): Promise<Blob> {
   // Re-use the same compression strategy as resizeImageToBase64
@@ -61,7 +61,7 @@ export async function resizeImageToBlob(
     fileType: file.type || "image/jpeg",
   };
 
-  const compressedFile = await imageCompression(file, options);
+  const compressedFile = await imageCompression(file as File, options);
 
   // imageCompression returns a File which is also a Blob
   return compressedFile as Blob;
