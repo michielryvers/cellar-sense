@@ -52,8 +52,13 @@ onUnmounted(() => {
 
 defineExpose({ loadWines });
 
-async function handleDelete(id: string, event: Event): Promise<void> {
+async function handleDelete(
+  id: string | undefined,
+  event: Event
+): Promise<void> {
   event.stopPropagation();
+  if (!id) return;
+
   if (confirm("Are you sure you want to delete this wine?")) {
     await deleteWine(id);
     // No need to reload, liveQuery will update automatically
@@ -76,7 +81,9 @@ function handleRowClick(wine: Wine): void {
 
 async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
-  await drinkBottle(wine.id);
+  if (wine.id) {
+    await drinkBottle(wine.id);
+  }
 }
 </script>
 

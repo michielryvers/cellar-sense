@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { ref, Ref } from "vue";
-import { XMarkIcon } from "@heroicons/vue/24/outline";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { XMarkIcon, SignalSlashIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
-import { extractWineData } from "../services/openai";
-import { addWine } from "../services/dexie-db";
-import {
-  resizeImageToBase64,
-  resizeImageToBlob,
-  createImagePreview,
-} from "../utils/imageHelpers";
+import { addWineQuery } from "../services/winequeries-idb";
+import { resizeImageToBase64, createImagePreview } from "../utils/imageHelpers";
+import { isOnline$ } from "../services/network-status";
+import { Subscription } from "rxjs";
 
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits<{
@@ -27,6 +24,37 @@ const purchaseLocation = ref<string>("");
 const numberOfBottles = ref<number>(1);
 const isLoading = ref<boolean>(false);
 const error = ref<string>("");
+const isOnline = ref(navigator.onLine);
+
+// Track subscription
+let subscription: Subscription | null = null;
+
+onMounted(() => {
+  // Subscribe to online status changes
+  subscription = isOnline$.subscribe((status) => {
+    isOnline.value = status;
+  });
+});
+
+onUnmounted(() => {
+  // Clean up subscription
+  if (subscription) {
+    subscription.unsubscribe();
+  }
+});
+
+// Computed property for button text
+const submitButtonText = computed(() => {
+  if (isLoading.value) {
+    return "Adding to Processing Queue...";
+  }
+
+  if (!isOnline.value) {
+    return "Add Wine to Offline Queue";
+  }
+
+  return "Add Wine to Processing Queue";
+});
 
 function closeModal(): void {
   emit("update:show", false);
@@ -72,12 +100,15 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
-  const apiKeyRaw = localStorage.getItem("OPENAI_SDK_KEY");
-  const apiKey: string = apiKeyRaw || "";
-  if (!apiKey) {
-    error.value = "OpenAI API key is required";
-    emit("missing-api-key");
-    return;
+  // If online, check for API key. If offline, we can still queue without a key
+  if (isOnline.value) {
+    const apiKeyRaw = localStorage.getItem("OPENAI_SDK_KEY");
+    const apiKey: string = apiKeyRaw || "";
+    if (!apiKey) {
+      error.value = "OpenAI API key is required";
+      emit("missing-api-key");
+      return;
+    }
   }
 
   error.value = "";
@@ -86,47 +117,27 @@ async function handleSubmit(): Promise<void> {
   try {
     const frontFile: File = frontLabelFile.value!;
     const backFile: File | null = backLabelFile.value;
-    const frontBase64Result = await resizeImageToBase64(frontFile);
-    const backBase64 = backFile ? await resizeImageToBase64(backFile) : "";
-    const frontBlob = await resizeImageToBlob(frontFile);
-    const backBlob = backFile ? await resizeImageToBlob(backFile) : null;
+    const frontBase64 = await resizeImageToBase64(frontFile);
+    const backBase64 = backFile ? await resizeImageToBase64(backFile) : null;
 
-    if (frontBase64Result === null) {
+    if (frontBase64 === null) {
       throw new Error("Failed to process front label image");
     }
 
-    const wineDataResult = await extractWineData({
-      apiKey,
-      purchaseLocation: purchaseLocation.value,
-      frontBase64: frontBase64Result,
+    // Add the query to the background processing queue
+    await addWineQuery({
+      frontBase64,
       backBase64,
+      purchaseLocation: purchaseLocation.value,
+      bottles: numberOfBottles.value,
     });
 
-    // Parse the result if it's a string, otherwise use as is
-    const wineData =
-      typeof wineDataResult === "string"
-        ? JSON.parse(wineDataResult)
-        : wineDataResult;
-
-    // Add inventory information
-    (wineData as any).inventory = {
-      bottles: numberOfBottles.value,
-      purchaseDate: new Date().toISOString(),
-      purchaseLocation: purchaseLocation.value,
-    };
-
-    // Attach resized images as blobs for local storage
-    (wineData as any).images = {
-      front: frontBlob ?? null,
-      back: backBlob ?? null,
-    };
-
-    await addWine(wineData);
+    // Let the user know their wine is being processed
     emit("wine-added");
     closeModal();
   } catch (err: any) {
-    error.value = err?.message || "Failed to process wine information";
-    console.error("Error adding wine:", err);
+    error.value = err?.message || "Failed to queue wine for processing";
+    console.error("Error adding wine query:", err);
   } finally {
     isLoading.value = false;
   }
@@ -313,6 +324,20 @@ async function handleSubmit(): Promise<void> {
             </div>
           </div>
 
+          <!-- Network Status -->
+          <div
+            v-if="!isOnline"
+            class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 rounded-lg"
+          >
+            <div class="flex items-center">
+              <SignalSlashIcon class="h-5 w-5 mr-2" />
+              <span class="text-sm">
+                You are currently offline. Changes will be saved locally and
+                synced when you are back online.
+              </span>
+            </div>
+          </div>
+
           <!-- Submit Button -->
           <button
             type="submit"
@@ -340,11 +365,7 @@ async function handleSubmit(): Promise<void> {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            {{
-              isLoading
-                ? "Processing with AI..."
-                : "Process Wine Information (via OpenAI)"
-            }}
+            {{ submitButtonText }}
           </button>
         </form>
       </div>

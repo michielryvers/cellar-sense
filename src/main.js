@@ -6,3 +6,4 @@ createApp(App).mount("#app");
 
 // Register PWA service worker for offline support
 import "./registerServiceWorker";
+import "./boot/openai-background";
