@@ -12,7 +12,7 @@ class WineventoryDB extends Dexie {
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(1).stores({
+      this.version(2).stores({
         wines: "@id, name, vintage, color",
       });
       this.cloud.configure({
@@ -21,7 +21,7 @@ class WineventoryDB extends Dexie {
       });
     } else {
       super("cellar-sense-db");
-      this.version(1).stores({
+      this.version(2).stores({
         wines: "++id, name, vintage, color",
       });
     }

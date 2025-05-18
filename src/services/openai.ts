@@ -18,9 +18,16 @@ export const wineSchema = {
     appellation: { type: "string" },
     region: { type: "string" },
     grapes: {
-      type: "object",
+      type: "array",
       description: "Any grape variety → percentage mapping",
-      properties: {},
+
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          percentage: { type: "number" },
+        },
+      },
     },
     color: { type: "string", enum: ["Red", "White", "Rosé", "Orange"] },
     volume: { type: "string" },
@@ -30,9 +37,15 @@ export const wineSchema = {
       enum: ["Organic", "Biodynamic", "Conventional", "Natural"],
     },
     vinification: {
-      type: "object",
       description: "Any vinification step → free-text description",
-      properties: {},
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          step: { type: "string" },
+          description: { type: "string" },
+        },
+      },
     },
     tasting_notes: {
       type: "object",

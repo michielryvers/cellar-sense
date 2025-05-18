@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, toRaw } from "vue";
+import { ref, toRaw } from "vue";
 import {
   XMarkIcon,
   PlusIcon,
   MinusCircleIcon,
 } from "@heroicons/vue/24/outline";
 import { updateWine } from "../services/dexie-db";
-import type { GrapeEntry, VinificationStep, Wine } from "../shared/Wine";
+import type { Wine } from "../shared/Wine";
 
 interface EditWineFormProps {
   show: boolean;
@@ -33,7 +33,11 @@ const formData = ref<Wine>({
   farming: props.wine.farming || "",
   inventory: {
     bottles: props.wine.inventory?.bottles || 0,
-    purchaseDate: props.wine.inventory?.purchaseDate || "",
+    purchaseDate: props.wine.inventory?.purchaseDate
+      ? (typeof props.wine.inventory.purchaseDate === 'string'
+          ? props.wine.inventory.purchaseDate.split('T')[0]
+          : '')
+      : '',
     purchaseLocation: props.wine.inventory?.purchaseLocation || "",
   },
   grapes: Array.isArray(props.wine.grapes)
@@ -108,7 +112,15 @@ async function handleSubmit(): Promise<void> {
     error.value = "";
 
     // Create a clean, non-reactive object for storage
-    const cleanFormData = toRaw<Wine>(formData.value); // Convert FormWine to Wine by cleaning up empty values
+
+    const cleanFormData = toRaw<Wine>(formData.value);
+
+    // Ensure purchaseDate is always a date string (YYYY-MM-DD)
+    let purchaseDate = cleanFormData.inventory.purchaseDate || '';
+    if (purchaseDate && purchaseDate.includes('T')) {
+      purchaseDate = purchaseDate.split('T')[0];
+    }
+
     const wineData: Wine = {
       id: cleanFormData.id,
       name: cleanFormData.name,
@@ -121,17 +133,16 @@ async function handleSubmit(): Promise<void> {
       alcohol: cleanFormData.alcohol,
       farming: cleanFormData.farming,
       inventory: {
-        bottles: cleanFormData.inventory.bottles,
-        purchaseDate: cleanFormData.inventory.purchaseDate,
-        purchaseLocation: cleanFormData.inventory.purchaseLocation,
+        ...cleanFormData.inventory,
+        purchaseDate,
       },
-      grapes: cleanFormData.grapes.filter((g) => g.name && g.percentage > 0),
-      vinification: cleanFormData.vinification.filter(
-        (v) => v.step && v.description
-      ),
+      grapes: cleanFormData.grapes.map((grape) => toRaw(grape)),
+      vinification: cleanFormData.vinification.map((step) => toRaw(step)),
       tasting_notes: {
-        nose: cleanFormData.tasting_notes.nose.filter((note) => note),
-        palate: cleanFormData.tasting_notes.palate.filter((note) => note),
+        nose: cleanFormData.tasting_notes.nose.map((note) => toRaw(note)),
+        palate: cleanFormData.tasting_notes.palate.map((palate) =>
+          toRaw(palate)
+        ),
       },
       drink_from: cleanFormData.drink_from,
       drink_until: cleanFormData.drink_until,

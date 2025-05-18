@@ -10,12 +10,15 @@ const emit = defineEmits<{
   (e: "edit", wine: Wine): void;
 }>();
 
+// Grapes: now an object of { [name]: percentage }
 const grapesList = computed(() => {
   if (!props.wine.grapes) return [];
-  return Object.entries(props.wine.grapes).map(([grape, percentage]) => ({
-    name: grape,
-    percentage,
-  }));
+  return props.wine.grapes;
+});
+
+const vinificationSteps = computed(() => {
+  if (!props.wine.vinification) return [];
+  return props.wine.vinification;
 });
 
 const frontImageUrl = computed(() => {
@@ -44,14 +47,6 @@ const backImageUrl = computed(() => {
     return URL.createObjectURL(props.wine.images.back);
   }
   return null;
-});
-
-const vinificationSteps = computed(() => {
-  if (!props.wine.vinification) return [];
-  return Object.entries(props.wine.vinification).map(([step, description]) => ({
-    step,
-    description,
-  }));
 });
 
 function handleEdit(): void {
