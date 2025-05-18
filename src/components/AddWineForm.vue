@@ -6,6 +6,7 @@ import { addWineQuery } from "../services/winequeries-idb";
 import { resizeImageToBase64, createImagePreview } from "../utils/imageHelpers";
 import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";
+import { getDistinctPurchaseLocations } from "../services/dexie-db";
 
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits<{
@@ -25,15 +26,24 @@ const numberOfBottles = ref<number>(1);
 const isLoading = ref<boolean>(false);
 const error = ref<string>("");
 const isOnline = ref(navigator.onLine);
+const purchaseLocations = ref<string[]>([]);
+const showLocationDropdown = ref<boolean>(false);
 
 // Track subscription
 let subscription: Subscription | null = null;
 
-onMounted(() => {
+onMounted(async () => {
   // Subscribe to online status changes
   subscription = isOnline$.subscribe((status) => {
     isOnline.value = status;
   });
+
+  // Load purchase locations
+  try {
+    purchaseLocations.value = await getDistinctPurchaseLocations();
+  } catch (err) {
+    console.error("Error loading purchase locations:", err);
+  }
 });
 
 onUnmounted(() => {
@@ -56,6 +66,20 @@ const submitButtonText = computed(() => {
   return "Add Wine to Processing Queue";
 });
 
+// Filtered locations based on user input
+const filteredLocations = computed(() => {
+  if (!purchaseLocation.value) return purchaseLocations.value;
+  const query = purchaseLocation.value.toLowerCase();
+  return purchaseLocations.value.filter((location) =>
+    location.toLowerCase().includes(query)
+  );
+});
+
+function selectLocation(location: string): void {
+  purchaseLocation.value = location;
+  showLocationDropdown.value = false;
+}
+
 function closeModal(): void {
   emit("update:show", false);
   // Reset form
@@ -66,6 +90,7 @@ function closeModal(): void {
   purchaseLocation.value = "";
   numberOfBottles.value = 1;
   error.value = "";
+  showLocationDropdown.value = false;
 }
 
 // Use escape key to close modal
@@ -75,6 +100,17 @@ function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
+}
+
+function handleLocationFocus(): void {
+  showLocationDropdown.value = true;
+}
+
+function handleLocationBlur(e: FocusEvent): void {
+  // Longer delay to ensure click events on dropdown items are processed first
+  setTimeout(() => {
+    showLocationDropdown.value = false;
+  }, 300);
 }
 
 async function handleImageChange(event: Event, isBack = false): Promise<void> {
@@ -289,7 +325,7 @@ async function handleSubmit(): Promise<void> {
 
           <!-- Details Section -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
+            <div class="relative">
               <label
                 for="purchaseLocation"
                 class="block text-sm font-medium text-gray-700 mb-2"
@@ -302,8 +338,44 @@ async function handleSubmit(): Promise<void> {
                 id="purchaseLocation"
                 v-model="purchaseLocation"
                 placeholder="Where did you buy this wine?"
+                @focus="handleLocationFocus"
+                @blur="handleLocationBlur"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
               />
+              <!-- Autocomplete Dropdown -->
+              <div
+                v-if="showLocationDropdown && filteredLocations.length > 0"
+                class="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto"
+              >
+                <ul class="divide-y divide-gray-200">
+                  <li
+                    v-for="location in filteredLocations"
+                    :key="location"
+                    @mousedown.prevent="selectLocation(location)"
+                    class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-purple-600 hover:text-white transition-colors"
+                  >
+                    {{ location }}
+                    <span
+                      v-if="location === purchaseLocation"
+                      class="absolute inset-y-0 left-0 flex items-center pl-3"
+                    >
+                      <svg
+                        class="w-5 h-5 text-purple-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 12l2 2 4-4"
+                        />
+                      </svg>
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div>

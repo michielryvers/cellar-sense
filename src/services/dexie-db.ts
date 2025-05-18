@@ -110,3 +110,29 @@ export async function drinkBottle(id: string): Promise<number | undefined> {
   }
   return wine.inventory.bottles;
 }
+
+/**
+ * Get all distinct purchase locations from the database
+ * @returns Array of unique purchase locations
+ */
+export async function getDistinctPurchaseLocations(): Promise<string[]> {
+  try {
+    const wines = await db.wines.toArray();
+    const locations = new Set<string>();
+
+    // Collect all non-empty purchase locations
+    wines.forEach((wine) => {
+      if (
+        wine.inventory?.purchaseLocation &&
+        wine.inventory.purchaseLocation.trim() !== ""
+      ) {
+        locations.add(wine.inventory.purchaseLocation.trim());
+      }
+    });
+
+    return Array.from(locations).sort();
+  } catch (error) {
+    console.error("Failed to get distinct purchase locations:", error);
+    return [];
+  }
+}
