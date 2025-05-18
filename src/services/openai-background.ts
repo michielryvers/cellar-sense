@@ -142,8 +142,21 @@ export async function processNextWineQuery() {
 }
 
 // Poll every N seconds, checking network status each time
-export function startWineQueryPolling(intervalMs = 5000) {
-  setInterval(() => {
-    processNextWineQuery();
+// But ensure we don't overlap executions
+let pollingTimeout: number | null = null;
+
+async function scheduleNextPoll(intervalMs = 5000) {
+  if (pollingTimeout) {
+    clearTimeout(pollingTimeout);
+  }
+
+  pollingTimeout = window.setTimeout(async () => {
+    await processNextWineQuery();
+    scheduleNextPoll(intervalMs);
   }, intervalMs);
+}
+
+export function startWineQueryPolling(intervalMs = 5000) {
+  // Start the first poll
+  scheduleNextPoll(intervalMs);
 }

@@ -151,10 +151,26 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true;
 
   try {
+    // Start processing the images in the background while showing the loading state
+    const processImagePromises: Promise<any>[] = [];
+    
+    // Process front image (required)
     const frontFile: File = frontLabelFile.value!;
-    const backFile: File | null = backLabelFile.value;
-    const frontBase64 = await resizeImageToBase64(frontFile);
-    const backBase64 = backFile ? await resizeImageToBase64(backFile) : null;
+    const frontBase64Promise = resizeImageToBase64(frontFile);
+    processImagePromises.push(frontBase64Promise);
+    
+    // Process back image (optional)
+    let backBase64Promise: Promise<string | null> | null = null;
+    if (backLabelFile.value) {
+      backBase64Promise = resizeImageToBase64(backLabelFile.value);
+      processImagePromises.push(backBase64Promise);
+    }
+    
+    // Wait for all image processing to complete
+    const [frontBase64, backBase64] = await Promise.all([
+      frontBase64Promise,
+      backBase64Promise || Promise.resolve(null)
+    ]);
 
     if (frontBase64 === null) {
       throw new Error("Failed to process front label image");
@@ -226,7 +242,8 @@ async function handleSubmit(): Promise<void> {
               >
                 Front Label Image
                 <span class="text-red-500">*</span>
-              </label>              <input
+              </label>
+              <input
                 type="file"
                 id="frontLabelImage"
                 ref="frontLabelInput"
@@ -279,7 +296,8 @@ async function handleSubmit(): Promise<void> {
               >
                 Back Label Image
                 <span class="text-gray-400">(Optional)</span>
-              </label>              <input
+              </label>
+              <input
                 type="file"
                 id="backLabelImage"
                 ref="backLabelInput"
