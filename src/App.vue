@@ -4,10 +4,22 @@ import WineTable from "./components/WineTable.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import AddWineForm from "./components/AddWineForm.vue";
 import WineQueue from "./components/WineQueue.vue";
-import { Cog6ToothIcon, PlusIcon } from "@heroicons/vue/24/outline";
+import WineRecommendModal from "./components/WineRecommendModal.vue";
+import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
+import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
+import { getAllWines } from "./services/dexie-db";
+import {
+  getWineRecommendations,
+  type RecommendationOption,
+} from "./services/openai-recommend";
 
 const showSettings = ref(false);
 const showAddModal = ref(false);
+const showRecommendModal = ref(false);
+const recommendLoading = ref(false);
+const recommendError = ref("");
+const recommendResults = ref<RecommendationOption[] | null>(null);
+const showRecommendationsResultModal = ref(false);
 
 function handleShowSettings() {
   showSettings.value = true;
@@ -24,6 +36,39 @@ function handleAddNew() {
     showSettings.value = true;
   } else {
     showAddModal.value = true;
+  }
+}
+
+function handleShowRecommend() {
+  recommendResults.value = null;
+  recommendError.value = "";
+  showRecommendModal.value = true;
+}
+
+async function handleSubmitRecommendQuery(query: string) {
+  recommendLoading.value = true;
+  recommendError.value = "";
+  recommendResults.value = null;
+  try {
+    const apiKey = localStorage.getItem("OPENAI_SDK_KEY") || "";
+    if (!apiKey) throw new Error("OpenAI API key is required");
+    const wines = await getAllWines();
+    const inStock = wines.filter(
+      (w) => w.inventory?.bottles && w.inventory.bottles > 0
+    );
+    if (!inStock.length) throw new Error("No wines in stock");
+    const recs = await getWineRecommendations({
+      apiKey,
+      wines: inStock,
+      userQuery: query,
+    });
+    recommendResults.value = recs;
+    showRecommendModal.value = false;
+    showRecommendationsResultModal.value = true;
+  } catch (err: any) {
+    recommendError.value = err?.message || "Failed to get recommendations";
+  } finally {
+    recommendLoading.value = false;
   }
 }
 </script>
@@ -55,6 +100,14 @@ function handleAddNew() {
           Settings
         </button>
         <button
+          @click="handleShowRecommend"
+          class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="AI Wine Recommendation"
+        >
+          <StarIcon class="h-5 w-5 mr-2" />
+          Recommend
+        </button>
+        <button
           @click="handleAddNew"
           class="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-xl shadow-md transform transition-all hover:shadow-lg hover:scale-105"
         >
@@ -73,6 +126,17 @@ function handleAddNew() {
       v-model:show="showAddModal"
       @wine-added="showAddModal = false"
       @missing-api-key="showSettings = true"
+    />
+    <WineRecommendModal
+      v-model:show="showRecommendModal"
+      :loading="recommendLoading"
+      :error="recommendError"
+      @submit-query="handleSubmitRecommendQuery"
+    />
+    <RecommendationsResultModal
+      :show="showRecommendationsResultModal"
+      :results="recommendResults || []"
+      @close="showRecommendationsResultModal = false"
     />
     <SettingsModal v-model:show="showSettings" @save="handleSettingsSave" />
   </div>
