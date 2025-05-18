@@ -1,5 +1,5 @@
 export interface Wine {
-  id: string;
+  id: string | undefined;
   name: string;
   vintner: string;
   vintage: number | string;
