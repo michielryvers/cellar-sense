@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, Ref, onUnmounted } from "vue";
-import { deleteWine, updateWine, db } from "../services/dexie-db";
+import { deleteWine, updateWine, db, drinkBottle } from "../services/dexie-db";
 import {
   ClockIcon,
   MinusCircleIcon,
@@ -52,7 +52,7 @@ onUnmounted(() => {
 
 defineExpose({ loadWines });
 
-async function handleDelete(id: string | number, event: Event): Promise<void> {
+async function handleDelete(id: string, event: Event): Promise<void> {
   event.stopPropagation();
   if (confirm("Are you sure you want to delete this wine?")) {
     await deleteWine(id);
@@ -74,27 +74,9 @@ function handleRowClick(wine: Wine): void {
   showDetailModal.value = true;
 }
 
-// Utility function for deep cloning
-function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
-}
-
 async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
-  // Use deepClone to ensure no Proxy objects are passed
-  const plainWine = deepClone(wine);
-  if (!plainWine.inventory) {
-    plainWine.inventory = {
-      bottles: 0,
-      purchaseDate: "",
-      purchaseLocation: "",
-    };
-  }
-  if (plainWine.inventory.bottles > 0) {
-    plainWine.inventory.bottles--;
-    await updateWine(plainWine);
-    // No need to reload, liveQuery will update automatically
-  }
+  await drinkBottle(wine.id);
 }
 </script>
 

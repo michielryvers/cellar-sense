@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, toRaw } from "vue";
 import {
   XMarkIcon,
   PlusIcon,
@@ -108,7 +108,7 @@ async function handleSubmit(): Promise<void> {
     error.value = "";
 
     // Create a clean, non-reactive object for storage
-    const cleanFormData = JSON.parse(JSON.stringify(formData.value)) as Wine; // Convert FormWine to Wine by cleaning up empty values
+    const cleanFormData = toRaw<Wine>(formData.value); // Convert FormWine to Wine by cleaning up empty values
     const wineData: Wine = {
       id: cleanFormData.id,
       name: cleanFormData.name,

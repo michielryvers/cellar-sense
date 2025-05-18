@@ -7,7 +7,7 @@ const DEXIE_CLOUD_URL = localStorage.getItem("DEXIE_CLOUD_URL") || "";
 // Define the database
 
 class WineventoryDB extends Dexie {
-  wines!: Table<Wine, number>;
+  wines!: Table<Wine, string>;
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
@@ -30,14 +30,7 @@ class WineventoryDB extends Dexie {
 
 export const db = new WineventoryDB();
 
-// Use these variables wherever Dexie Cloud configuration is needed
-
-/**
- * Add a new wine to the database
- * @param {Wine} wineData - The wine data to store
- * @returns {Promise<number>} The ID of the newly added wine
- */
-export async function addWine(wineData: Wine): Promise<number> {
+export async function addWine(wineData: Wine): Promise<string> {
   try {
     const id = await db.wines.add(wineData);
     return id;
@@ -47,10 +40,6 @@ export async function addWine(wineData: Wine): Promise<number> {
   }
 }
 
-/**
- * Retrieve all wines from the database
- * @returns {Promise<Wine[]>} Array of wine objects
- */
 export async function getAllWines(): Promise<Wine[]> {
   try {
     const wines = await db.wines.toArray();
@@ -61,29 +50,18 @@ export async function getAllWines(): Promise<Wine[]> {
   }
 }
 
-/**
- * Delete a wine by its ID
- * @param {number} id - The ID of the wine to delete
- * @returns {Promise<void>}
- */
-export async function deleteWine(id: string | number): Promise<void> {
+export async function deleteWine(id: string): Promise<void> {
   try {
-    await db.wines.delete(typeof id === "string" ? parseInt(id, 10) : id);
+    await db.wines.delete(id);
   } catch (error) {
     console.error(`Failed to delete wine with id ${id}:`, error);
     throw error;
   }
 }
 
-/**
- * Get a single wine by its ID
- * @param {number} id - The ID of the wine to retrieve
- * @returns {Promise<Wine|undefined>} The wine object if found
- */
-export async function getWine(id: string | number): Promise<Wine | undefined> {
+export async function getWine(id: string): Promise<Wine | undefined> {
   try {
-    const numericId = typeof id === "string" ? parseInt(id, 10) : id;
-    const wine = await db.wines.get(numericId);
+    const wine = await db.wines.get(id);
     return wine;
   } catch (error) {
     console.error(`Failed to get wine with id ${id}:`, error);
@@ -91,12 +69,7 @@ export async function getWine(id: string | number): Promise<Wine | undefined> {
   }
 }
 
-/**
- * Update an existing wine
- * @param {Wine} wineData - The wine data to update (must include id)
- * @returns {Promise<number>} The ID of the updated wine
- */
-export async function updateWine(wineData: Wine): Promise<number> {
+export async function updateWine(wineData: Wine): Promise<string> {
   if (wineData.id === undefined) {
     throw new Error("Wine data must include an id to be updated.");
   }
@@ -111,10 +84,6 @@ export async function updateWine(wineData: Wine): Promise<number> {
   }
 }
 
-/**
- * Delete all wines from the database
- * @returns {Promise<void>}
- */
 export async function deleteAllWines(): Promise<void> {
   try {
     await db.wines.clear();
@@ -122,4 +91,20 @@ export async function deleteAllWines(): Promise<void> {
     console.error("Failed to delete all wines:", error);
     throw error;
   }
+}
+
+export async function drinkBottle(id: string): Promise<number | undefined> {
+  const wine = await db.wines.get(id);
+  if (!wine) return undefined;
+  if (!wine.inventory) {
+    wine.inventory = { bottles: 0, purchaseDate: "", purchaseLocation: "" };
+  }
+  if (wine.inventory.bottles > 0) {
+    wine.inventory.bottles--;
+    await db.wines.update(wine.id, {
+      "inventory.bottles": wine.inventory.bottles,
+    });
+    return wine.inventory.bottles;
+  }
+  return wine.inventory.bottles;
 }
