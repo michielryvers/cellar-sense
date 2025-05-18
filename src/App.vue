@@ -19,7 +19,7 @@ function handleSettingsSave() {
 }
 
 function handleAddNew() {
-  const openaiKey = localStorage.getItem("openai_api_key");
+  const openaiKey = localStorage.getItem("OPENAI_SDK_KEY");
   if (!openaiKey) {
     showSettings.value = true;
   } else {
