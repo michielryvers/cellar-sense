@@ -20,6 +20,7 @@ const isImporting = ref<boolean>(false);
 const settings = reactive({
   DEXIE_CLOUD_URL: localStorage.getItem("DEXIE_CLOUD_URL") || "",
   OPENAI_SDK_KEY: localStorage.getItem("OPENAI_SDK_KEY") || "",
+  OPENAI_MODEL: localStorage.getItem("OPENAI_MODEL") || "gpt-4.1",
 });
 
 function closeModal(): void {
@@ -79,6 +80,7 @@ function saveSettings() {
   const prevCloudUrl = localStorage.getItem("DEXIE_CLOUD_URL") || "";
   localStorage.setItem("DEXIE_CLOUD_URL", settings.DEXIE_CLOUD_URL);
   localStorage.setItem("OPENAI_SDK_KEY", settings.OPENAI_SDK_KEY);
+  localStorage.setItem("OPENAI_MODEL", settings.OPENAI_MODEL);
   emit("save");
   closeModal();
   // If DEXIE_CLOUD_URL changed, reload the page to re-init DB
@@ -141,6 +143,24 @@ function saveSettings() {
               type="text"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
             />
+          </div>
+          <div class="mb-6">
+            <label
+              class="block mb-1 text-xs font-semibold text-gray-600 tracking-wide uppercase"
+              for="OPENAI_MODEL"
+            >
+              OpenAI Model
+            </label>
+            <select
+              id="OPENAI_MODEL"
+              v-model="settings.OPENAI_MODEL"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
+            >
+              <option value="gpt-4.1">GPT-4.1 (Best Quality)</option>
+              <option value="gpt-4.1-mini">
+                GPT-4.1-mini (Faster, Less Accurate)
+              </option>
+            </select>
           </div>
           <div class="flex flex-col gap-4">
             <div class="flex gap-2">

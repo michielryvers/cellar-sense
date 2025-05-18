@@ -145,10 +145,12 @@ export async function extractWineData({
       content: getInputImages(frontBase64, backBase64),
     },
   ];
-
   try {
+    // Get the model from localStorage, default to gpt-4.1 if not set
+    const model = localStorage.getItem("OPENAI_MODEL") || "gpt-4.1";
+
     const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
+      model,
       input,
       tools: [{ type: "web_search_preview", search_context_size: "medium" }],
       text: {
