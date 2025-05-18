@@ -1,5 +1,7 @@
+import imageCompression from "browser-image-compression";
+
 /**
- * Resize and convert an image file to base64 string
+ * Efficiently compress and resize an image file to base64 string
  * @param {File} file - The image file to process
  * @param {number} maxSize - Maximum width/height in pixels
  * @returns {Promise<string|null>} Base64 string of the resized image
@@ -10,55 +12,35 @@ export async function resizeImageToBase64(
 ): Promise<string | null> {
   if (!file) return null;
 
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      img.onload = () => {
-        let w = img.width;
-        let h = img.height;
-        if (w > maxSize || h > maxSize) {
-          const scale = Math.min(maxSize / w, maxSize / h);
-          w = Math.round(w * scale);
-          h = Math.round(h * scale);
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Could not get 2D context"));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, w, h);
-
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Failed to create blob"));
-              return;
-            }
-            const reader2 = new FileReader();
-            reader2.onload = () => resolve(reader2.result as string);
-            reader2.onerror = reject;
-            reader2.readAsDataURL(blob);
-          },
-          file.type || "image/jpeg",
-          0.92
-        );
-      };
-      img.onerror = reject;
-      if (typeof e.target?.result === "string") {
-        img.src = e.target.result;
-      } else {
-        reject(new Error("Failed to load image"));
-      }
+  try {
+    // Compression options
+    const options = {
+      maxSizeMB: 1, // Maximum file size in MB
+      maxWidthOrHeight: maxSize, // Max width/height
+      useWebWorker: true, // Use web worker for better performance
+      fileType: file.type || "image/jpeg",
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+
+    // Compress the image file
+    const compressedFile = await imageCompression(file as File, options);
+
+    // Convert the compressed file to base64
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        } else {
+          reject(new Error("Failed to convert image to base64"));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(compressedFile);
+    });
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    return null;
+  }
 }
 
 /**
@@ -72,30 +54,69 @@ export async function resizeImageToBlob(
   maxSize: number = 1024
 ): Promise<Blob | null> {
   if (!file) return null;
-  const base64 = await resizeImageToBase64(file, maxSize);
-  if (!base64) return null;
 
-  // Convert base64 to blob
-  const response = await fetch(base64 as string);
-  return response.blob();
+  try {
+    // Use the browser-image-compression library directly
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: maxSize,
+      useWebWorker: true,
+      fileType: file.type || "image/jpeg",
+    };
+
+    // This returns the compressed blob directly
+    return await imageCompression(file as File, options);
+  } catch (error) {
+    console.error("Error compressing image to blob:", error);
+    return null;
+  }
 }
 
 /**
- * Create a preview URL for an image file
+ * Create an optimized preview URL for an image file
  * @param {File} file - The image file to preview
  * @returns {Promise<string>} Data URL for the image preview
  */
-export function createImagePreview(file: Blob): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target) {
-        resolve(e.target.result as string);
-      } else {
-        reject(new Error("Failed to load image"));
-      }
+export async function createImagePreview(file: Blob): Promise<string> {
+  try {
+    // Use smaller size for previews (300px max)
+    const options = {
+      maxSizeMB: 0.3, // Very small file size for previews
+      maxWidthOrHeight: 300, // Small preview size
+      useWebWorker: true,
+      fileType: file.type || "image/jpeg",
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+
+    // Compress the image for preview
+    const compressedFile = await imageCompression(file as File, options);
+
+    // Convert to data URL
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        } else {
+          reject(new Error("Failed to create preview"));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(compressedFile);
+    });
+  } catch (error) {
+    console.error("Error creating preview:", error);
+    // Fallback to original method if compression fails
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        } else {
+          reject(new Error("Failed to load image"));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 }

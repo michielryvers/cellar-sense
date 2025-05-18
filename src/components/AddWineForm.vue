@@ -121,9 +121,17 @@ async function handleImageChange(event: Event, isBack = false): Promise<void> {
   const previewTarget = isBack ? backPreview : frontPreview;
   const fileTarget = isBack ? backLabelFile : frontLabelFile;
 
+  // Store the original file for now
   fileTarget.value = file;
+  
+  // Show loading state while processing
+  error.value = isBack ? "Processing back label..." : "Processing front label...";
+  
   try {
+    // Generate optimized preview immediately
     previewTarget.value = await createImagePreview(file);
+    // Clear error message
+    error.value = "";
   } catch (err) {
     error.value = "Error processing image";
     console.error("Image processing error:", err);
