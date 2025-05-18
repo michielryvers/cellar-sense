@@ -11,7 +11,6 @@ export interface Wine {
   farming: string;
   price: string;
   sulfites: string;
-  label_art: string;
   drink_from: number | string;
   drink_until: number | string;
   grapes: GrapeEntry[];

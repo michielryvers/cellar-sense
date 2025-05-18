@@ -12,7 +12,7 @@ class WineventoryDB extends Dexie {
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(2).stores({
+      this.version(3).stores({
         wines: "@id, name, vintage, color",
       });
       this.cloud.configure({
@@ -21,7 +21,7 @@ class WineventoryDB extends Dexie {
       });
     } else {
       super("cellar-sense-db");
-      this.version(2).stores({
+      this.version(3).stores({
         wines: "++id, name, vintage, color",
       });
     }
@@ -101,9 +101,11 @@ export async function drinkBottle(id: string): Promise<number | undefined> {
   }
   if (wine.inventory.bottles > 0) {
     wine.inventory.bottles--;
-    await db.wines.update(wine.id, {
-      "inventory.bottles": wine.inventory.bottles,
-    });
+    if (wine.id !== undefined) {
+      await db.wines.update(wine.id, {
+        "inventory.bottles": wine.inventory.bottles,
+      });
+    }
     return wine.inventory.bottles;
   }
   return wine.inventory.bottles;

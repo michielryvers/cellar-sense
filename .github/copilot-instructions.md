@@ -68,7 +68,6 @@ Users snap both label sides, optional store info, and let OpenAI ✨ pre-fill al
   "drink_until": 2026,
   "price": "€10.50",
   "sulfites": "Low-sulfite",
-  "label_art": "Abstract design with expressive character",
   "images": {
     "front": "blob-url-or-base64",
     "back": "blob-url-or-base64"

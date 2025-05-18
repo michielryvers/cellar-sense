@@ -29,7 +29,10 @@ export const wineSchema = {
         },
       },
     },
-    color: { type: "string", enum: ["Red", "White", "Rosé", "Orange"] },
+    color: {
+      type: "string",
+      enum: ["Red", "White", "Rosé", "Orange", "Sparkling"],
+    },
     volume: { type: "string" },
     alcohol: { type: "string" },
     farming: {
@@ -58,7 +61,6 @@ export const wineSchema = {
     drink_until: { type: "integer" },
     price: { type: "string" },
     sulfites: { type: "string" },
-    label_art: { type: "string" },
   },
   required: [
     "name",
@@ -77,7 +79,6 @@ export const wineSchema = {
     "drink_until",
     "price",
     "sulfites",
-    "label_art",
   ],
   additionalProperties: false,
 };

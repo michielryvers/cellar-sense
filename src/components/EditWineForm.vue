@@ -34,10 +34,10 @@ const formData = ref<Wine>({
   inventory: {
     bottles: props.wine.inventory?.bottles || 0,
     purchaseDate: props.wine.inventory?.purchaseDate
-      ? (typeof props.wine.inventory.purchaseDate === 'string'
-          ? props.wine.inventory.purchaseDate.split('T')[0]
-          : '')
-      : '',
+      ? typeof props.wine.inventory.purchaseDate === "string"
+        ? props.wine.inventory.purchaseDate.split("T")[0]
+        : ""
+      : "",
     purchaseLocation: props.wine.inventory?.purchaseLocation || "",
   },
   grapes: Array.isArray(props.wine.grapes)
@@ -62,7 +62,6 @@ const formData = ref<Wine>({
   drink_until: props.wine.drink_until || "",
   price: props.wine.price || "",
   sulfites: props.wine.sulfites || "",
-  label_art: props.wine.label_art || "",
   images: {
     front: props.wine.images.front,
     back: props.wine.images.back,
@@ -116,9 +115,9 @@ async function handleSubmit(): Promise<void> {
     const cleanFormData = toRaw<Wine>(formData.value);
 
     // Ensure purchaseDate is always a date string (YYYY-MM-DD)
-    let purchaseDate = cleanFormData.inventory.purchaseDate || '';
-    if (purchaseDate && purchaseDate.includes('T')) {
-      purchaseDate = purchaseDate.split('T')[0];
+    let purchaseDate = cleanFormData.inventory.purchaseDate || "";
+    if (purchaseDate && purchaseDate.includes("T")) {
+      purchaseDate = purchaseDate.split("T")[0];
     }
 
     const wineData: Wine = {
@@ -148,7 +147,6 @@ async function handleSubmit(): Promise<void> {
       drink_until: cleanFormData.drink_until,
       price: cleanFormData.price,
       sulfites: cleanFormData.sulfites,
-      label_art: cleanFormData.label_art,
       images: {
         front: cleanFormData.images.front,
         back: cleanFormData.images.back,
@@ -689,22 +687,6 @@ function handleOutsideClick(e: MouseEvent): void {
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="e.g., Low-sulfite"
                 />
-              </div>
-
-              <div class="md:col-span-2">
-                <label
-                  for="labelArt"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Label Art Description
-                </label>
-                <textarea
-                  id="labelArt"
-                  v-model="formData.label_art"
-                  rows="2"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Describe the label art"
-                ></textarea>
               </div>
             </div>
           </div>

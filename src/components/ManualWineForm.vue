@@ -23,7 +23,6 @@ const emptyWine = (): Wine => ({
   farming: "",
   price: "",
   sulfites: "",
-  label_art: "",
   drink_from: "",
   drink_until: "",
   grapes: [],
@@ -550,20 +549,6 @@ async function handleSubmit() {
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="e.g., Low-sulfite"
                 />
-              </div>
-              <div class="md:col-span-2">
-                <label
-                  for="labelArt"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                  >Label Art Description</label
-                >
-                <textarea
-                  id="labelArt"
-                  v-model="formData.label_art"
-                  rows="2"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Describe the label art"
-                ></textarea>
               </div>
             </div>
           </div>

@@ -9,6 +9,25 @@ import { BehaviorSubject } from "rxjs";
 
 let isProcessing = false;
 
+/**
+ * Convert a base64 string to a Blob
+ * @param base64 The base64 string to convert
+ * @returns A Blob representation of the base64 string
+ */
+async function base64ToBlob(base64: string): Promise<Blob> {
+  // Check if this is a data URL and extract the actual base64 part
+  if (base64.startsWith("data:")) {
+    const parts = base64.split(",");
+    if (parts.length === 2) {
+      base64 = parts[1];
+    }
+  }
+
+  // Convert base64 to Blob using fetch API
+  const response = await fetch(`data:image/jpeg;base64,${base64}`);
+  return response.blob();
+}
+
 // Observable for processing status
 export const processingStatus$ = new BehaviorSubject<{
   isRunning: boolean;
@@ -73,15 +92,38 @@ export async function processNextWineQuery() {
       typeof extractedData === "string"
         ? JSON.parse(extractedData)
         : extractedData
-    ) as Wine;
-
-    // Add inventory info
+    ) as Wine; // Add inventory info
     wineData.inventory = {
       bottles: query.bottles,
       purchaseDate: new Date().toISOString(),
       purchaseLocation: query.purchaseLocation || "",
     };
-    // Images are not available here, user must attach manually if needed
+
+    // Convert base64 images to blobs and add them to the wine data
+    try {
+      // For front image (required)
+      if (query.frontBase64) {
+        const frontBlob = await base64ToBlob(query.frontBase64);
+        wineData.images = {
+          ...wineData.images,
+          front: frontBlob,
+        };
+      }
+
+      // For back image (optional)
+      if (query.backBase64) {
+        const backBlob = await base64ToBlob(query.backBase64);
+        wineData.images = {
+          ...wineData.images,
+          back: backBlob,
+        };
+      }
+    } catch (imageErr) {
+      console.error("Error converting images to blobs:", imageErr);
+      // If conversion fails, ensure we at least have a valid images object
+      wineData.images = wineData.images || { front: null };
+    }
+
     await addWine(wineData);
     await deleteWineQuery(query.id!);
   } catch (err) {
