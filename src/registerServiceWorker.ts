@@ -3,7 +3,7 @@
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((err) => {
+    navigator.serviceWorker.register("/cellar-sense/sw.js").catch((err) => {
       // Ignore errors, as vite-plugin-pwa will handle registration
       // and fallback gracefully in dev
       // eslint-disable-next-line no-console
