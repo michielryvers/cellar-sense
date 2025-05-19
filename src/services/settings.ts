@@ -100,8 +100,9 @@ export const settingsService = {
   
   // Convenience setters
   setDexieCloudUrl(url: string): boolean {
+    const prevUrl = settings$.value.DEXIE_CLOUD_URL;
     setSetting("DEXIE_CLOUD_URL", url);
-    return url !== settings$.value.DEXIE_CLOUD_URL;
+    return url !== prevUrl;
   },
   
   setOpenAiKey(key: string): void {
