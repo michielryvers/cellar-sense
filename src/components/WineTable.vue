@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, Ref, onUnmounted, computed } from "vue";
-import { deleteWine, updateWine, db, drinkBottle } from "../services/dexie-db";
+import { onUnmounted, computed } from "vue";
 import {
   ClockIcon,
   MinusCircleIcon,
@@ -11,40 +10,25 @@ import WineDetail from "./WineDetail.vue";
 import EditWineForm from "./EditWineForm.vue";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import type { Wine } from "../shared/Wine";
-import { liveQuery } from "dexie";
+import { WineTableHelper } from "../helpers/WineTableHelper";
 
-const wines: Ref<Wine[]> = ref([]);
-const filterVintner = ref<string>("");
-const filterColor = ref<string>("");
+// Create helper instance to manage state and logic
+const helper = new WineTableHelper();
 
-// Compute unique vintners and colors for dropdowns
-const vintnerOptions = computed(() => {
-  const set = new Set<string>();
-  wines.value.forEach((w) => {
-    if (w.vintner) set.add(w.vintner);
-  });
-  return Array.from(set).sort();
-});
-const colorOptions = computed(() => {
-  const set = new Set<string>();
-  wines.value.forEach((w) => {
-    if (w.color) set.add(w.color);
-  });
-  return Array.from(set).sort();
-});
+// Expose reactive refs from helper
+const wines = helper.wines;
+const filterVintner = helper.filterVintner;
+const filterColor = helper.filterColor;
+const showDetailModal = helper.showDetailModal;
+const showEditModal = helper.showEditModal;
+const selectedWine = helper.selectedWine;
 
-const filteredWines = computed(() => {
-  return wines.value.filter((wine) => {
-    const vintnerMatch =
-      !filterVintner.value || wine.vintner === filterVintner.value;
-    const colorMatch = !filterColor.value || wine.color === filterColor.value;
-    return vintnerMatch && colorMatch; // UPDATED
-  });
-});
-let subscription: any;
-const showDetailModal = ref(false);
-const showEditModal = ref(false);
-const selectedWine: Ref<Wine | null> = ref(null);
+// Compute unique vintners and colors for dropdowns with helper methods
+const vintnerOptions = computed(() => helper.getVintnerOptions());
+const colorOptions = computed(() => helper.getColorOptions());
+
+// Compute filtered wines with helper method
+const filteredWines = computed(() => helper.getFilteredWines());
 
 const emit = defineEmits(["showSettings"]);
 
@@ -57,61 +41,19 @@ useEscapeKey(() => {
   }
 });
 
-// liveQuery subscription for real-time updates
-function loadWines(): void {
-  // No-op, kept for compatibility with EditWineForm and others
-}
-
-subscription = liveQuery(() => db.wines.toArray()).subscribe({
-  next: (result: Wine[]) => {
-    wines.value = result;
-  },
-  error: (err: any) => {
-    console.error("liveQuery error", err);
-  },
-});
-
+// Clean up subscriptions
 onUnmounted(() => {
-  if (subscription) {
-    subscription.unsubscribe();
-  }
+  helper.cleanup();
 });
 
-defineExpose({ loadWines });
+// Expose loadWines method for compatibility
+defineExpose({ loadWines: helper.loadWines.bind(helper) });
 
-async function handleDelete(
-  id: string | undefined,
-  event: Event
-): Promise<void> {
-  event.stopPropagation();
-  if (!id) return;
-
-  if (confirm("Are you sure you want to delete this wine?")) {
-    await deleteWine(id);
-    // No need to reload, liveQuery will update automatically
-  }
-}
-
-function handleEdit(wine: Wine, event?: Event): void {
-  // Only stop propagation if event exists (clicked from table)
-  if (event) {
-    event.stopPropagation();
-  }
-  selectedWine.value = wine;
-  showEditModal.value = true;
-}
-
-function handleRowClick(wine: Wine): void {
-  selectedWine.value = wine;
-  showDetailModal.value = true;
-}
-
-async function handleDrink(wine: Wine, event: Event): Promise<void> {
-  event.stopPropagation();
-  if (wine.id) {
-    await drinkBottle(wine.id);
-  }
-}
+// Handlers are referenced from the helper
+const handleDelete = helper.handleDelete.bind(helper);
+const handleEdit = helper.handleEdit.bind(helper);
+const handleRowClick = helper.handleRowClick.bind(helper);
+const handleDrink = helper.handleDrink.bind(helper);
 </script>
 
 <template>
@@ -176,10 +118,7 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
               <th class="py-3 px-4 w-28">
                 <button
                   v-if="filterVintner || filterColor"
-                  @click="
-                    filterVintner = '';
-                    filterColor = '';
-                  "
+                  @click="helper.clearFilters()"
                   class="text-xs text-gray-500 underline"
                 >
                   Clear
