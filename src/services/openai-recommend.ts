@@ -1,6 +1,7 @@
 import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
 import { saveRecommendation } from "./recommendations-idb";
+import { settingsService } from "./settings";
 
 export interface RecommendationOption {
   id: string;
@@ -71,7 +72,7 @@ export async function getWineRecommendations({
     },
   ];
 
-  const model = localStorage.getItem("OPENAI_MODEL") || "gpt-4.1";
+  const model = settingsService.openAiModel;
 
   const response = await openai.chat.completions.create({
     model: model,
