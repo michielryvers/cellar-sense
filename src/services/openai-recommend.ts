@@ -1,15 +1,8 @@
 import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
+import type { RecommendationOption } from "../shared/types";
 import { saveRecommendation } from "./recommendations-idb";
 import { settingsService } from "./settings";
-
-export interface RecommendationOption {
-  id: string;
-  name: string;
-  vintner: string;
-  vintage: number | string;
-  reason: string;
-}
 
 export async function getWineRecommendations({
   apiKey,

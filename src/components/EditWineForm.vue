@@ -7,11 +7,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import { updateWine } from "../services/dexie-db";
 import type { Wine } from "../shared/Wine";
-
-interface EditWineFormProps {
-  show: boolean;
-  wine: Wine;
-}
+import type { EditWineFormProps } from "../shared/types";
 
 const props = defineProps<EditWineFormProps>();
 

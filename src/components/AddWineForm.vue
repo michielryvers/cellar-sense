@@ -8,8 +8,9 @@ import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";
 import { getDistinctPurchaseLocations } from "../services/dexie-db";
 import { settingsService } from "../services/settings";
+import type { AddWineFormProps } from "../shared/types";
 
-const props = defineProps<{ show: boolean }>();
+const props = defineProps<AddWineFormProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "wine-added"): void;

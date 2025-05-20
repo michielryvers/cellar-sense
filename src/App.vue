@@ -7,14 +7,11 @@ import AddWineForm from "./components/AddWineForm.vue";
 import WineQueue from "./components/WineQueue.vue";
 import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
-import type { RecommendationHistoryEntry } from "./services/recommendations-idb";
+import type { RecommendationHistoryEntry, RecommendationOption } from "./shared/types";
 import WineDetail from "./components/WineDetail.vue";
 import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
-import {
-  getWineRecommendations,
-  type RecommendationOption,
-} from "./services/openai-recommend";
+import { getWineRecommendations } from "./services/openai-recommend";
 import { settingsService } from "./services/settings";
 
 const showSettings = ref(false);
