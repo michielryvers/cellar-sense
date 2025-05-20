@@ -18,6 +18,14 @@ export interface WineDetailProps {
 }
 
 /**
+ * Props for DrinkWineModal component
+ */
+export interface DrinkWineModalProps {
+  show: boolean;
+  wine: Wine;
+}
+
+/**
  * Props for SettingsModal component
  */
 export interface SettingsModalProps {
