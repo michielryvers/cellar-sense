@@ -46,7 +46,9 @@ const showDetailModal = ref(false);
 const showEditModal = ref(false);
 const selectedWine: Ref<Wine | null> = ref(null);
 
-const emit = defineEmits(["showSettings"]);
+const emit = defineEmits<{
+  (e: "showSettings"): void;
+}>();
 
 // Handle escape key for closing modals
 useEscapeKey(() => {

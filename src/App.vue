@@ -14,27 +14,40 @@ import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
 import { settingsService } from "./services/settings";
 
+// Modal visibility state
 const showSettings = ref(false);
 const showAddModal = ref(false);
 const showRecommendModal = ref(false);
+const showDetailModal = ref(false);
+const showRecommendationsResultModal = ref(false);
+
+// Recommendation state
 const recommendLoading = ref(false);
 const recommendError = ref("");
 const recommendResults = ref<RecommendationOption[] | null>(null);
 const recommendQuery = ref<string>("");
-const showRecommendationsResultModal = ref(false);
 
-const showDetailModal = ref(false);
+// Wine selection state
 const selectedWine = ref<Wine | null>(null);
 
-function handleShowSettings() {
+/**
+ * Show settings modal
+ */
+function handleShowSettings(): void {
   showSettings.value = true;
 }
 
-function handleSettingsSave() {
+/**
+ * Handle settings save
+ */
+function handleSettingsSave(): void {
   showSettings.value = false;
 }
 
-function handleAddNew() {
+/**
+ * Handle add new wine button click
+ */
+function handleAddNew(): void {
   if (!settingsService.hasOpenAiKey()) {
     showSettings.value = true;
   } else {
@@ -42,14 +55,20 @@ function handleAddNew() {
   }
 }
 
-function handleShowRecommend() {
+/**
+ * Show wine recommendation modal
+ */
+function handleShowRecommend(): void {
   recommendResults.value = null;
   recommendQuery.value = "";
   recommendError.value = "";
   showRecommendModal.value = true;
 }
 
-async function handleSubmitRecommendQuery(query: string) {
+/**
+ * Handle recommendation query submission
+ */
+async function handleSubmitRecommendQuery(query: string): Promise<void> {
   recommendLoading.value = true;
   recommendError.value = "";
   recommendResults.value = null;
@@ -77,14 +96,20 @@ async function handleSubmitRecommendQuery(query: string) {
   }
 }
 
-function handleShowPastRecommendation(rec: RecommendationHistoryEntry) {
+/**
+ * Show a past recommendation
+ */
+function handleShowPastRecommendation(rec: RecommendationHistoryEntry): void {
   recommendResults.value = rec.results;
   recommendQuery.value = rec.query;
   showRecommendModal.value = false;
   showRecommendationsResultModal.value = true;
 }
 
-async function handleShowRecommendationDetail(wineId: string) {
+/**
+ * Show wine detail from recommendation
+ */
+async function handleShowRecommendationDetail(wineId: string): Promise<void> {
   // Find the wine in the user's cellar by id
   const wines = await getAllWines();
   const wine = wines.find((w) => w.id === wineId);
