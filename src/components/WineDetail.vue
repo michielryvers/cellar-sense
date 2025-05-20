@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { XMarkIcon, PencilIcon } from "@heroicons/vue/24/outline";
+import { StarIcon } from "@heroicons/vue/24/solid";
+import { StarIcon as StarIconOutline } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { Wine } from "../shared/Wine";
 import type { WineDetailProps } from "../shared/types";
@@ -49,6 +51,21 @@ const grapesList = computed(() => {
 const vinificationSteps = computed(() => {
   if (!props.wine.vinification) return [];
   return props.wine.vinification;
+});
+
+const consumptionHistory = computed(() => {
+  if (!props.wine.consumptions) return [];
+  // Sort by date descending (most recent first)
+  return [...props.wine.consumptions].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+});
+
+const averageRating = computed(() => {
+  if (!props.wine.consumptions || props.wine.consumptions.length === 0) return 0;
+  
+  const sum = props.wine.consumptions.reduce((acc, consumption) => acc + consumption.rating, 0);
+  return Math.round((sum / props.wine.consumptions.length) * 10) / 10; // Round to 1 decimal place
 });
 
 // Event handlers
@@ -318,6 +335,42 @@ useEscapeKey(closeModal);
               <div>
                 <span class="text-sm font-medium text-gray-600">Sulfites</span>
                 <p class="text-gray-800">{{ wine.sulfites || "-" }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Consumption History Section -->
+          <div v-if="consumptionHistory.length > 0" class="bg-gray-50 p-6 rounded-xl">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-gray-800 text-lg">
+                Consumption History
+              </h3>
+              <div v-if="averageRating > 0" class="flex items-center">
+                <span class="text-sm font-medium text-gray-600 mr-2">Average Rating:</span>
+                <div class="flex items-center">
+                  <span class="text-lg font-semibold text-yellow-600 mr-1">{{ averageRating }}</span>
+                  <StarIcon class="h-5 w-5 text-yellow-400" />
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-4">
+              <div v-for="(consumption, index) in consumptionHistory" :key="index" class="bg-white p-4 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="flex items-center mb-2">
+                      <div class="flex">
+                        <StarIcon v-for="i in consumption.rating" :key="i" class="h-4 w-4 text-yellow-400" />
+                        <StarIconOutline v-for="i in 5-consumption.rating" :key="i+consumption.rating" class="h-4 w-4 text-gray-300" />
+                      </div>
+                      <span class="text-xs text-gray-500 ml-2">
+                        {{ new Date(consumption.date).toLocaleDateString() }}
+                      </span>
+                    </div>
+                    <p v-if="consumption.notes" class="text-gray-700">{{ consumption.notes }}</p>
+                    <p v-else class="text-gray-500 italic text-sm">No notes provided</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
