@@ -17,8 +17,11 @@ const emit = defineEmits<{
   (e: "missing-api-key"): void;
 }>();
 
+// Input elements refs
 const frontLabelInput = ref<HTMLInputElement | null>(null);
 const backLabelInput = ref<HTMLInputElement | null>(null);
+
+// Form state
 const frontLabelFile = ref<File | null>(null);
 const backLabelFile = ref<File | null>(null);
 const frontPreview = ref<string>("");
@@ -27,6 +30,8 @@ const purchaseLocation = ref<string>("");
 const numberOfBottles = ref<number>(1);
 const isLoading = ref<boolean>(false);
 const error = ref<string>("");
+
+// Network and UI state
 const isOnline = ref(navigator.onLine);
 const purchaseLocations = ref<string[]>([]);
 const showLocationDropdown = ref<boolean>(false);
@@ -34,6 +39,7 @@ const showLocationDropdown = ref<boolean>(false);
 // Track subscription
 let subscription: Subscription | null = null;
 
+// Lifecycle hooks
 onMounted(async () => {
   // Subscribe to online status changes
   subscription = isOnline$.subscribe((status) => {
@@ -55,8 +61,8 @@ onUnmounted(() => {
   }
 });
 
-// Computed property for button text
-const submitButtonText = computed(() => {
+// Computed properties
+const submitButtonText = computed((): string => {
   if (isLoading.value) {
     return "Adding to Processing Queue...";
   }
@@ -69,7 +75,7 @@ const submitButtonText = computed(() => {
 });
 
 // Filtered locations based on user input
-const filteredLocations = computed(() => {
+const filteredLocations = computed((): string[] => {
   if (!purchaseLocation.value) return purchaseLocations.value;
   const query = purchaseLocation.value.toLowerCase();
   return purchaseLocations.value.filter((location) =>
@@ -77,11 +83,17 @@ const filteredLocations = computed(() => {
   );
 });
 
+/**
+ * Select a purchase location from dropdown
+ */
 function selectLocation(location: string): void {
   purchaseLocation.value = location;
   showLocationDropdown.value = false;
 }
 
+/**
+ * Close the modal and reset form
+ */
 function closeModal(): void {
   emit("update:show", false);
   // Reset form
@@ -98,16 +110,25 @@ function closeModal(): void {
 // Use escape key to close modal
 useEscapeKey(closeModal);
 
+/**
+ * Handle outside click
+ */
 function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
 }
 
+/**
+ * Handle purchase location field focus
+ */
 function handleLocationFocus(): void {
   showLocationDropdown.value = true;
 }
 
+/**
+ * Handle purchase location field blur
+ */
 function handleLocationBlur(e: FocusEvent): void {
   // Longer delay to ensure click events on dropdown items are processed first
   setTimeout(() => {
@@ -115,6 +136,9 @@ function handleLocationBlur(e: FocusEvent): void {
   }, 300);
 }
 
+/**
+ * Handle image upload
+ */
 async function handleImageChange(event: Event, isBack = false): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -142,6 +166,9 @@ async function handleImageChange(event: Event, isBack = false): Promise<void> {
   }
 }
 
+/**
+ * Handle form submission
+ */
 async function handleSubmit(): Promise<void> {
   console.time("🟣 handleSubmit — total"); // 1️⃣ start overall timer
   if (!frontLabelFile.value) {

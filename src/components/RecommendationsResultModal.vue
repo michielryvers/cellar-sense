@@ -1,3 +1,14 @@
+<script setup lang="ts">
+import type { RecommendationOption, RecommendationsResultModalProps } from "../shared/types";
+
+defineProps<RecommendationsResultModalProps>();
+
+defineEmits<{
+  (e: "close"): void;
+  (e: "show-detail", id: string): void;
+}>();
+</script>
+
 <template>
   <div
     v-if="show"
@@ -68,11 +79,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { RecommendationOption, RecommendationsResultModalProps } from "../shared/types";
-
-defineProps<RecommendationsResultModalProps>();
-
-defineEmits(["close", "show-detail"]);
-</script>

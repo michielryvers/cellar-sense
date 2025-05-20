@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, Ref, reactive } from "vue";
+import { ref, reactive } from "vue";
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import {
@@ -9,12 +9,14 @@ import {
 import { settingsService, type Settings } from "../services/settings";
 import type { SettingsModalProps } from "../shared/types";
 
+// Props and emits
 const props = defineProps<SettingsModalProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "save"): void;
 }>();
-const apiKey = ref<string>("");
+
+// UI state
 const importInput = ref<HTMLInputElement | null>(null);
 const isExporting = ref<boolean>(false);
 const isImporting = ref<boolean>(false);
@@ -26,10 +28,16 @@ const settings = reactive<Settings>({
   OPENAI_MODEL: settingsService.openAiModel,
 });
 
+/**
+ * Close the modal
+ */
 function closeModal(): void {
   emit("update:show", false);
 }
 
+/**
+ * Handle clicking outside the modal
+ */
 function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
@@ -39,6 +47,9 @@ function handleOutsideClick(e: MouseEvent): void {
 // Add escape key handling
 useEscapeKey(closeModal);
 
+/**
+ * Handle export button click
+ */
 async function handleExport(): Promise<void> {
   isExporting.value = true;
   try {
@@ -60,6 +71,9 @@ async function handleExport(): Promise<void> {
   }
 }
 
+/**
+ * Handle file import
+ */
 async function handleImportFile(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement;
   const file = input.files && input.files[0];
@@ -79,7 +93,10 @@ async function handleImportFile(e: Event): Promise<void> {
   }
 }
 
-function saveSettings() {
+/**
+ * Save settings
+ */
+function saveSettings(): void {
   // Use the settings service to save all settings at once
   const needsRefresh = settingsService.setAllSettings({
     DEXIE_CLOUD_URL: settings.DEXIE_CLOUD_URL,
@@ -96,6 +113,7 @@ function saveSettings() {
   }
 }
 </script>
+
 <template>
   <Teleport to="body">
     <div

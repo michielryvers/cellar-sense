@@ -11,17 +11,7 @@ const emit = defineEmits<{
   (e: "edit", wine: Wine): void;
 }>();
 
-// Grapes: now an object of { [name]: percentage }
-const grapesList = computed(() => {
-  if (!props.wine.grapes) return [];
-  return props.wine.grapes;
-});
-
-const vinificationSteps = computed(() => {
-  if (!props.wine.vinification) return [];
-  return props.wine.vinification;
-});
-
+// Image URLs computed properties
 const frontImageUrl = computed(() => {
   if (!props.wine.images?.front) return null;
   if (
@@ -50,6 +40,18 @@ const backImageUrl = computed(() => {
   return null;
 });
 
+// Wine data computed properties
+const grapesList = computed(() => {
+  if (!props.wine.grapes) return [];
+  return props.wine.grapes;
+});
+
+const vinificationSteps = computed(() => {
+  if (!props.wine.vinification) return [];
+  return props.wine.vinification;
+});
+
+// Event handlers
 function handleEdit(): void {
   emit("edit", props.wine);
   emit("update:show", false);
@@ -59,14 +61,14 @@ function closeModal(): void {
   emit("update:show", false);
 }
 
-// Use escape key to close modal
-useEscapeKey(closeModal);
-
 function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
 }
+
+// Use escape key to close modal
+useEscapeKey(closeModal);
 </script>
 
 <template>

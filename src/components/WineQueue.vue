@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { wineQueries$ } from "../services/winequeries-idb";
 import { isOnline$ } from "../services/network-status";
 import { processingStatus$ } from "../services/openai-background";
@@ -12,6 +12,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import { WineQuery } from "../services/winequeries-idb";
 
+// Component state
 const loading = ref(true);
 const wineQueries = ref<WineQuery[]>([]);
 const isOnline = ref(navigator.onLine);
@@ -62,7 +63,7 @@ onUnmounted(() => {
 });
 
 // Computed properties for status display
-const statusMessage = computed(() => {
+const statusMessage = computed((): string => {
   if (!isOnline.value) {
     return "You are currently offline. Wines will be processed when you reconnect.";
   }
@@ -84,7 +85,7 @@ const statusMessage = computed(() => {
   return "No pending wine requests.";
 });
 
-const statusType = computed(() => {
+const statusType = computed((): string => {
   let newStatus;
 
   if (!isOnline.value || !processingStatus.value.hasApiKey) {
