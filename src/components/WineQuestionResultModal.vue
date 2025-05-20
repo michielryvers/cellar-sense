@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { XMarkIcon } from "@heroicons/vue/24/outline";
-import type { WineQuestionResultModalProps } from "../shared/types";
+import type { WineQuestionResultModalProps } from "../shared/types/ComponentProps";
+import VueMarkdown from "vue-markdown-render";
 
 const props = defineProps<WineQuestionResultModalProps>();
 const emit = defineEmits<{
@@ -46,12 +47,9 @@ function closeModal() {
         <!-- Response -->
         <div>
           <h3 class="text-gray-700 font-semibold text-lg mb-2">Response:</h3>
-          <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="bg-gray-50 p-4 rounded-lg max-h-[50vh] overflow-y-auto">
             <div class="prose prose-sm max-w-none">
-              <!-- Split the response by newlines and render as paragraphs -->
-              <p v-for="(paragraph, index) in response.split('\\n\\n')" :key="index">
-                {{ paragraph }}
-              </p>
+              <VueMarkdown :markdown="response" />
             </div>
           </div>
         </div>
@@ -68,3 +66,21 @@ function closeModal() {
     </div>
   </Teleport>
 </template>
+
+<style>
+.markdown-body {
+  font-family: inherit;
+}
+
+/* Ensure proper spacing and styling for markdown content */
+.markdown-body > * + * {
+  margin-top: 1em;
+}
+
+/* Optimize for mobile */
+@media (max-width: 640px) {
+  .markdown-body {
+    font-size: 0.9rem;
+  }
+}
+</style>
