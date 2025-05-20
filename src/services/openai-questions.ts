@@ -54,6 +54,8 @@ export async function askWineQuestion({
   Provide detailed, educational responses based on the wine collection provided.
   If the question isn't related to wine, politely redirect the conversation to wine-related topics.
   If the question requires information not in the wine collection data, you can provide general wine knowledge.
+  
+  IMPORTANT: Format your response using markdown syntax. Use headings, lists, bold, italic, etc. as appropriate to make your response well-structured and readable.
   `;
 
   const messages = [
