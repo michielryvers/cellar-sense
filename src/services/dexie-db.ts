@@ -94,7 +94,10 @@ export async function deleteAllWines(): Promise<void> {
   }
 }
 
-export async function drinkBottle(id: string): Promise<number | undefined> {
+export async function drinkBottle(
+  id: string,
+  consumption?: { rating: number; notes: string }
+): Promise<number | undefined> {
   const wine = await db.wines.get(id);
   if (!wine) return undefined;
   if (!wine.inventory) {
@@ -102,9 +105,23 @@ export async function drinkBottle(id: string): Promise<number | undefined> {
   }
   if (wine.inventory.bottles > 0) {
     wine.inventory.bottles--;
+
+    // If consumption details are provided, add them to the wine's consumptions array
+    if (consumption) {
+      if (!wine.consumptions) {
+        wine.consumptions = [];
+      }
+      wine.consumptions.push({
+        date: new Date().toISOString(),
+        rating: consumption.rating,
+        notes: consumption.notes,
+      });
+    }
+
     if (wine.id !== undefined) {
       await db.wines.update(wine.id, {
         "inventory.bottles": wine.inventory.bottles,
+        consumptions: wine.consumptions || [],
       });
     }
     return wine.inventory.bottles;

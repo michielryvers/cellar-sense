@@ -9,8 +9,9 @@ import {
 } from "@heroicons/vue/24/outline";
 import WineDetail from "./WineDetail.vue";
 import EditWineForm from "./EditWineForm.vue";
+import DrinkWineModal from "./DrinkWineModal.vue";
 import { useEscapeKey } from "../composables/useEscapeKey";
-import type { Wine } from "../shared/Wine";
+import type { Wine, WineConsumption } from "../shared/Wine";
 import { liveQuery } from "dexie";
 
 const wines: Ref<Wine[]> = ref([]);
@@ -44,6 +45,7 @@ const filteredWines = computed(() => {
 let subscription: any;
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
+const showDrinkModal = ref(false);
 const selectedWine: Ref<Wine | null> = ref(null);
 
 const emit = defineEmits<{
@@ -56,6 +58,8 @@ useEscapeKey(() => {
     showDetailModal.value = false;
   } else if (showEditModal.value) {
     showEditModal.value = false;
+  } else if (showDrinkModal.value) {
+    showDrinkModal.value = false;
   }
 });
 
@@ -110,8 +114,16 @@ function handleRowClick(wine: Wine): void {
 
 async function handleDrink(wine: Wine, event: Event): Promise<void> {
   event.stopPropagation();
-  if (wine.id) {
-    await drinkBottle(wine.id);
+  selectedWine.value = wine;
+  showDrinkModal.value = true;
+}
+
+async function handleSaveConsumption(consumption: WineConsumption): Promise<void> {
+  if (selectedWine.value?.id) {
+    await drinkBottle(selectedWine.value.id, {
+      rating: consumption.rating,
+      notes: consumption.notes,
+    });
   }
 }
 </script>
@@ -404,6 +416,12 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
         v-model:show="showEditModal"
         :wine="selectedWine"
         @wine-updated="loadWines"
+      />
+      <DrinkWineModal
+        v-if="selectedWine"
+        v-model:show="showDrinkModal"
+        :wine="selectedWine"
+        @save="handleSaveConsumption"
       />
     </Teleport>
   </div>

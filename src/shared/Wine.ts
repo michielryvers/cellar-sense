@@ -28,6 +28,7 @@ export interface Wine {
     purchaseDate: string;
     purchaseLocation: string;
   };
+  consumptions?: WineConsumption[];
 }
 
 export interface GrapeEntry {
@@ -38,4 +39,10 @@ export interface GrapeEntry {
 export interface VinificationStep {
   step: string;
   description: string;
+}
+
+export interface WineConsumption {
+  date: string;
+  rating: number;
+  notes: string;
 }
