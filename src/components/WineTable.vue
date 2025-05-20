@@ -118,7 +118,9 @@ async function handleDrink(wine: Wine, event: Event): Promise<void> {
   showDrinkModal.value = true;
 }
 
-async function handleSaveConsumption(consumption: WineConsumption): Promise<void> {
+async function handleSaveConsumption(
+  consumption: WineConsumption
+): Promise<void> {
   if (selectedWine.value?.id) {
     await drinkBottle(selectedWine.value.id, {
       rating: consumption.rating,
@@ -413,6 +415,7 @@ async function handleSaveConsumption(consumption: WineConsumption): Promise<void
       />
       <EditWineForm
         v-if="selectedWine"
+        :key="selectedWine.id"
         v-model:show="showEditModal"
         :wine="selectedWine"
         @wine-updated="loadWines"

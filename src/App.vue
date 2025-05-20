@@ -4,10 +4,14 @@ import type { Wine } from "./shared/Wine";
 import WineTable from "./components/WineTable.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import AddWineForm from "./components/AddWineForm.vue";
+import EditWineForm from "./components/EditWineForm.vue";
 import WineQueue from "./components/WineQueue.vue";
 import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
-import type { RecommendationHistoryEntry, RecommendationOption } from "./shared/types";
+import type {
+  RecommendationHistoryEntry,
+  RecommendationOption,
+} from "./shared/types";
 import WineDetail from "./components/WineDetail.vue";
 import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
@@ -19,6 +23,7 @@ const showSettings = ref(false);
 const showAddModal = ref(false);
 const showRecommendModal = ref(false);
 const showDetailModal = ref(false);
+const showEditModal = ref(false);
 const showRecommendationsResultModal = ref(false);
 
 // Recommendation state
@@ -119,6 +124,14 @@ async function handleShowRecommendationDetail(wineId: string): Promise<void> {
     showRecommendationsResultModal.value = false;
   }
 }
+
+/**
+ * Handle edit wine action
+ */
+function handleEditWine(wine: Wine): void {
+  selectedWine.value = wine;
+  showEditModal.value = true;
+}
 </script>
 
 <template>
@@ -193,7 +206,14 @@ async function handleShowRecommendationDetail(wineId: string): Promise<void> {
       v-if="selectedWine"
       v-model:show="showDetailModal"
       :wine="selectedWine"
-      @edit="() => {}"
+      @edit="handleEditWine"
+    />
+    <EditWineForm
+      v-if="selectedWine"
+      :key="selectedWine.id"
+      v-model:show="showEditModal"
+      :wine="selectedWine"
+      @wine-updated="showEditModal = false"
     />
     <SettingsModal v-model:show="showSettings" @save="handleSettingsSave" />
   </div>
