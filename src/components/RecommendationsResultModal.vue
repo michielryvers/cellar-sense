@@ -70,13 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import type { RecommendationOption } from "../services/openai-recommend";
+import type { RecommendationOption, RecommendationsResultModalProps } from "../shared/types";
 
-defineProps<{
-  show: boolean;
-  results: RecommendationOption[];
-  query?: string;
-}>();
+defineProps<RecommendationsResultModalProps>();
 
 defineEmits(["close", "show-detail"]);
 </script>

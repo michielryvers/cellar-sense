@@ -1,16 +1,6 @@
 import Dexie, { liveQuery, type Table } from "dexie";
 import { ref, Ref } from "vue";
-
-export interface WineQuery {
-  id?: number;
-  frontImage: Blob; // resized JPEG blob
-  backImage: Blob | null; // optional
-  purchaseLocation?: string;
-  bottles: number;
-  needsResize: boolean;
-  createdAt: number;
-  status: "pending" | "done";
-}
+import { WineQuery } from "../shared/types";
 
 class WineQueryDB extends Dexie {
   winequeries!: Table<WineQuery, number>;

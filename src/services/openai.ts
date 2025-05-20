@@ -3,6 +3,7 @@ import {
   ResponseInput,
   ResponseInputImage,
 } from "openai/resources/responses/responses";
+import { ExtractWineDataParams } from "../shared/types";
 
 /**
  * JSON Schema for wine entry validation
@@ -99,13 +100,6 @@ Always return a single, complete JSON object (do not include any images fields).
 - Do not emit anything except the JSON object.
 - Use the purchase location as a hint if provided: "${purchaseLocation || ""}".
 `;
-}
-
-interface ExtractWineDataParams {
-  apiKey: string;
-  purchaseLocation?: string;
-  frontBase64: string;
-  backBase64: string | null;
 }
 
 /**

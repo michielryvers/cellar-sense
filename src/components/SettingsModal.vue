@@ -6,8 +6,9 @@ import {
   exportWinesToJSON,
   importWinesFromJSON,
 } from "../services/importExport";
+import type { SettingsModalProps } from "../shared/types";
 
-const props = defineProps<{ show: boolean }>();
+const props = defineProps<SettingsModalProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "save"): void;

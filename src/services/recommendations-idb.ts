@@ -1,12 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { RecommendationOption } from "./openai-recommend";
-
-export interface RecommendationHistoryEntry {
-  id?: number;
-  query: string;
-  results: RecommendationOption[];
-  createdAt: number;
-}
+import type { RecommendationOption, RecommendationHistoryEntry } from "../shared/types";
 
 class RecommendationsDB extends Dexie {
   recommendations!: Table<RecommendationHistoryEntry, number>;

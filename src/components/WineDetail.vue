@@ -3,8 +3,9 @@ import { computed } from "vue";
 import { XMarkIcon, PencilIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { Wine } from "../shared/Wine";
+import type { WineDetailProps } from "../shared/types";
 
-const props = defineProps<{ show: boolean; wine: Wine }>();
+const props = defineProps<WineDetailProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "edit", wine: Wine): void;

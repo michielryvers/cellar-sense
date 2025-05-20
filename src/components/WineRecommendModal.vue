@@ -8,12 +8,10 @@ import {
   ChevronUpIcon,
 } from "@heroicons/vue/24/outline";
 import { liveQuery } from "dexie";
-import {
-  getAllRecommendations,
-  type RecommendationHistoryEntry,
-} from "../services/recommendations-idb";
+import { getAllRecommendations } from "../services/recommendations-idb";
+import type { RecommendationHistoryEntry, WineRecommendModalProps } from "../shared/types";
 
-const props = defineProps<{ show: boolean; loading: boolean; error: string }>();
+const props = defineProps<WineRecommendModalProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "submit-query", query: string): void;
