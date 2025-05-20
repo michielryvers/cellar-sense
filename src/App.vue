@@ -8,14 +8,18 @@ import EditWineForm from "./components/EditWineForm.vue";
 import WineQueue from "./components/WineQueue.vue";
 import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
+import WineQuestionModal from "./components/WineQuestionModal.vue";
+import WineQuestionResultModal from "./components/WineQuestionResultModal.vue";
 import type {
   RecommendationHistoryEntry,
   RecommendationOption,
+  WineQuestionEntry,
 } from "./shared/types";
 import WineDetail from "./components/WineDetail.vue";
-import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
+import { Cog6ToothIcon, PlusIcon, StarIcon, QuestionMarkCircleIcon } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
+import { askWineQuestion } from "./services/openai-questions";
 import { settingsService } from "./services/settings";
 
 // Modal visibility state
@@ -25,12 +29,20 @@ const showRecommendModal = ref(false);
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
 const showRecommendationsResultModal = ref(false);
+const showQuestionModal = ref(false);
+const showQuestionResultModal = ref(false);
 
 // Recommendation state
 const recommendLoading = ref(false);
 const recommendError = ref("");
 const recommendResults = ref<RecommendationOption[] | null>(null);
 const recommendQuery = ref<string>("");
+
+// Question state
+const questionLoading = ref(false);
+const questionError = ref("");
+const questionResponse = ref<string>("");
+const questionText = ref<string>("");
 
 // Wine selection state
 const selectedWine = ref<Wine | null>(null);
@@ -132,6 +144,54 @@ function handleEditWine(wine: Wine): void {
   selectedWine.value = wine;
   showEditModal.value = true;
 }
+
+/**
+ * Show wine question modal
+ */
+function handleShowQuestion(): void {
+  questionResponse.value = "";
+  questionText.value = "";
+  questionError.value = "";
+  showQuestionModal.value = true;
+}
+
+/**
+ * Handle question submission
+ */
+async function handleSubmitQuestion(question: string): Promise<void> {
+  questionLoading.value = true;
+  questionError.value = "";
+  questionResponse.value = "";
+  questionText.value = question;
+  try {
+    const apiKey = settingsService.openAiKey;
+    if (!apiKey) throw new Error("OpenAI API key is required");
+    const wines = await getAllWines();
+    if (!wines.length) throw new Error("No wines in collection");
+    const response = await askWineQuestion({
+      apiKey,
+      wines,
+      userQuestion: question,
+    });
+    questionResponse.value = response;
+    showQuestionModal.value = false;
+    showQuestionResultModal.value = true;
+  } catch (err: any) {
+    questionError.value = err?.message || "Failed to get a response";
+  } finally {
+    questionLoading.value = false;
+  }
+}
+
+/**
+ * Show a past question and response
+ */
+function handleShowPastQuestion(entry: WineQuestionEntry): void {
+  questionResponse.value = entry.response;
+  questionText.value = entry.question;
+  showQuestionModal.value = false;
+  showQuestionResultModal.value = true;
+}
 </script>
 
 <template>
@@ -167,6 +227,14 @@ function handleEditWine(wine: Wine): void {
         >
           <StarIcon class="h-5 w-5 mr-2" />
           Recommend
+        </button>
+        <button
+          @click="handleShowQuestion"
+          class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="Ask AI About Your Wines"
+        >
+          <QuestionMarkCircleIcon class="h-5 w-5 mr-2" />
+          Ask AI
         </button>
         <button
           @click="handleAddNew"
@@ -216,6 +284,19 @@ function handleEditWine(wine: Wine): void {
       @wine-updated="showEditModal = false"
     />
     <SettingsModal v-model:show="showSettings" @save="handleSettingsSave" />
+    <WineQuestionModal
+      v-model:show="showQuestionModal"
+      :loading="questionLoading"
+      :error="questionError"
+      @submit-question="handleSubmitQuestion"
+      @show-past-question="handleShowPastQuestion"
+    />
+    <WineQuestionResultModal
+      :show="showQuestionResultModal"
+      :response="questionResponse"
+      :question="questionText"
+      @close="showQuestionResultModal = false"
+    />
   </div>
 </template>
 

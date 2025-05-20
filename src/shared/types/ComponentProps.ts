@@ -1,5 +1,6 @@
 import type { Wine } from "../Wine";
 import type { RecommendationOption } from "./RecommendationTypes";
+import type { WineQuestionEntry } from "./WineQuestionTypes";
 
 /**
  * Props for EditWineForm component
@@ -55,4 +56,22 @@ export interface RecommendationsResultModalProps {
   show: boolean;
   results: RecommendationOption[];
   query?: string;
+}
+
+/**
+ * Props for WineQuestionModal component
+ */
+export interface WineQuestionModalProps {
+  show: boolean;
+  loading: boolean;
+  error: string;
+}
+
+/**
+ * Props for WineQuestionResultModal component
+ */
+export interface WineQuestionResultModalProps {
+  show: boolean;
+  response: string;
+  question: string;
 }
