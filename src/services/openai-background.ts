@@ -7,6 +7,7 @@ import { getOnlineStatus } from "./network-status";
 import { Wine } from "../shared/Wine";
 import { BehaviorSubject } from "rxjs";
 import { resizeImageToBlob } from "../utils/imageHelpers";
+import { settingsService } from "./settings";
 
 let isProcessing = false;
 
@@ -48,7 +49,7 @@ export const processingStatus$ = new BehaviorSubject<{
 }>({
   isRunning: false,
   isOnline: navigator.onLine,
-  hasApiKey: !!localStorage.getItem("OPENAI_SDK_KEY"),
+  hasApiKey: settingsService.hasOpenAiKey(),
 });
 
 export async function processNextWineQuery() {
@@ -57,7 +58,7 @@ export async function processNextWineQuery() {
   // Check if we're online
   const isOnline = getOnlineStatus();
   // Check if we have API key
-  const apiKey = localStorage.getItem("OPENAI_SDK_KEY") || "";
+  const apiKey = settingsService.openAiKey;
   const hasApiKey = !!apiKey;
 
   // Update processing status
@@ -171,7 +172,7 @@ export async function processNextWineQuery() {
     processingStatus$.next({
       isRunning: false,
       isOnline: getOnlineStatus(),
-      hasApiKey: !!localStorage.getItem("OPENAI_SDK_KEY"),
+      hasApiKey: settingsService.hasOpenAiKey(),
     });
   }
 }

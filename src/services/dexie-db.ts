@@ -1,8 +1,9 @@
 import Dexie, { type Table } from "dexie";
 import dexieCloud from "dexie-cloud-addon";
 import type { Wine } from "../shared/Wine";
+import { settingsService } from "./settings";
 
-const DEXIE_CLOUD_URL = localStorage.getItem("DEXIE_CLOUD_URL") || "";
+const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
 // Define the database
 

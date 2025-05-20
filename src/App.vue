@@ -12,6 +12,7 @@ import WineDetail from "./components/WineDetail.vue";
 import { Cog6ToothIcon, PlusIcon, StarIcon } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
+import { settingsService } from "./services/settings";
 
 const showSettings = ref(false);
 const showAddModal = ref(false);
@@ -34,8 +35,7 @@ function handleSettingsSave() {
 }
 
 function handleAddNew() {
-  const openaiKey = localStorage.getItem("OPENAI_SDK_KEY");
-  if (!openaiKey) {
+  if (!settingsService.hasOpenAiKey()) {
     showSettings.value = true;
   } else {
     showAddModal.value = true;
@@ -55,7 +55,7 @@ async function handleSubmitRecommendQuery(query: string) {
   recommendResults.value = null;
   recommendQuery.value = query;
   try {
-    const apiKey = localStorage.getItem("OPENAI_SDK_KEY") || "";
+    const apiKey = settingsService.openAiKey;
     if (!apiKey) throw new Error("OpenAI API key is required");
     const wines = await getAllWines();
     const inStock = wines.filter(

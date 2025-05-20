@@ -7,6 +7,7 @@ import { resizeImageToBlob, createImagePreview } from "../utils/imageHelpers";
 import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";
 import { getDistinctPurchaseLocations } from "../services/dexie-db";
+import { settingsService } from "../services/settings";
 import type { AddWineFormProps } from "../shared/types";
 
 const props = defineProps<AddWineFormProps>();
@@ -151,8 +152,7 @@ async function handleSubmit(): Promise<void> {
   // If online, check for API key. If offline, we can still queue without a key
   if (isOnline.value) {
     console.time("🔑 check-api-key");
-    const apiKeyRaw = localStorage.getItem("OPENAI_SDK_KEY");
-    const apiKey: string = apiKeyRaw || "";
+    const apiKey = settingsService.openAiKey;
     console.timeEnd("🔑 check-api-key");
     if (!apiKey) {
       error.value = "OpenAI API key is required";

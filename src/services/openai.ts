@@ -3,6 +3,7 @@ import {
   ResponseInput,
   ResponseInputImage,
 } from "openai/resources/responses/responses";
+import { settingsService } from "./settings";
 import { ExtractWineDataParams } from "../shared/types";
 
 /**
@@ -140,8 +141,8 @@ export async function extractWineData({
     },
   ];
   try {
-    // Get the model from localStorage, default to gpt-4.1 if not set
-    const model = localStorage.getItem("OPENAI_MODEL") || "gpt-4.1";
+    // Get the model from settings service
+    const model = settingsService.openAiModel;
 
     const response = await openai.responses.create({
       model,

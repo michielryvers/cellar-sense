@@ -6,6 +6,7 @@ import {
   exportWinesToJSON,
   importWinesFromJSON,
 } from "../services/importExport";
+import { settingsService, type Settings } from "../services/settings";
 import type { SettingsModalProps } from "../shared/types";
 
 const props = defineProps<SettingsModalProps>();
@@ -18,10 +19,11 @@ const importInput = ref<HTMLInputElement | null>(null);
 const isExporting = ref<boolean>(false);
 const isImporting = ref<boolean>(false);
 
-const settings = reactive({
-  DEXIE_CLOUD_URL: localStorage.getItem("DEXIE_CLOUD_URL") || "",
-  OPENAI_SDK_KEY: localStorage.getItem("OPENAI_SDK_KEY") || "",
-  OPENAI_MODEL: localStorage.getItem("OPENAI_MODEL") || "gpt-4.1",
+// Initialize settings from the service
+const settings = reactive<Settings>({
+  DEXIE_CLOUD_URL: settingsService.dexieCloudUrl,
+  OPENAI_SDK_KEY: settingsService.openAiKey,
+  OPENAI_MODEL: settingsService.openAiModel,
 });
 
 function closeModal(): void {
@@ -78,14 +80,18 @@ async function handleImportFile(e: Event): Promise<void> {
 }
 
 function saveSettings() {
-  const prevCloudUrl = localStorage.getItem("DEXIE_CLOUD_URL") || "";
-  localStorage.setItem("DEXIE_CLOUD_URL", settings.DEXIE_CLOUD_URL);
-  localStorage.setItem("OPENAI_SDK_KEY", settings.OPENAI_SDK_KEY);
-  localStorage.setItem("OPENAI_MODEL", settings.OPENAI_MODEL);
+  // Use the settings service to save all settings at once
+  const needsRefresh = settingsService.setAllSettings({
+    DEXIE_CLOUD_URL: settings.DEXIE_CLOUD_URL,
+    OPENAI_SDK_KEY: settings.OPENAI_SDK_KEY,
+    OPENAI_MODEL: settings.OPENAI_MODEL,
+  });
+  
   emit("save");
   closeModal();
+  
   // If DEXIE_CLOUD_URL changed, reload the page to re-init DB
-  if (settings.DEXIE_CLOUD_URL !== prevCloudUrl) {
+  if (needsRefresh) {
     window.location.reload();
   }
 }
