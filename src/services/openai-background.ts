@@ -14,7 +14,7 @@ let isProcessing = false;
 /**
  * Convert a Blob/File to a base64 data-URL string
  */
-async function blobToBase64(blob: Blob): Promise<string> {
+export async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
@@ -23,11 +23,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
-/**
- * Convert a base64 string to a Blob                                   ← kept for
- * (legacy queries that still store base64)                            ← fallback
- */
-async function base64ToBlob(base64: string): Promise<Blob> {
+export async function base64ToBlob(base64: string): Promise<Blob> {
   // Check if this is a data URL and extract the actual base64 part
   if (base64.startsWith("data:")) {
     const parts = base64.split(",");

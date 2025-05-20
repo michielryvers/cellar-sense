@@ -72,7 +72,7 @@ export async function importWinesFromJSON(winesData: any) {
 }
 
 // Helpers
-function blobToBase64(blob: Blob): Promise<string> {
+export function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result as string);
@@ -81,7 +81,7 @@ function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
-function base64ToBlob(base64: string) {
+export function base64ToBlob(base64: string) {
   // base64 may be a data URL
   const parts = base64.split(",");
   const matches = parts[0].match(/:(.*?);/);
@@ -94,3 +94,5 @@ function base64ToBlob(base64: string) {
   }
   return new Blob([u8arr], { type: mime });
 }
+// Export for test mocks
+export { getAllWines, addWine };
