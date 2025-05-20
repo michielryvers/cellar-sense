@@ -25,3 +25,5 @@ dist-ssr
 
 dexie-cloud.json
 dexie-cloud.key
+
+coverage
