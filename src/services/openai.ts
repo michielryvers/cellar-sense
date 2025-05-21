@@ -63,6 +63,11 @@ export const wineSchema = {
     drink_until: { type: "integer" },
     price: { type: "string" },
     sulfites: { type: "string" },
+    sources: {
+      type: "array",
+      description: "URLs that OpenAI used as sources for data",
+      items: { type: "string" },
+    },
   },
   required: [
     "name",
@@ -163,6 +168,25 @@ export async function extractWineData({
     if (typeof json === "string") {
       json = JSON.parse(json);
     }
+    
+    // Extract web search sources if available
+    if (response.tool_outputs && response.tool_outputs.length > 0) {
+      // Look for web search results in tool_outputs
+      const webSearchResults = response.tool_outputs.find(
+        (tool) => tool.type === "web_search"
+      );
+      
+      if (webSearchResults && webSearchResults.web_search) {
+        // Extract URLs from search results
+        const sources = webSearchResults.web_search.results
+          ? webSearchResults.web_search.results.map((result) => result.url)
+          : [];
+          
+        // Add sources to the wine data
+        json.sources = sources;
+      }
+    }
+    
     return json;
   } catch (error) {
     console.error("OpenAI API error:", error);

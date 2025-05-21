@@ -86,6 +86,22 @@ function handleOutsideClick(e: MouseEvent): void {
 
 // Use escape key to close modal
 useEscapeKey(closeModal);
+
+// Helper function to truncate URLs for display
+function truncateUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname;
+    const path = urlObj.pathname;
+    
+    // Show domain and the first part of the path, truncate if too long
+    let displayPath = path.length > 20 ? path.substring(0, 20) + '...' : path;
+    return `${domain}${displayPath}`;
+  } catch (e) {
+    // If URL parsing fails, return a truncated version of the original string
+    return url.length > 50 ? url.substring(0, 50) + '...' : url;
+  }
+}
 </script>
 
 <template>
@@ -322,6 +338,25 @@ useEscapeKey(closeModal);
                 <span class="text-2xl font-bold text-purple-800">{{
                   wine.drink_until || "-"
                 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sources Section -->
+          <div v-if="wine.sources && wine.sources.length > 0" class="bg-gray-50 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+              Information Sources
+            </h3>
+            <div class="space-y-2">
+              <div v-for="(source, index) in wine.sources" :key="index" class="text-sm">
+                <a 
+                  :href="source" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="text-purple-600 hover:text-purple-800 underline"
+                >
+                  {{ truncateUrl(source) }}
+                </a>
               </div>
             </div>
           </div>

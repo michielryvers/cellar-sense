@@ -29,6 +29,7 @@ export interface Wine {
     purchaseLocation: string;
   };
   consumptions?: WineConsumption[];
+  sources?: string[]; // URLs that OpenAI used as sources for data
 }
 
 export interface GrapeEntry {
