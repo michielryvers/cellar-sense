@@ -3,8 +3,7 @@ import type { Wine } from "../shared/Wine";
 import type { RecommendationOption } from "../shared/types";
 import { saveRecommendation } from "./recommendations-idb";
 import { settingsService } from "./settings";
-import { getStoredFileId, ensureDatabaseUploaded } from "./openai-file";
-import { getOnlineStatus } from "./network-status";
+import { ensureDatabaseUploaded } from "./openai-file";
 
 export async function getWineRecommendations({
   apiKey,
@@ -21,30 +20,6 @@ export async function getWineRecommendations({
 
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
-  // Only send non-image, non-blob fields
-  const winesForAI = wines
-    .filter((w) => w.inventory?.bottles && w.inventory.bottles > 0)
-    .map((w) => ({
-      id: w.id,
-      name: w.name,
-      vintner: w.vintner,
-      vintage: w.vintage,
-      appellation: w.appellation,
-      region: w.region,
-      color: w.color,
-      volume: w.volume,
-      alcohol: w.alcohol,
-      farming: w.farming,
-      price: w.price,
-      sulfites: w.sulfites,
-      drink_from: w.drink_from,
-      drink_until: w.drink_until,
-      grapes: w.grapes,
-      vinification: w.vinification,
-      tasting_notes: w.tasting_notes,
-      inventory: w.inventory,
-    }));
-
   // Create system prompt
   const systemPrompt = `
   You are a helpful wine assistant. 
@@ -57,45 +32,29 @@ export async function getWineRecommendations({
   `;
 
   try {
-    // Use file reference if online and file is available
-    let fileId = null;
-    let messages = [];
-
-    if (getOnlineStatus()) {
-      // Try to get or create a file reference
-      fileId = await ensureDatabaseUploaded();
+    // Get file reference - throws error if not available
+    const fileId = await ensureDatabaseUploaded();
+    if (!fileId) {
+      throw new Error("OpenAI file reference is required. Please ensure you are online and try again.");
     }
-
-    // If we have a valid file ID, use it
-    if (fileId) {
-      messages = [
-        { role: "system" as const, content: systemPrompt },
-        { role: "user" as const, content: userQuery }
-      ];
-    } else {
-      // Fall back to including wines in the message
-      messages = [
-        { role: "system" as const, content: systemPrompt },
-        { role: "user" as const, content: userQuery },
-        { role: "user" as const, content: JSON.stringify(winesForAI) },
-      ];
-    }
+    
+    // Create messages with system prompt and user query
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: userQuery }
+    ];
 
     const model = settingsService.openAiModel;
 
-    // Create the API request parameters
-    const requestParams: any = {
+    // Create the API request parameters with file reference
+    const requestParams = {
       model: model,
       messages,
       response_format: { type: "json_object" },
       max_tokens: 800,
       temperature: 0.7,
+      file_ids: [fileId]
     };
-    
-    // Add file reference if available
-    if (fileId) {
-      requestParams.file_ids = [fileId];
-    }
 
     const response = await openai.chat.completions.create(requestParams);
 

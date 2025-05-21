@@ -147,13 +147,22 @@ export async function uploadDatabaseToOpenAI(): Promise<string | null> {
  * Ensures database is uploaded to OpenAI
  * Uses cached file ID if available and valid
  * @returns The file ID to use with API calls
+ * @throws Error if file upload fails or no file ID is available
  */
-export async function ensureDatabaseUploaded(): Promise<string | null> {
+export async function ensureDatabaseUploaded(): Promise<string> {
   // If we're offline, use cached file ID
   if (!getOnlineStatus()) {
-    return await getStoredFileId();
+    const fileId = await getStoredFileId();
+    if (!fileId) {
+      throw new Error("No OpenAI file ID available and device is offline");
+    }
+    return fileId;
   }
 
   // Try to upload
-  return await uploadDatabaseToOpenAI();
+  const newFileId = await uploadDatabaseToOpenAI();
+  if (!newFileId) {
+    throw new Error("Failed to upload database to OpenAI");
+  }
+  return newFileId;
 }
