@@ -2,6 +2,7 @@ import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
 import { saveWineQuestion } from "./dexie-db";
 import { settingsService } from "./settings";
+import { ensureDatabaseUploaded } from "./openai-file";
 
 /**
  * Asks OpenAI a question about the user's wine collection
@@ -26,28 +27,7 @@ export async function askWineQuestion({
 
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
-  // Only send non-image, non-blob fields
-  const winesForAI = wines.map((w) => ({
-    id: w.id,
-    name: w.name,
-    vintner: w.vintner,
-    vintage: w.vintage,
-    appellation: w.appellation,
-    region: w.region,
-    color: w.color,
-    volume: w.volume,
-    alcohol: w.alcohol,
-    farming: w.farming,
-    price: w.price,
-    sulfites: w.sulfites,
-    drink_from: w.drink_from,
-    drink_until: w.drink_until,
-    grapes: w.grapes,
-    vinification: w.vinification,
-    tasting_notes: w.tasting_notes,
-    inventory: w.inventory,
-  }));
-
+  // Prepare system prompt
   const systemPrompt = `
   You are a knowledgeable wine expert and sommelier.
   The user will ask questions about their wine collection, wine pairings, storage, and other wine-related topics.
@@ -58,27 +38,31 @@ export async function askWineQuestion({
   IMPORTANT: Format your response using markdown syntax. Use headings, lists, bold, italic, etc. as appropriate to make your response well-structured and readable.
   `;
 
-  const messages = [
-    { role: "system" as const, content: systemPrompt },
-    {
-      role: "user" as const,
-      content: userQuestion,
-    },
-    {
-      role: "user" as const,
-      content: JSON.stringify(winesForAI),
-    },
-  ];
-
-  const model = settingsService.openAiModel;
-
   try {
-    const response = await openai.chat.completions.create({
+    // Get file reference - throws error if not available
+    const fileId = await ensureDatabaseUploaded();
+    if (!fileId) {
+      throw new Error("OpenAI file reference is required. Please ensure you are online and try again.");
+    }
+    
+    // Create messages with system prompt and user question
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: userQuestion }
+    ];
+
+    const model = settingsService.openAiModel;
+    
+    // Create the API request parameters with file reference
+    const requestParams = {
       model: model,
       messages,
       max_tokens: 2000,
       temperature: 0.7,
-    });
+      file_ids: [fileId]
+    };
+
+    const response = await openai.chat.completions.create(requestParams);
 
     const responseText =
       response.choices?.[0]?.message?.content || "No response generated";
