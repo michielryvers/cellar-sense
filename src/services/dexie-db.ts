@@ -4,6 +4,8 @@ import type { Wine } from "../shared/Wine";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
 import { WineQuery, WineQuestionEntry } from "../shared/types";
+import { uploadDatabaseToOpenAI } from "./openai-file";
+import { getOnlineStatus } from "./network-status";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
@@ -65,6 +67,20 @@ wineQuestions$.subscribe((questions) => {
 export async function addWine(wineData: Wine): Promise<string> {
   try {
     const id = await db.wines.add(wineData);
+    
+    // After adding wine, upload database to OpenAI if online and API key available
+    if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
+      try {
+        // Non-blocking upload to avoid delaying UI
+        uploadDatabaseToOpenAI().catch(err => {
+          console.warn("Background database upload failed:", err);
+        });
+      } catch (uploadError) {
+        // Non-fatal, just log
+        console.warn("Failed to upload database to OpenAI:", uploadError);
+      }
+    }
+    
     return id;
   } catch (error) {
     console.error("Failed to add wine:", error);
@@ -109,6 +125,20 @@ export async function updateWine(wineData: Wine): Promise<string> {
     // Dexie's put method updates if exists, or adds if not.
     // It returns the key of the updated/added item.
     const id = await db.wines.put(wineData);
+    
+    // After updating wine, upload database to OpenAI if online and API key available
+    if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
+      try {
+        // Non-blocking upload to avoid delaying UI
+        uploadDatabaseToOpenAI().catch(err => {
+          console.warn("Background database upload failed:", err);
+        });
+      } catch (uploadError) {
+        // Non-fatal, just log
+        console.warn("Failed to upload database to OpenAI:", uploadError);
+      }
+    }
+    
     return id;
   } catch (error) {
     console.error(`Failed to update wine with id ${wineData.id}:`, error);
@@ -154,6 +184,19 @@ export async function drinkBottle(
         "inventory.bottles": wine.inventory.bottles,
         consumptions: wine.consumptions || [],
       });
+      
+      // After updating wine, upload database to OpenAI if online and API key available
+      if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
+        try {
+          // Non-blocking upload to avoid delaying UI
+          uploadDatabaseToOpenAI().catch(err => {
+            console.warn("Background database upload failed:", err);
+          });
+        } catch (uploadError) {
+          // Non-fatal, just log
+          console.warn("Failed to upload database to OpenAI:", uploadError);
+        }
+      }
     }
     return wine.inventory.bottles;
   }
