@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { XMarkIcon, SignalSlashIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
-import { addWineQuery } from "../services/winequeries-idb";
+import { addWineQuery } from "../services/dexie-db";
 import { resizeImageToBlob, createImagePreview } from "../utils/imageHelpers";
 import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";

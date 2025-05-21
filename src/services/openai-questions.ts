@@ -1,6 +1,6 @@
 import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
-import { saveWineQuestion } from "./wine-questions-idb";
+import { saveWineQuestion } from "./dexie-db";
 import { settingsService } from "./settings";
 
 /**
@@ -76,11 +76,12 @@ export async function askWineQuestion({
     const response = await openai.chat.completions.create({
       model: model,
       messages,
-      max_tokens: 1000,
+      max_tokens: 2000,
       temperature: 0.7,
     });
 
-    const responseText = response.choices?.[0]?.message?.content || "No response generated";
+    const responseText =
+      response.choices?.[0]?.message?.content || "No response generated";
 
     // Save the question and response to the database
     try {

@@ -38,7 +38,9 @@ function closeModal() {
 
         <!-- Question -->
         <div class="mb-6">
-          <h3 class="text-gray-700 font-semibold text-lg mb-2">Your Question:</h3>
+          <h3 class="text-gray-700 font-semibold text-lg mb-2">
+            Your Question:
+          </h3>
           <div class="bg-purple-50 p-4 rounded-lg">
             <p class="text-gray-800">{{ question }}</p>
           </div>
@@ -49,7 +51,7 @@ function closeModal() {
           <h3 class="text-gray-700 font-semibold text-lg mb-2">Response:</h3>
           <div class="bg-gray-50 p-4 rounded-lg max-h-[50vh] overflow-y-auto">
             <div class="prose prose-sm max-w-none">
-              <VueMarkdown :markdown="response" />
+              <VueMarkdown :source="response" />
             </div>
           </div>
         </div>

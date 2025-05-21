@@ -1,12 +1,18 @@
-import { db, addWineQuery, wineQueriesState } from "../winequeries-idb";
+import { db, addWineQuery, wineQueriesState } from "../dexie-db";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Define test data with the correct WineQuery shape
+const mockFrontImage = new Blob(["mock"], { type: "image/jpeg" });
 const sampleQuery = {
-  query: "Find all Bordeaux",
-  params: { color: "Red" },
+  frontImage: mockFrontImage,
+  backImage: null,
+  bottles: 2,
+  needsResize: true,
+  purchaseLocation: "Test Store",
+  status: "pending" as "pending", // Type assertion to satisfy literal type
 };
 
-describe("winequeries-idb", () => {
+describe("wine queries database", () => {
   beforeEach(async () => {
     await db.winequeries.clear();
   });
@@ -16,15 +22,16 @@ describe("winequeries-idb", () => {
   });
 
   it("adds a wine query and updates state", async () => {
-    const id = await addWineQuery(sampleQuery as any);
+    const id = await addWineQuery(sampleQuery);
     expect(typeof id).toBe("number");
     const all = await db.winequeries.toArray();
     expect(all.length).toBe(1);
-    expect(all[0].query).toBe("Find all Bordeaux");
+    expect(all[0].bottles).toBe(2);
+    expect(all[0].purchaseLocation).toBe("Test Store");
   });
 
   it("wineQueriesState is kept in sync", async () => {
-    await addWineQuery(sampleQuery as any);
+    await addWineQuery(sampleQuery);
     // Wait for liveQuery to update
     await new Promise((r) => setTimeout(r, 100));
     expect(wineQueriesState.value.length).toBeGreaterThan(0);

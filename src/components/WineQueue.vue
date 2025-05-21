@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from "vue";
-import { wineQueries$ } from "../services/winequeries-idb";
+import { wineQueries$ } from "../services/dexie-db";
 import { isOnline$ } from "../services/network-status";
 import { processingStatus$ } from "../services/openai-background";
 import {
@@ -10,11 +10,28 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from "@heroicons/vue/24/outline";
-import { WineQuery } from "../services/winequeries-idb";
+import { WineQuery } from "../shared/types";
+
+// Extended type with frontBase64 property
+interface ExtendedWineQuery extends WineQuery {
+  frontBase64?: string;
+}
+
+/**
+ * Convert a Blob/File to a base64 string
+ */
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 // Component state
 const loading = ref(true);
-const wineQueries = ref<WineQuery[]>([]);
+const wineQueries = ref<ExtendedWineQuery[]>([]);
 const isOnline = ref(navigator.onLine);
 const processingStatus = ref({
   isRunning: false,
@@ -30,8 +47,20 @@ onMounted(() => {
   loading.value = true;
 
   // Subscribe to Dexie's liveQuery for wine queries
-  const unsubWineQueries = wineQueries$.subscribe((queries) => {
-    wineQueries.value = queries;
+  const unsubWineQueries = wineQueries$.subscribe(async (queries) => {
+    // Process each query to convert blobs to base64 when needed
+    const processedQueries = await Promise.all(
+      queries.map(async (query) => {
+        // Add base64 representation of the front image for display
+        if (query.frontImage) {
+          const frontBase64 = await blobToBase64(query.frontImage);
+          return { ...query, frontBase64 };
+        }
+        return query;
+      })
+    );
+
+    wineQueries.value = processedQueries;
     loading.value = false;
   });
 

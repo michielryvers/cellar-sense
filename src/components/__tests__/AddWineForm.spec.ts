@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import AddWineForm from "../AddWineForm.vue";
 import { settingsService } from "../../services/settings";
-import * as idbService from "../../services/winequeries-idb";
 import * as dbService from "../../services/dexie-db";
 import * as networkService from "../../services/network-status";
 import * as imageHelpers from "../../utils/imageHelpers";
@@ -24,14 +23,11 @@ vi.mock("../../services/settings", () => ({
   },
 }));
 
-vi.mock("../../services/winequeries-idb", () => ({
-  addWineQuery: vi.fn().mockResolvedValue(1),
-}));
-
 vi.mock("../../services/dexie-db", () => ({
   getDistinctPurchaseLocations: vi
     .fn()
     .mockResolvedValue(["Store 1", "Store 2"]),
+  addWineQuery: vi.fn().mockResolvedValue(1),
 }));
 
 vi.mock("../../utils/imageHelpers", () => ({
@@ -291,8 +287,7 @@ describe("AddWineForm.vue", () => {
     const backImage = createMockFile("back.jpg");
     const purchaseLocation = "Test Store";
     const bottles = 2;
-
-    await idbService.addWineQuery({
+    await dbService.addWineQuery({
       frontImage,
       backImage,
       purchaseLocation,
@@ -302,7 +297,7 @@ describe("AddWineForm.vue", () => {
     });
 
     // Verify the service was called with correct data
-    expect(idbService.addWineQuery).toHaveBeenCalledWith(
+    expect(dbService.addWineQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         frontImage,
         backImage,

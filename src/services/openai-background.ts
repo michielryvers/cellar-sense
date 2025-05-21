@@ -1,8 +1,7 @@
 // src/services/openai-background.ts
 // Background processor for OpenAI wine queries
 import { extractWineData } from "./openai";
-import { addWine } from "./dexie-db";
-import { getNextWineQuery, deleteWineQuery, db } from "./winequeries-idb";
+import { addWine, getNextWineQuery, deleteWineQuery, db } from "./dexie-db";
 import { getOnlineStatus } from "./network-status";
 import { Wine } from "../shared/Wine";
 import { BehaviorSubject } from "rxjs";

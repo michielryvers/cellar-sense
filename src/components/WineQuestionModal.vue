@@ -8,8 +8,11 @@ import {
   ChevronUpIcon,
 } from "@heroicons/vue/24/outline";
 import { liveQuery } from "dexie";
-import { getAllWineQuestions } from "../services/wine-questions-idb";
-import type { WineQuestionEntry, WineQuestionModalProps } from "../shared/types";
+import { getAllWineQuestions } from "../services/dexie-db";
+import type {
+  WineQuestionEntry,
+  WineQuestionModalProps,
+} from "../shared/types";
 
 const props = defineProps<WineQuestionModalProps>();
 const emit = defineEmits<{
@@ -123,7 +126,10 @@ function handleShowPast(entry: WineQuestionEntry) {
                 }}</span>
               </div>
               <div class="text-xs text-gray-500 mt-1 line-clamp-2">
-                {{ entry.response.substring(0, 100) + (entry.response.length > 100 ? '...' : '') }}
+                {{
+                  entry.response.substring(0, 100) +
+                  (entry.response.length > 100 ? "..." : "")
+                }}
               </div>
             </li>
           </ul>
