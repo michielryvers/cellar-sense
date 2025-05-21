@@ -102,7 +102,6 @@ export async function getWineRecommendations({
     let result;
     const content = response.choices?.[0]?.message?.content;
 
-  try {
     if (typeof content === "string") {
       result = JSON.parse(content);
     } else {
