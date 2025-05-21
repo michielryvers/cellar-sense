@@ -62,6 +62,7 @@ const formData = ref<Wine>({
     front: props.wine.images.front,
     back: props.wine.images.back,
   },
+  sources: props.wine.sources || [],
 });
 
 const error = ref<string>("");
@@ -99,6 +100,17 @@ function addTastingNote(type: "nose" | "palate"): void {
 
 function removeTastingNote(type: "nose" | "palate", index: number): void {
   formData.value.tasting_notes[type].splice(index, 1);
+}
+
+function addSource(): void {
+  formData.value.sources = formData.value.sources || [];
+  formData.value.sources.push("");
+}
+
+function removeSource(index: number): void {
+  if (formData.value.sources) {
+    formData.value.sources.splice(index, 1);
+  }
 }
 
 async function handleSubmit(): Promise<void> {
@@ -147,6 +159,7 @@ async function handleSubmit(): Promise<void> {
         front: cleanFormData.images.front,
         back: cleanFormData.images.back,
       },
+      sources: cleanFormData.sources?.filter(s => s.trim() !== ''),
     };
 
     await updateWine(wineData);
@@ -683,6 +696,47 @@ function handleOutsideClick(e: MouseEvent): void {
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="e.g., Low-sulfite"
                 />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sources Section -->
+          <div class="bg-gray-50 p-6 rounded-xl">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-gray-800 text-lg">
+                Data Sources
+              </h3>
+              <button
+                type="button"
+                @click="addSource"
+                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+              >
+                <PlusIcon class="h-5 w-5 mr-2" />
+                Add Source
+              </button>
+            </div>
+            <div class="space-y-3">
+              <div
+                v-for="(source, index) in formData.sources"
+                :key="'source-' + index"
+                class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+              >
+                <input
+                  type="url"
+                  v-model="formData.sources[index]"
+                  class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  placeholder="https://example.com"
+                />
+                <button
+                  type="button"
+                  @click="removeSource(index)"
+                  class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <MinusCircleIcon class="h-5 w-5" />
+                </button>
+              </div>
+              <div v-if="!formData.sources || formData.sources.length === 0" class="text-gray-500 italic">
+                No data sources added
               </div>
             </div>
           </div>
