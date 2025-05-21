@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { storeFileId, getStoredFileId, createDatabaseExport, uploadDatabaseToOpenAI, ensureDatabaseUploaded } from "../openai-file";
-import { getAllWines } from "../dexie-db";
+import { getAllWines, getFilestoreValue, setFilestoreValue, OPENAI_FILE_ID_KEY } from "../dexie-db";
 import { getOnlineStatus } from "../network-status";
 import { settingsService } from "../settings";
 
 // Mock dependencies
 vi.mock("../dexie-db", () => ({
   getAllWines: vi.fn().mockResolvedValue([{ id: "1", name: "Wine 1" }]),
+  getFilestoreValue: vi.fn(),
+  setFilestoreValue: vi.fn().mockResolvedValue(undefined),
+  OPENAI_FILE_ID_KEY: "OPENAI_WINE_FILE_ID",
 }));
 
 vi.mock("../network-status", () => ({
@@ -36,43 +39,30 @@ vi.mock("openai", () => {
 });
 
 describe("openai-file service", () => {
-  let localStorageMock: Record<string, string> = {};
-  
   beforeEach(() => {
-    // Setup localStorage mock
-    Object.defineProperty(window, 'localStorage', {
-      value: {
-        getItem: vi.fn().mockImplementation(key => localStorageMock[key] || null),
-        setItem: vi.fn().mockImplementation((key, value) => {
-          localStorageMock[key] = value.toString();
-        }),
-        clear: vi.fn().mockImplementation(() => {
-          localStorageMock = {};
-        }),
-      },
-      writable: true,
-    });
-    
     // Reset mocks
     vi.clearAllMocks();
-    localStorageMock = {};
   });
   
   describe("storeFileId", () => {
-    it("stores the file ID in localStorage", () => {
-      storeFileId("test-file-id");
-      expect(localStorage.setItem).toHaveBeenCalledWith("OPENAI_WINE_FILE_ID", "test-file-id");
+    it("stores the file ID in the database", async () => {
+      await storeFileId("test-file-id");
+      expect(setFilestoreValue).toHaveBeenCalledWith(OPENAI_FILE_ID_KEY, "test-file-id");
     });
   });
   
   describe("getStoredFileId", () => {
-    it("returns stored file ID from localStorage", () => {
-      localStorageMock["OPENAI_WINE_FILE_ID"] = "stored-file-id";
-      expect(getStoredFileId()).toBe("stored-file-id");
+    it("returns stored file ID from database", async () => {
+      (getFilestoreValue as jest.Mock).mockResolvedValueOnce("stored-file-id");
+      const result = await getStoredFileId();
+      expect(result).toBe("stored-file-id");
+      expect(getFilestoreValue).toHaveBeenCalledWith(OPENAI_FILE_ID_KEY);
     });
     
-    it("returns null if no file ID in localStorage", () => {
-      expect(getStoredFileId()).toBeNull();
+    it("returns null if no file ID in database", async () => {
+      (getFilestoreValue as jest.Mock).mockResolvedValueOnce(null);
+      const result = await getStoredFileId();
+      expect(result).toBeNull();
     });
   });
   
@@ -106,7 +96,7 @@ describe("openai-file service", () => {
   describe("ensureDatabaseUploaded", () => {
     it("returns cached file ID when offline", async () => {
       (getOnlineStatus as any).mockReturnValue(false);
-      localStorageMock["OPENAI_WINE_FILE_ID"] = "cached-file-id";
+      (getFilestoreValue as jest.Mock).mockResolvedValueOnce("cached-file-id");
       
       const result = await ensureDatabaseUploaded();
       

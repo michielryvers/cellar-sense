@@ -2,33 +2,28 @@
 // Service for managing OpenAI file uploads
 import { OpenAI } from "openai";
 import { BehaviorSubject } from "rxjs";
-import { getAllWines } from "./dexie-db";
+import { getAllWines, getFilestoreValue, setFilestoreValue, OPENAI_FILE_ID_KEY } from "./dexie-db";
 import { getOnlineStatus } from "./network-status";
 import { settingsService } from "./settings";
 
-// Local storage key for OpenAI file ID
-const OPENAI_FILE_ID_KEY = "OPENAI_WINE_FILE_ID";
-
 // BehaviorSubject to track current file ID
-export const fileId$ = new BehaviorSubject<string | null>(
-  localStorage.getItem(OPENAI_FILE_ID_KEY)
-);
+export const fileId$ = new BehaviorSubject<string | null>(null);
 
 /**
- * Store the OpenAI file ID in localStorage
+ * Store the OpenAI file ID in the database
  * @param fileId The file ID to store
  */
-export function storeFileId(fileId: string): void {
-  localStorage.setItem(OPENAI_FILE_ID_KEY, fileId);
+export async function storeFileId(fileId: string): Promise<void> {
+  await setFilestoreValue(OPENAI_FILE_ID_KEY, fileId);
   fileId$.next(fileId);
 }
 
 /**
- * Get the stored OpenAI file ID
+ * Get the stored OpenAI file ID from the database
  * @returns The stored file ID or null if not found
  */
-export function getStoredFileId(): string | null {
-  return localStorage.getItem(OPENAI_FILE_ID_KEY);
+export async function getStoredFileId(): Promise<string | null> {
+  return await getFilestoreValue(OPENAI_FILE_ID_KEY);
 }
 
 /**
@@ -122,7 +117,7 @@ export async function uploadDatabaseToOpenAI(): Promise<string | null> {
     const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
     
     // Delete previous file if exists
-    const existingFileId = getStoredFileId();
+    const existingFileId = await getStoredFileId();
     if (existingFileId) {
       try {
         await openai.files.del(existingFileId);
@@ -139,7 +134,7 @@ export async function uploadDatabaseToOpenAI(): Promise<string | null> {
     });
     
     // Store the new file ID
-    storeFileId(uploadedFile.id);
+    await storeFileId(uploadedFile.id);
     
     return uploadedFile.id;
   } catch (error) {
@@ -156,7 +151,7 @@ export async function uploadDatabaseToOpenAI(): Promise<string | null> {
 export async function ensureDatabaseUploaded(): Promise<string | null> {
   // If we're offline, use cached file ID
   if (!getOnlineStatus()) {
-    return getStoredFileId();
+    return await getStoredFileId();
   }
 
   // Try to upload

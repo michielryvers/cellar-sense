@@ -9,19 +9,27 @@ import { getOnlineStatus } from "./network-status";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
+// Define a simple key-value table structure
+interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
 // Define the database
 class WineventoryDB extends Dexie {
   wines!: Table<Wine, string>;
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
+  filestore!: Table<KeyValuePair, string>;  // New table for storing file IDs and other key-value data
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(4).stores({
+      this.version(5).stores({
         wines: "@id, name, vintage, color",
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
+        filestore: "key",  // Key-value store with key as primary key
       });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
@@ -29,10 +37,11 @@ class WineventoryDB extends Dexie {
       });
     } else {
       super("cellar-sense-db");
-      this.version(4).stores({
+      this.version(5).stores({
         wines: "++id, name, vintage, color",
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
+        filestore: "key",  // Key-value store with key as primary key
       });
     }
   }
@@ -228,6 +237,40 @@ export async function getDistinctPurchaseLocations(): Promise<string[]> {
     return [];
   }
 }
+
+// FILE STORAGE METHODS
+
+/**
+ * Get a value from the filestore table by key
+ * @param key The key to get the value for
+ * @returns The value for the key or null if not found
+ */
+export async function getFilestoreValue(key: string): Promise<string | null> {
+  try {
+    const entry = await db.filestore.get(key);
+    return entry?.value || null;
+  } catch (error) {
+    console.error(`Failed to get filestore value for key ${key}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Set a value in the filestore table
+ * @param key The key to set the value for
+ * @param value The value to set
+ */
+export async function setFilestoreValue(key: string, value: string): Promise<void> {
+  try {
+    await db.filestore.put({ key, value });
+  } catch (error) {
+    console.error(`Failed to set filestore value for key ${key}:`, error);
+    throw error;
+  }
+}
+
+// Constants for filestore keys
+export const OPENAI_FILE_ID_KEY = "OPENAI_WINE_FILE_ID";
 
 // WINE QUERY METHODS
 

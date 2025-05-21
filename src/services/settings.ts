@@ -8,7 +8,6 @@ export interface Settings {
   DEXIE_CLOUD_URL: string;
   OPENAI_SDK_KEY: string;
   OPENAI_MODEL: string;
-  OPENAI_FILE_ID: string;
 }
 
 // Define default values
@@ -16,7 +15,6 @@ const DEFAULT_SETTINGS: Settings = {
   DEXIE_CLOUD_URL: "",
   OPENAI_SDK_KEY: "",
   OPENAI_MODEL: "gpt-4.1",
-  OPENAI_FILE_ID: "",
 };
 
 // Create a BehaviorSubject with the initial settings
@@ -29,8 +27,6 @@ const loadInitialSettings = (): Settings => {
       localStorage.getItem("OPENAI_SDK_KEY") || DEFAULT_SETTINGS.OPENAI_SDK_KEY,
     OPENAI_MODEL:
       localStorage.getItem("OPENAI_MODEL") || DEFAULT_SETTINGS.OPENAI_MODEL,
-    OPENAI_FILE_ID:
-      localStorage.getItem("OPENAI_FILE_ID") || DEFAULT_SETTINGS.OPENAI_FILE_ID,
   };
 };
 
@@ -109,10 +105,6 @@ export const settingsService = {
     return settingsReactive.OPENAI_MODEL;
   },
 
-  get openAiFileId(): string {
-    return settingsReactive.OPENAI_FILE_ID;
-  },
-
   // Convenience setters
   setDexieCloudUrl(url: string): boolean {
     const prevUrl = settings$.value.DEXIE_CLOUD_URL;
@@ -126,10 +118,6 @@ export const settingsService = {
 
   setOpenAiModel(model: string): void {
     setSetting("OPENAI_MODEL", model);
-  },
-
-  setOpenAiFileId(fileId: string): void {
-    setSetting("OPENAI_FILE_ID", fileId);
   },
 
   // Check if settings have required values
