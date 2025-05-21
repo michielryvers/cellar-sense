@@ -7,8 +7,8 @@ import VueMarkdown from "vue-markdown-render";
 vi.mock("vue-markdown-render", () => ({
   default: {
     name: "VueMarkdown",
-    props: ["markdown"],
-    template: '<div class="markdown-mock">{{ markdown }}</div>',
+    props: ["source"],
+    template: '<div class="markdown-mock">{{ source }}</div>',
   },
 }));
 
@@ -17,7 +17,8 @@ describe("WineQuestionResultModal", () => {
     const testProps = {
       show: true,
       question: "What wines go well with fish?",
-      response: "# Wine Pairings for Fish\n\n**White wines** are typically best with fish. For example:\n\n- Sauvignon Blanc\n- Chardonnay\n- Pinot Grigio",
+      response:
+        "# Wine Pairings for Fish\n\n**White wines** are typically best with fish. For example:\n\n- Sauvignon Blanc\n- Chardonnay\n- Pinot Grigio",
     };
 
     const wrapper = mount(WineQuestionResultModal, {
@@ -31,12 +32,12 @@ describe("WineQuestionResultModal", () => {
 
     // Check if the question is displayed correctly
     expect(wrapper.text()).toContain(testProps.question);
-    
+
     // Check if VueMarkdown component is present with the correct props
     const markdownComponent = wrapper.findComponent(VueMarkdown);
     expect(markdownComponent.exists()).toBe(true);
-    expect(markdownComponent.props("markdown")).toBe(testProps.response);
-    
+    expect(markdownComponent.props("source")).toBe(testProps.response);
+
     // Check if scrollable container has the right classes
     const responseContainer = wrapper.find(".bg-gray-50.p-4.rounded-lg");
     expect(responseContainer.classes()).toContain("max-h-[50vh]");
