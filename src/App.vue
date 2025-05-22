@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import type { Wine } from "./shared/Wine";
 import WineTable from "./components/WineTable.vue";
 import SettingsModal from "./components/SettingsModal.vue";
@@ -75,6 +75,24 @@ function handleShowSettings(): void {
 function handleSettingsSave(): void {
   showSettings.value = false;
 }
+
+// Theme management
+let themeCleanup: (() => void) | null = null;
+
+onMounted(() => {
+  // Apply theme on initial load
+  settingsService.applyTheme();
+  
+  // Set up listener for system theme changes
+  themeCleanup = settingsService.setupThemeListener();
+});
+
+onUnmounted(() => {
+  // Clean up theme listener when component is unmounted
+  if (themeCleanup) {
+    themeCleanup();
+  }
+});
 
 /**
  * Handle add new wine button click
@@ -228,7 +246,7 @@ function handleDexieCancel(): void {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8 dark:bg-gray-900 min-h-screen transition-colors duration-300">
     <!-- Header Section -->
     <div
       class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 space-y-3 md:space-y-0"
@@ -245,7 +263,7 @@ function handleDexieCancel(): void {
           >
             CellarSense
           </h1>
-          <p class="text-sm md:text-base text-gray-600 mt-1">
+          <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mt-1">
             Snap a label, let OpenAI parse it — CellarSense catalogues your
             cellar in seconds.
           </p>
@@ -254,7 +272,7 @@ function handleDexieCancel(): void {
       <div class="flex flex-wrap gap-2 md:gap-3">
         <button
           @click="showSettings = true"
-          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
           title="Settings"
         >
           <Cog6ToothIcon class="h-5 w-5 md:mr-2" />
@@ -262,7 +280,7 @@ function handleDexieCancel(): void {
         </button>
         <button
           @click="handleShowRecommend"
-          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
           title="AI Wine Recommendation"
         >
           <StarIcon class="h-5 w-5 md:mr-2" />
@@ -270,7 +288,7 @@ function handleDexieCancel(): void {
         </button>
         <button
           @click="handleShowQuestion"
-          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white hover:bg-gray-50 text-purple-700 border border-purple-200 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
           title="Ask AI About Your Wines"
         >
           <QuestionMarkCircleIcon class="h-5 w-5 md:mr-2" />
@@ -278,7 +296,7 @@ function handleDexieCancel(): void {
         </button>
         <button
           @click="handleAddNew"
-          class="inline-flex items-center px-3 py-1 md:px-6 md:py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-lg md:rounded-xl shadow-md transform transition-all hover:shadow-lg hover:scale-105"
+          class="inline-flex items-center px-3 py-1 md:px-6 md:py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-lg md:rounded-xl shadow-md transform transition-all hover:shadow-lg hover:scale-105 dark:from-purple-700 dark:to-purple-900 dark:hover:from-purple-800 dark:hover:to-purple-950"
         >
           <PlusIcon class="h-5 w-5 md:mr-2" />
           <span class="md:inline">Add Wine</span>
