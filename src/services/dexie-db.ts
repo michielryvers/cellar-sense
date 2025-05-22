@@ -4,8 +4,6 @@ import type { Wine } from "../shared/Wine";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
 import { WineQuery, WineQuestionEntry } from "../shared/types";
-import { uploadDatabaseToOpenAI } from "./openai-file";
-import { getOnlineStatus } from "./network-status";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
@@ -29,16 +27,14 @@ class WineventoryDB extends Dexie {
   wines!: Table<Wine, string>;
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
-  filestore!: Table<KeyValuePair, string>; // New table for storing file IDs and other key-value data
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(5).stores({
+      this.version(4).stores({
         wines: "@id, name, vintage, color",
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
-        filestore: "key", // Key-value store with key as primary key (use 'key' for both local and cloud)
       });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
@@ -181,11 +177,10 @@ class WineventoryDB extends Dexie {
       });
     } else {
       super("cellar-sense-db");
-      this.version(5).stores({
+      this.version(4).stores({
         wines: "++id, name, vintage, color",
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
-        filestore: "key", // Key-value store with key as primary key
       });
     }
   }
@@ -220,20 +215,6 @@ wineQuestions$.subscribe((questions) => {
 export async function addWine(wineData: Wine): Promise<string> {
   try {
     const id = await db.wines.add(wineData);
-
-    // After adding wine, upload database to OpenAI if online and API key available
-    if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
-      try {
-        // Non-blocking upload to avoid delaying UI
-        uploadDatabaseToOpenAI().catch((err) => {
-          console.warn("Background database upload failed:", err);
-        });
-      } catch (uploadError) {
-        // Non-fatal, just log
-        console.warn("Failed to upload database to OpenAI:", uploadError);
-      }
-    }
-
     return id;
   } catch (error) {
     console.error("Failed to add wine:", error);
@@ -278,20 +259,6 @@ export async function updateWine(wineData: Wine): Promise<string> {
     // Dexie's put method updates if exists, or adds if not.
     // It returns the key of the updated/added item.
     const id = await db.wines.put(wineData);
-
-    // After updating wine, upload database to OpenAI if online and API key available
-    if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
-      try {
-        // Non-blocking upload to avoid delaying UI
-        uploadDatabaseToOpenAI().catch((err) => {
-          console.warn("Background database upload failed:", err);
-        });
-      } catch (uploadError) {
-        // Non-fatal, just log
-        console.warn("Failed to upload database to OpenAI:", uploadError);
-      }
-    }
-
     return id;
   } catch (error) {
     console.error(`Failed to update wine with id ${wineData.id}:`, error);
@@ -337,19 +304,6 @@ export async function drinkBottle(
         "inventory.bottles": wine.inventory.bottles,
         consumptions: wine.consumptions || [],
       });
-
-      // After updating wine, upload database to OpenAI if online and API key available
-      if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
-        try {
-          // Non-blocking upload to avoid delaying UI
-          uploadDatabaseToOpenAI().catch((err) => {
-            console.warn("Background database upload failed:", err);
-          });
-        } catch (uploadError) {
-          // Non-fatal, just log
-          console.warn("Failed to upload database to OpenAI:", uploadError);
-        }
-      }
     }
     return wine.inventory.bottles;
   }
@@ -381,43 +335,6 @@ export async function getDistinctPurchaseLocations(): Promise<string[]> {
     return [];
   }
 }
-
-// FILE STORAGE METHODS
-
-/**
- * Get a value from the filestore table by key
- * @param key The key to get the value for
- * @returns The value for the key or null if not found
- */
-export async function getFilestoreValue(key: string): Promise<string | null> {
-  try {
-    const entry = await db.filestore.get(key);
-    return entry?.value || null;
-  } catch (error) {
-    console.error(`Failed to get filestore value for key ${key}:`, error);
-    return null;
-  }
-}
-
-/**
- * Set a value in the filestore table
- * @param key The key to set the value for
- * @param value The value to set
- */
-export async function setFilestoreValue(
-  key: string,
-  value: string
-): Promise<void> {
-  try {
-    await db.filestore.put({ key, value });
-  } catch (error) {
-    console.error(`Failed to set filestore value for key ${key}:`, error);
-    throw error;
-  }
-}
-
-// Constants for filestore keys
-export const OPENAI_FILE_ID_KEY = "OPENAI_WINE_FILE_ID";
 
 // WINE QUERY METHODS
 

@@ -3,8 +3,6 @@ import type { Wine } from "../shared/Wine";
 import type { RecommendationOption } from "../shared/types";
 import { saveRecommendation } from "./recommendations-idb";
 import { settingsService } from "./settings";
-import { ensureDatabaseUploaded } from "./openai-file";
-import { ResponseFormatJSONObject } from "openai/resources/index";
 
 export async function getWineRecommendations({
   apiKey,
@@ -21,7 +19,30 @@ export async function getWineRecommendations({
 
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
-  // Create system prompt
+  // Only send non-image, non-blob fields
+  const winesForAI = wines
+    .filter((w) => w.inventory?.bottles && w.inventory.bottles > 0)
+    .map((w) => ({
+      id: w.id,
+      name: w.name,
+      vintner: w.vintner,
+      vintage: w.vintage,
+      appellation: w.appellation,
+      region: w.region,
+      color: w.color,
+      volume: w.volume,
+      alcohol: w.alcohol,
+      farming: w.farming,
+      price: w.price,
+      sulfites: w.sulfites,
+      drink_from: w.drink_from,
+      drink_until: w.drink_until,
+      grapes: w.grapes,
+      vinification: w.vinification,
+      tasting_notes: w.tasting_notes,
+      inventory: w.inventory,
+    }));
+
   const systemPrompt = `
   You are a helpful wine assistant. 
   The user will describe their meal, occasion, or mood. 
@@ -29,45 +50,35 @@ export async function getWineRecommendations({
   Only recommend wines that are in stock (bottles > 0). 
   For each, include a short reason. Return an array of JSON objects:
    { id, name, vintner, vintage, reason } in order of best fit first.
-  Do not recommend any wine not in the list.
-  If you need additional information about wine pairings or characteristics, you can use web search to find appropriate matches.
-  `;
+ Do not recommend any wine not in the list.
+ `;
+
+  const messages = [
+    { role: "system" as const, content: systemPrompt },
+    {
+      role: "user" as const,
+      content: userQuery,
+    },
+    {
+      role: "user" as const,
+      content: JSON.stringify(winesForAI),
+    },
+  ];
+
+  const model = settingsService.openAiModel;
+
+  const response = await openai.chat.completions.create({
+    model: model,
+    messages,
+    response_format: { type: "json_object" },
+    max_tokens: 800,
+    temperature: 0.7,
+  });
+
+  let result;
+  const content = response.choices?.[0]?.message?.content;
 
   try {
-    // Get file reference - throws error if not available
-    const fileId = await ensureDatabaseUploaded();
-    if (!fileId) {
-      throw new Error(
-        "OpenAI file reference is required. Please ensure you are online and try again."
-      );
-    }
-
-    // Create messages with system prompt and user query
-    const messages = [
-      { role: "system" as const, content: systemPrompt },
-      { role: "user" as const, content: userQuery },
-    ];
-
-    const model = settingsService.openAiModel;
-
-    // Create the API request parameters with file reference
-    const requestParams = {
-      model: "gpt-4o-search-preview",
-      messages,
-      response_format: { type: "json_object" } as ResponseFormatJSONObject,
-      max_tokens: 800,
-      temperature: 0.7,
-      file_ids: [fileId],
-      web_search_options: {
-        search_context_size: "low" as "low",
-      },
-    };
-
-    const response = await openai.chat.completions.create(requestParams);
-
-    let result;
-    const content = response.choices?.[0]?.message?.content;
-
     if (typeof content === "string") {
       result = JSON.parse(content);
     } else {
