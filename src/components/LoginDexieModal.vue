@@ -82,17 +82,17 @@ useEscapeKey(closeModal);
       @click="handleOutsideClick"
     >
       <div
-        class="bg-white rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200"
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200 dark:border-gray-700"
       >
         <div
-          class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100"
+          class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100 dark:border-gray-700"
         >
-          <h2 class="text-lg font-semibold text-purple-900 tracking-tight">
+          <h2 class="text-lg font-semibold text-purple-900 dark:text-purple-200 tracking-tight">
             {{ title || "Dexie Cloud Authentication" }}
           </h2>
           <button
             @click="closeModal"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Close modal"
           >
             <XMarkIcon class="h-6 w-6" />
@@ -101,10 +101,10 @@ useEscapeKey(closeModal);
 
         <form @submit.prevent="handleSubmit" class="p-6">
           <!-- Message -->
-          <p v-if="message" class="text-gray-600 mb-4">{{ message }}</p>
+          <p v-if="message" class="text-gray-600 dark:text-gray-300 mb-4">{{ message }}</p>
 
           <!-- Error message -->
-          <div v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+          <div v-if="error" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg mb-4 text-sm">
             {{ error }}
           </div>
 
@@ -116,7 +116,7 @@ useEscapeKey(closeModal);
               type="email"
               autocomplete="email"
               required
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
             />
           </div>
 
@@ -125,14 +125,14 @@ useEscapeKey(closeModal);
             <button
               type="button"
               @click="handleCancel"
-              class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-100 border border-gray-300 rounded-md transition-colors"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="isLoading"
-              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-md shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 dark:from-purple-700 dark:to-purple-900 dark:hover:from-purple-800 dark:hover:to-purple-950 rounded-md shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
             >
               <span v-if="isLoading" class="flex items-center">
                 <svg

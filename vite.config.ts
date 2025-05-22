@@ -22,6 +22,8 @@ export default defineConfig({
         description: "Offline-first wine cellar app for wine lovers.",
         theme_color: "#7c3aed",
         background_color: "#faf9f6",
+        dark_theme_color: "#4c1d95",
+        dark_background_color: "#1f2937",
         display: "standalone",
         start_url: ".",
         icons: [
