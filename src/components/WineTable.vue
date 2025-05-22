@@ -133,24 +133,24 @@ async function handleSaveConsumption(
 <template>
   <div class="container mx-auto px-4 py-8">
     <!-- Responsive Table/List Section -->
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
       <!-- Desktop Table -->
       <div class="hidden sm:block">
         <table class="min-w-full">
           <thead>
-            <tr class="bg-gradient-to-r from-purple-50 to-purple-100">
+            <tr class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-800 dark:to-gray-700">
               <th
-                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 Name
               </th>
               <th
-                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 <div class="flex items-center gap-1">
                   <select
                     v-model="filterVintner"
-                    class="ml-1 px-2 py-0.5 border rounded text-xs"
+                    class="ml-1 px-2 py-0.5 border rounded text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                   >
                     <option value="">Vintner</option>
                     <option v-for="v in vintnerOptions" :key="v" :value="v">
@@ -170,7 +170,7 @@ async function handleSaveConsumption(
                 <div class="flex items-center gap-1">
                   <select
                     v-model="filterColor"
-                    class="ml-1 px-2 py-0.5 border rounded text-xs"
+                    class="ml-1 px-2 py-0.5 border rounded text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                   >
                     <option value="">Color</option>
                     <option v-for="c in colorOptions" :key="c" :value="c">
@@ -180,12 +180,12 @@ async function handleSaveConsumption(
                 </div>
               </th>
               <th
-                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 Region
               </th>
               <th
-                class="py-3 px-4 text-center text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-center text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 Bottles
               </th>
@@ -203,15 +203,15 @@ async function handleSaveConsumption(
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             <tr v-if="filteredWines.length === 0">
-              <td colspan="7" class="py-8 px-6 text-center text-gray-500">
+              <td colspan="7" class="py-8 px-6 text-center text-gray-500 dark:text-gray-400">
                 <div
                   class="flex flex-col items-center justify-center space-y-3"
                 >
-                  <ClockIcon class="h-12 w-12 text-gray-400" />
+                  <ClockIcon class="h-12 w-12 text-gray-400 dark:text-gray-500" />
                   <p class="text-lg font-medium">No wines in inventory</p>
-                  <p class="text-sm text-gray-400">
+                  <p class="text-sm text-gray-400 dark:text-gray-500">
                     Add your first wine to get started
                   </p>
                 </div>
@@ -220,15 +220,15 @@ async function handleSaveConsumption(
             <tr
               v-for="wine in filteredWines"
               :key="wine.id"
-              class="group hover:bg-purple-50 transition-colors cursor-pointer"
+              class="group hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
               :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
               @click="handleRowClick(wine)"
             >
-              <td class="py-3 px-4 font-medium text-gray-900">
+              <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
                 {{ wine.name }}
               </td>
-              <td class="py-3 px-4 text-gray-600">{{ wine.vintner }}</td>
-              <td class="py-3 px-4 text-gray-600">{{ wine.vintage }}</td>
+              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">{{ wine.vintner }}</td>
+              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">{{ wine.vintage }}</td>
               <td class="py-3 px-4">
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
@@ -306,17 +306,17 @@ async function handleSaveConsumption(
       <div class="sm:hidden">
         <div
           v-if="wines.length === 0"
-          class="py-8 px-4 text-center text-gray-500"
+          class="py-8 px-4 text-center text-gray-500 dark:text-gray-400"
         >
           <div class="flex flex-col items-center justify-center space-y-3">
-            <ClockIcon class="h-12 w-12 text-gray-400" />
+            <ClockIcon class="h-12 w-12 text-gray-400 dark:text-gray-500" />
             <p class="text-lg font-medium">No wines in inventory</p>
-            <p class="text-sm text-gray-400">
+            <p class="text-sm text-gray-400 dark:text-gray-500">
               Add your first wine to get started
             </p>
           </div>
         </div>
-        <ul v-else class="divide-y divide-gray-100">
+        <ul v-else class="divide-y divide-gray-100 dark:divide-gray-700">
           <li
             v-for="wine in filteredWines"
             :key="wine.id"

@@ -8,6 +8,7 @@ export interface Settings {
   DEXIE_CLOUD_URL: string;
   OPENAI_SDK_KEY: string;
   OPENAI_MODEL: string;
+  THEME_PREFERENCE: "system" | "light" | "dark";
 }
 
 // Define default values
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: Settings = {
   DEXIE_CLOUD_URL: "",
   OPENAI_SDK_KEY: "",
   OPENAI_MODEL: "gpt-4.1",
+  THEME_PREFERENCE: "system",
 };
 
 // Create a BehaviorSubject with the initial settings
@@ -27,6 +29,8 @@ const loadInitialSettings = (): Settings => {
       localStorage.getItem("OPENAI_SDK_KEY") || DEFAULT_SETTINGS.OPENAI_SDK_KEY,
     OPENAI_MODEL:
       localStorage.getItem("OPENAI_MODEL") || DEFAULT_SETTINGS.OPENAI_MODEL,
+    THEME_PREFERENCE:
+      (localStorage.getItem("THEME_PREFERENCE") as Settings["THEME_PREFERENCE"]) || DEFAULT_SETTINGS.THEME_PREFERENCE,
   };
 };
 
@@ -104,6 +108,10 @@ export const settingsService = {
   get openAiModel(): string {
     return settingsReactive.OPENAI_MODEL;
   },
+  
+  get themePreference(): Settings["THEME_PREFERENCE"] {
+    return settingsReactive.THEME_PREFERENCE;
+  },
 
   // Convenience setters
   setDexieCloudUrl(url: string): boolean {
@@ -119,10 +127,50 @@ export const settingsService = {
   setOpenAiModel(model: string): void {
     setSetting("OPENAI_MODEL", model);
   },
+  
+  setThemePreference(theme: Settings["THEME_PREFERENCE"]): void {
+    setSetting("THEME_PREFERENCE", theme);
+  },
 
   // Check if settings have required values
   hasOpenAiKey(): boolean {
     return !!settingsReactive.OPENAI_SDK_KEY;
+  },
+
+  // Theme related methods
+  getEffectiveTheme(): "light" | "dark" {
+    const preference = settingsReactive.THEME_PREFERENCE;
+    if (preference === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches 
+        ? "dark" 
+        : "light";
+    }
+    return preference;
+  },
+  
+  applyTheme(): void {
+    const theme = this.getEffectiveTheme();
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  },
+  
+  setupThemeListener(): () => void {
+    // Only set up listener if using system preference
+    if (settingsReactive.THEME_PREFERENCE !== "system") {
+      return () => {}; // Return empty cleanup function
+    }
+    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const listener = () => this.applyTheme();
+    
+    // Add listener
+    mediaQuery.addEventListener("change", listener);
+    
+    // Return cleanup function to remove listener
+    return () => mediaQuery.removeEventListener("change", listener);
   },
 };
 

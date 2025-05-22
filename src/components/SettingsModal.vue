@@ -26,6 +26,7 @@ const settings = reactive<Settings>({
   DEXIE_CLOUD_URL: settingsService.dexieCloudUrl,
   OPENAI_SDK_KEY: settingsService.openAiKey,
   OPENAI_MODEL: settingsService.openAiModel,
+  THEME_PREFERENCE: settingsService.themePreference,
 });
 
 /**
@@ -102,7 +103,11 @@ function saveSettings(): void {
     DEXIE_CLOUD_URL: settings.DEXIE_CLOUD_URL,
     OPENAI_SDK_KEY: settings.OPENAI_SDK_KEY,
     OPENAI_MODEL: settings.OPENAI_MODEL,
+    THEME_PREFERENCE: settings.THEME_PREFERENCE,
   });
+  
+  // Apply theme right away
+  settingsService.applyTheme();
 
   emit("save");
   closeModal();
@@ -118,21 +123,21 @@ function saveSettings(): void {
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 dark:from-gray-900/90 dark:via-gray-900/90 dark:to-purple-900/90 backdrop-blur-sm"
       @click="handleOutsideClick"
     >
       <div
-        class="bg-white rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200"
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-0 w-full max-w-md relative border border-gray-200 dark:border-gray-700"
       >
         <div
-          class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100"
+          class="flex items-center justify-between px-6 pt-5 pb-2 border-b border-gray-100 dark:border-gray-700"
         >
-          <h2 class="text-lg font-semibold text-purple-900 tracking-tight">
+          <h2 class="text-lg font-semibold text-purple-900 dark:text-purple-200 tracking-tight">
             Settings
           </h2>
           <button
             @click="closeModal"
-            class="text-gray-400 hover:text-purple-600 transition-colors rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            class="text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-purple-300"
             aria-label="Close settings"
           >
             <XMarkIcon class="h-6 w-6" />
@@ -141,7 +146,7 @@ function saveSettings(): void {
         <div class="px-6 pt-4 pb-6">
           <div class="mb-6">
             <label
-              class="block mb-1 text-xs font-semibold text-gray-600 tracking-wide uppercase"
+              class="block mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase"
               for="openaiKeyInput"
             >
               OpenAI API Key
@@ -150,14 +155,14 @@ function saveSettings(): void {
               id="openaiKeyInput"
               v-model="settings.OPENAI_SDK_KEY"
               type="password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
               placeholder="sk-..."
               autocomplete="off"
             />
           </div>
           <div class="mb-6">
             <label
-              class="block mb-1 text-xs font-semibold text-gray-600 tracking-wide uppercase"
+              class="block mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase"
               for="DEXIE_CLOUD_URL"
             >
               Dexie Cloud URL
@@ -166,12 +171,12 @@ function saveSettings(): void {
               id="DEXIE_CLOUD_URL"
               v-model="settings.DEXIE_CLOUD_URL"
               type="text"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
             />
           </div>
           <div class="mb-6">
             <label
-              class="block mb-1 text-xs font-semibold text-gray-600 tracking-wide uppercase"
+              class="block mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase"
               for="OPENAI_MODEL"
             >
               OpenAI Model
@@ -179,7 +184,7 @@ function saveSettings(): void {
             <select
               id="OPENAI_MODEL"
               v-model="settings.OPENAI_MODEL"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
             >
               <option value="gpt-4.1">GPT-4.1 (Best Quality)</option>
               <option value="gpt-4.1-mini">
@@ -187,24 +192,41 @@ function saveSettings(): void {
               </option>
             </select>
           </div>
+          <div class="mb-6">
+            <label
+              class="block mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase"
+              for="THEME_PREFERENCE"
+            >
+              Theme
+            </label>
+            <select
+              id="THEME_PREFERENCE"
+              v-model="settings.THEME_PREFERENCE"
+              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+            >
+              <option value="system">System Default</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
           <div class="flex flex-col gap-4">
             <div class="flex gap-2">
               <button
                 @click="saveSettings"
-                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex-1 transition-colors shadow-sm"
+                class="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white font-bold py-2 px-4 rounded-lg flex-1 transition-colors shadow-sm"
               >
                 Save
               </button>
               <button
                 @click="closeModal"
-                class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg flex-1 transition-colors shadow-sm border border-gray-200"
+                class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded-lg flex-1 transition-colors shadow-sm border border-gray-200 dark:border-gray-600"
               >
                 Cancel
               </button>
             </div>
             <div class="mt-5">
               <h3
-                class="text-xs font-semibold text-gray-600 tracking-wide uppercase mb-2 px-1"
+                class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-2 px-1"
               >
                 Import / Export
               </h3>
@@ -276,7 +298,7 @@ function saveSettings(): void {
                 </label>
               </div>
               <div
-                class="flex gap-2 text-xs text-gray-400 justify-between px-1 mt-1"
+                class="flex gap-2 text-xs text-gray-400 dark:text-gray-500 justify-between px-1 mt-1"
               >
                 <span>Export: Download a backup of your wines</span>
                 <span>Import: Restore from backup</span>

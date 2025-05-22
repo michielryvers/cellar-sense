@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+:root {
+  transition: background-color 0.3s ease;
+}
+
+html.dark {
+  background-color: #111827; /* dark:bg-gray-900 */
+  color-scheme: dark;
+}
