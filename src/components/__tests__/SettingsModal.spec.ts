@@ -193,7 +193,7 @@ describe("SettingsModal.vue", () => {
     
     // Verify a download was initiated
     expect(mockAnchorElement.href).toBe("blob:test-url");
-    expect(mockAnchorElement.download).toMatch(/wineventory-backup-\d{4}-\d{2}-\d{2}\.json/);
+    expect(mockAnchorElement.download).toMatch(/cellar-sense-backup-\d{4}-\d{2}-\d{2}\.json/);
     expect(mockAnchorElement.click).toHaveBeenCalled();
     expect(document.body.appendChild).toHaveBeenCalled();
     

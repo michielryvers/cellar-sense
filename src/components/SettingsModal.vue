@@ -57,7 +57,7 @@ async function handleExport(): Promise<void> {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `wineventory-backup-${new Date()
+    a.download = `cellar-sense-backup-${new Date()
       .toISOString()
       .slice(0, 10)}.json`;
     document.body.appendChild(a);
