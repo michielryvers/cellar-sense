@@ -134,6 +134,10 @@ vi.mock("@heroicons/vue/24/outline", () => ({
     name: "QuestionMarkCircleIcon",
     render: () => {},
   },
+  XMarkIcon: {
+    name: "XMarkIcon",
+    render: () => {},
+  },
 }));
 
 // Mock services
@@ -146,6 +150,13 @@ vi.mock("../../services/settings", () => ({
 
 vi.mock("../../services/dexie-db", () => ({
   getAllWines: vi.fn(),
+  showDexieLoginModal: false,
+  dexieLoginTitle: "",
+  dexieLoginMessage: "",
+  dexieLoginButtonText: "",
+  dexieLoginError: "",
+  dexieLoginInputPlaceholder: "",
+  dexieLoginCallback: null,
 }));
 
 vi.mock("../../services/openai-recommend", () => ({
@@ -169,17 +180,78 @@ describe("App.vue", () => {
       {
         id: "1",
         name: "Test Wine 1",
-        inventory: { bottles: 1 },
+        vintner: "Test Vintner",
+        vintage: 2020,
+        appellation: "Test Appellation",
+        region: "Test Region",
+        grapes: [{ name: "Grenache", percentage: 100 }],
+        color: "Red",
+        volume: "750 ml",
+        alcohol: "13% Vol",
+        farming: "Organic",
+        vinification: [
+          { step: "harvest", description: "Manual" },
+          { step: "yeasts", description: "Indigenous" },
+          { step: "maceration", description: "2 weeks" },
+          { step: "aging", description: "6 months" },
+          { step: "bottling", description: "Unfiltered" },
+        ],
+        tasting_notes: {
+          nose: ["Berry"],
+          palate: ["Smooth"],
+        },
+        drink_from: 2021,
+        drink_until: 2025,
+        price: "$20",
+        sulfites: "Low-sulfite",
+        images: { front: "", back: "" },
+        inventory: {
+          bottles: 1,
+          purchaseDate: "2024-01-01",
+          purchaseLocation: "Test Store",
+        },
       },
       {
         id: "2",
         name: "Test Wine 2",
-        inventory: { bottles: 2 },
+        vintner: "Test Vintner",
+        vintage: 2021,
+        appellation: "Test Appellation",
+        region: "Test Region",
+        grapes: [{ name: "Syrah", percentage: 100 }],
+        color: "White",
+        volume: "750 ml",
+        alcohol: "12% Vol",
+        farming: "Conventional",
+        vinification: [
+          { step: "harvest", description: "Machine" },
+          { step: "yeasts", description: "Commercial" },
+          { step: "maceration", description: "1 week" },
+          { step: "aging", description: "3 months" },
+          { step: "bottling", description: "Filtered" },
+        ],
+        tasting_notes: {
+          nose: ["Citrus"],
+          palate: ["Crisp"],
+        },
+        drink_from: 2022,
+        drink_until: 2026,
+        price: "$15",
+        sulfites: "Medium",
+        images: { front: "", back: "" },
+        inventory: {
+          bottles: 2,
+          purchaseDate: "2024-01-01",
+          purchaseLocation: "Test Store",
+        },
       },
     ]);
     vi.mocked(recommendService.getWineRecommendations).mockResolvedValue([
       {
-        wineId: "1",
+        id: "1",
+        name: "Test Wine 1",
+        vintner: "Test Vintner",
+        vintage: 2020,
         reason: "Test reason 1",
       },
     ]);
@@ -211,7 +283,7 @@ describe("App.vue", () => {
     const buttons = wrapper.findAll("button");
     // Check if all buttons exist
     expect(buttons.length).toBeGreaterThanOrEqual(4);
-    
+
     // Check for button text
     const buttonTexts = buttons.map((button) => button.text());
     expect(buttonTexts).toContain("Settings");
@@ -223,10 +295,10 @@ describe("App.vue", () => {
   it("shows settings modal when settings button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showSettings).toBe(false);
-    
+
     // Click settings button
     await wrapper.findAll("button")[0].trigger("click");
-    
+
     // Check if settings modal is shown
     expect((wrapper.vm as any).showSettings).toBe(true);
   });
@@ -234,10 +306,10 @@ describe("App.vue", () => {
   it("shows add wine modal when add wine button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showAddModal).toBe(false);
-    
+
     // Click add wine button
     await wrapper.findAll("button")[3].trigger("click");
-    
+
     // Check if add wine modal is shown
     expect((wrapper.vm as any).showAddModal).toBe(true);
   });
@@ -245,14 +317,14 @@ describe("App.vue", () => {
   it("shows settings modal instead when API key is missing", async () => {
     // Mock missing API key
     vi.mocked(settingsService.hasOpenAiKey).mockReturnValue(false);
-    
+
     // Initial state check
     expect((wrapper.vm as any).showSettings).toBe(false);
     expect((wrapper.vm as any).showAddModal).toBe(false);
-    
+
     // Click add wine button
     await wrapper.findAll("button")[3].trigger("click");
-    
+
     // Check if settings modal is shown instead of add wine modal
     expect((wrapper.vm as any).showSettings).toBe(true);
     expect((wrapper.vm as any).showAddModal).toBe(false);
@@ -261,29 +333,29 @@ describe("App.vue", () => {
   it("shows recommendation modal when recommend button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showRecommendModal).toBe(false);
-    
+
     // Click recommend button
     await wrapper.findAll("button")[1].trigger("click");
-    
+
     // Check if recommendation modal is shown
     expect((wrapper.vm as any).showRecommendModal).toBe(true);
-    
+
     // Check if state is reset
     expect((wrapper.vm as any).recommendResults).toBeNull();
     expect((wrapper.vm as any).recommendQuery).toBe("");
     expect((wrapper.vm as any).recommendError).toBe("");
   });
-  
+
   it("shows question modal when ask AI button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showQuestionModal).toBe(false);
-    
+
     // Click ask AI button
     await wrapper.findAll("button")[2].trigger("click");
-    
+
     // Check if question modal is shown
     expect((wrapper.vm as any).showQuestionModal).toBe(true);
-    
+
     // Check if state is reset
     expect((wrapper.vm as any).questionResponse).toBe("");
     expect((wrapper.vm as any).questionText).toBe("");
@@ -293,10 +365,10 @@ describe("App.vue", () => {
   it("handles recommendation query submission", async () => {
     // Set up initial state for the test
     (wrapper.vm as any).recommendLoading = false;
-    
+
     // Call the method directly with a test query
     await (wrapper.vm as any).handleSubmitRecommendQuery("test query");
-    
+
     // Check if API was called with right parameters
     expect(dbService.getAllWines).toHaveBeenCalled();
     expect(recommendService.getWineRecommendations).toHaveBeenCalledWith({
@@ -307,12 +379,18 @@ describe("App.vue", () => {
       ]),
       userQuery: "test query",
     });
-    
+
     // Check if state is updated correctly
     await flushPromises();
     expect((wrapper.vm as any).recommendLoading).toBe(false);
     expect((wrapper.vm as any).recommendResults).toEqual([
-      { wineId: "1", reason: "Test reason 1" },
+      {
+        id: "1",
+        name: "Test Wine 1",
+        vintner: "Test Vintner",
+        vintage: 2020,
+        reason: "Test reason 1",
+      },
     ]);
     expect((wrapper.vm as any).recommendQuery).toBe("test query");
     expect((wrapper.vm as any).showRecommendModal).toBe(false);
@@ -322,10 +400,10 @@ describe("App.vue", () => {
   it("handles question submission", async () => {
     // Set up initial state for the test
     (wrapper.vm as any).questionLoading = false;
-    
+
     // Call the method directly with a test question
     await (wrapper.vm as any).handleSubmitQuestion("test question");
-    
+
     // Check if API was called with right parameters
     expect(dbService.getAllWines).toHaveBeenCalled();
     expect(questionService.askWineQuestion).toHaveBeenCalledWith({
@@ -336,7 +414,7 @@ describe("App.vue", () => {
       ]),
       userQuestion: "test question",
     });
-    
+
     // Check if state is updated correctly
     await flushPromises();
     expect((wrapper.vm as any).questionLoading).toBe(false);
@@ -351,10 +429,10 @@ describe("App.vue", () => {
     vi.mocked(recommendService.getWineRecommendations).mockRejectedValue(
       new Error("API error")
     );
-    
+
     // Call the method
     await (wrapper.vm as any).handleSubmitRecommendQuery("test query");
-    
+
     // Check if error is handled correctly
     await flushPromises();
     expect((wrapper.vm as any).recommendLoading).toBe(false);
@@ -367,10 +445,10 @@ describe("App.vue", () => {
     vi.mocked(questionService.askWineQuestion).mockRejectedValue(
       new Error("API error")
     );
-    
+
     // Call the method
     await (wrapper.vm as any).handleSubmitQuestion("test question");
-    
+
     // Check if error is handled correctly
     await flushPromises();
     expect((wrapper.vm as any).questionLoading).toBe(false);
@@ -384,10 +462,10 @@ describe("App.vue", () => {
       query: "past query",
       results: [{ wineId: "2", reason: "Past reason" }],
     };
-    
+
     // Call the method
     (wrapper.vm as any).handleShowPastRecommendation(pastRec);
-    
+
     // Check if UI state is updated correctly
     expect((wrapper.vm as any).recommendResults).toEqual(pastRec.results);
     expect((wrapper.vm as any).recommendQuery).toBe("past query");
@@ -401,30 +479,29 @@ describe("App.vue", () => {
       question: "past question",
       response: "past response",
     };
-    
+
     // Call the method
     (wrapper.vm as any).handleShowPastQuestion(pastQuestion);
-    
+
     // Check if UI state is updated correctly
     expect((wrapper.vm as any).questionResponse).toBe("past response");
     expect((wrapper.vm as any).questionText).toBe("past question");
     expect((wrapper.vm as any).showQuestionModal).toBe(false);
     expect((wrapper.vm as any).showQuestionResultModal).toBe(true);
   });
-  
+
   it("handles wine detail display from recommendation", async () => {
     // Call the method with the wine ID
     await (wrapper.vm as any).handleShowRecommendationDetail("1");
-    
+
     // Check if getAllWines was called
     expect(dbService.getAllWines).toHaveBeenCalled();
-    
+
     // Check if UI state is updated correctly
     await flushPromises();
-    expect((wrapper.vm as any).selectedWine).toEqual({
+    expect((wrapper.vm as any).selectedWine).toMatchObject({
       id: "1",
       name: "Test Wine 1",
-      inventory: { bottles: 1 },
     });
     expect((wrapper.vm as any).showDetailModal).toBe(true);
     expect((wrapper.vm as any).showRecommendationsResultModal).toBe(false);
@@ -436,10 +513,10 @@ describe("App.vue", () => {
       id: "3",
       name: "Edit Test Wine",
     };
-    
+
     // Call the method
     (wrapper.vm as any).handleEditWine(testWine);
-    
+
     // Check if UI state is updated correctly
     expect((wrapper.vm as any).selectedWine).toEqual(testWine);
     expect((wrapper.vm as any).showEditModal).toBe(true);
@@ -448,10 +525,10 @@ describe("App.vue", () => {
   it("handles settings save", () => {
     // Initial setup
     (wrapper.vm as any).showSettings = true;
-    
+
     // Call the method
     (wrapper.vm as any).handleSettingsSave();
-    
+
     // Check if modal is closed
     expect((wrapper.vm as any).showSettings).toBe(false);
   });

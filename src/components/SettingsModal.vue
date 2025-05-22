@@ -103,10 +103,10 @@ function saveSettings(): void {
     OPENAI_SDK_KEY: settings.OPENAI_SDK_KEY,
     OPENAI_MODEL: settings.OPENAI_MODEL,
   });
-  
+
   emit("save");
   closeModal();
-  
+
   // If DEXIE_CLOUD_URL changed, reload the page to re-init DB
   if (needsRefresh) {
     window.location.reload();
