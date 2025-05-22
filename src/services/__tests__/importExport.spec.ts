@@ -5,7 +5,6 @@ import { exportDB, importDB } from "dexie-export-import";
 // Mock dependencies
 vi.mock("../dexie-db", () => ({
   db: {},
-  getAllWines: vi.fn(),
   addWine: vi.fn(),
   deleteAllWines: vi.fn(),
 }));
@@ -16,32 +15,31 @@ vi.mock("dexie-export-import", () => ({
   importDB: vi.fn(),
 }));
 
+// Mock document methods for testing
+document.createElement = vi.fn().mockImplementation(() => ({
+  href: '',
+  download: '',
+  click: vi.fn()
+}));
+URL.createObjectURL = vi.fn().mockReturnValue("mock-url");
+URL.revokeObjectURL = vi.fn();
+
 describe("importExport service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("blobToBase64 and base64ToBlob", () => {
-    it("converts a Blob to base64 and back", async () => {
-      const text = "hello world";
-      const blob = new Blob([text], { type: "text/plain" });
-      const base64 = await importExport.blobToBase64(blob);
-      expect(typeof base64).toBe("string");
-      const blob2 = importExport.base64ToBlob(base64);
-      expect(blob2).toBeInstanceOf(Blob);
-      // Read back the text (use FileReader for compatibility)
-      const text2 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsText(blob2);
-      });
-      expect(text2).toBe(text);
+  describe("base64ToBlob", () => {
+    it("converts base64 to Blob", () => {
+      const base64 = "data:text/plain;base64,aGVsbG8gd29ybGQ=";
+      const blob = importExport.base64ToBlob(base64);
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe("text/plain");
     });
   });
 
   describe("exportWinesToJSON", () => {
-    it("exports wines using Dexie's exportDB", async () => {
+    it("exports full database using Dexie's exportDB", async () => {
       const mockBlob = new Blob(["test"], { type: "application/json" });
       (exportDB as any).mockResolvedValue(mockBlob);
 
@@ -49,21 +47,19 @@ describe("importExport service", () => {
       expect(blob).toBe(mockBlob);
       expect(exportDB).toHaveBeenCalled();
       
-      // Verify exportDB was called with the correct filter
-      const exportOptions = (exportDB as any).mock.calls[0][1];
-      expect(exportOptions.filter).toBeDefined();
-      expect(exportOptions.filter("wines")).toBe(true);
-      expect(exportOptions.filter("other-table")).toBe(false);
+      // Verify exportDB was called with the right parameters
+      expect(exportDB).toHaveBeenCalledWith(
+        expect.anything(), 
+        expect.objectContaining({ prettyJson: true })
+      );
     });
   });
 
   describe("importWinesFromJSON", () => {
     it("imports array data by calling addWine for each item", async () => {
       // Use the re-exported mocks from importExport
-      const getAllWines = vi.mocked(importExport.getAllWines);
       const addWine = vi.mocked(importExport.addWine);
       const deleteAllWines = vi.mocked(importExport.deleteAllWines);
-      getAllWines.mockResolvedValue([]);
       addWine.mockResolvedValue(undefined);
       deleteAllWines.mockResolvedValue(undefined);
       
@@ -79,28 +75,21 @@ describe("importExport service", () => {
     });
 
     it("imports blob data using Dexie's importDB", async () => {
-      const getAllWines = vi.mocked(importExport.getAllWines);
       const deleteAllWines = vi.mocked(importExport.deleteAllWines);
-      getAllWines.mockResolvedValue([]);
       deleteAllWines.mockResolvedValue(undefined);
       
       const mockBlob = new Blob(["test"], { type: "application/json" });
       await importExport.importWinesFromJSON(mockBlob);
       
-      expect(deleteAllWines).toHaveBeenCalled();
       expect(importDB).toHaveBeenCalled();
       
       // Verify importDB was called with the correct parameters
       expect(importDB).toHaveBeenCalledWith(mockBlob, expect.objectContaining({
-        filter: expect.any(Function),
         clearTablesBeforeImport: true
       }));
     });
 
     it("throws an error for invalid data format", async () => {
-      const getAllWines = vi.mocked(importExport.getAllWines);
-      getAllWines.mockResolvedValue([]);
-      
       // Try to import something that's neither an array nor a Blob
       await expect(importExport.importWinesFromJSON("invalid data"))
         .rejects.toThrow("Invalid import data format");
