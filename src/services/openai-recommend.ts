@@ -29,6 +29,7 @@ export async function getWineRecommendations({
   For each, include a short reason. Return an array of JSON objects:
    { id, name, vintner, vintage, reason } in order of best fit first.
   Do not recommend any wine not in the list.
+  If you need additional information about wine pairings or characteristics, you can use web search to find appropriate matches.
   `;
 
   try {
@@ -53,7 +54,8 @@ export async function getWineRecommendations({
       response_format: { type: "json_object" },
       max_tokens: 800,
       temperature: 0.7,
-      file_ids: [fileId]
+      file_ids: [fileId],
+      tools: [{ type: "web_search" }]
     };
 
     const response = await openai.chat.completions.create(requestParams);

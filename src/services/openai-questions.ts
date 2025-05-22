@@ -33,7 +33,7 @@ export async function askWineQuestion({
   The user will ask questions about their wine collection, wine pairings, storage, and other wine-related topics.
   Provide detailed, educational responses based on the wine collection provided.
   If the question isn't related to wine, politely redirect the conversation to wine-related topics.
-  If the question requires information not in the wine collection data, you can provide general wine knowledge.
+  If the question requires information not in the wine collection data, you can provide general wine knowledge or use web search to find more specific information.
   
   IMPORTANT: Format your response using markdown syntax. Use headings, lists, bold, italic, etc. as appropriate to make your response well-structured and readable.
   `;
@@ -59,7 +59,8 @@ export async function askWineQuestion({
       messages,
       max_tokens: 2000,
       temperature: 0.7,
-      file_ids: [fileId]
+      file_ids: [fileId],
+      tools: [{ type: "web_search" }]
     };
 
     const response = await openai.chat.completions.create(requestParams);
