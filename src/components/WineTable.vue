@@ -233,13 +233,13 @@ async function handleSaveConsumption(
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                   :class="{
-                    'bg-red-100 text-red-800': wine.color === 'Red',
-                    'bg-yellow-100 text-yellow-800': wine.color === 'White',
-                    'bg-pink-100 text-pink-800': wine.color === 'Rosé',
-                    'bg-amber-100 text-amber-800': wine.color === 'Orange',
-                    'bg-blue-100 text-blue-800': wine.color === 'Sparkling',
-                    'bg-purple-100 text-purple-800': wine.color === 'Dessert',
-                    'bg-gray-100 text-gray-800': wine.color === 'Other',
+                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': wine.color === 'Red',
+                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': wine.color === 'White',
+                    'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300': wine.color === 'Rosé',
+                    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': wine.color === 'Orange',
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': wine.color === 'Sparkling',
+                    'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': wine.color === 'Dessert',
+                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': wine.color === 'Other',
                   }"
                 >
                   {{ wine.color }}
@@ -251,12 +251,12 @@ async function handleSaveConsumption(
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                     :class="{
-                      'bg-emerald-100 text-emerald-800':
+                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300':
                         wine.inventory?.bottles > 3,
-                      'bg-yellow-100 text-yellow-800':
+                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
                         wine.inventory?.bottles > 0 &&
                         wine.inventory?.bottles <= 3,
-                      'bg-gray-100 text-gray-800': !wine.inventory?.bottles,
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': !wine.inventory?.bottles,
                     }"
                   >
                     {{ wine.inventory?.bottles || 0 }}
@@ -270,7 +270,7 @@ async function handleSaveConsumption(
                   <button
                     v-if="wine.inventory?.bottles > 0"
                     @click="handleDrink(wine, $event)"
-                    class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded-lg transition-colors"
+                    class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1 rounded-lg transition-colors"
                     :aria-label="'Drink a bottle of ' + wine.name"
                     :title="
                       'Mark one bottle as consumed (' +
@@ -282,7 +282,7 @@ async function handleSaveConsumption(
                   </button>
                   <button
                     @click="handleEdit(wine, $event)"
-                    class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-lg transition-colors"
+                    class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1 rounded-lg transition-colors"
                     :aria-label="'Edit ' + wine.name"
                     :title="'Edit details for ' + wine.name"
                   >
@@ -290,7 +290,7 @@ async function handleSaveConsumption(
                   </button>
                   <button
                     @click="handleDelete(wine.id, $event)"
-                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                    class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded-lg transition-colors"
                     :aria-label="'Delete ' + wine.name"
                     :title="'Delete ' + wine.name + ' from inventory'"
                   >
@@ -331,11 +331,11 @@ async function handleSaveConsumption(
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="{
-                  'bg-emerald-100 text-emerald-800':
+                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300':
                     wine.inventory?.bottles > 3,
-                  'bg-yellow-100 text-yellow-800':
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
                     wine.inventory?.bottles > 0 && wine.inventory?.bottles <= 3,
-                  'bg-gray-100 text-gray-800': !wine.inventory?.bottles,
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': !wine.inventory?.bottles,
                 }"
               >
                 {{ wine.inventory?.bottles || 0 }}
@@ -354,13 +354,13 @@ async function handleSaveConsumption(
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="{
-                  'bg-red-100 text-red-800': wine.color === 'Red',
-                  'bg-yellow-100 text-yellow-800': wine.color === 'White',
-                  'bg-pink-100 text-pink-800': wine.color === 'Rosé',
-                  'bg-amber-100 text-amber-800': wine.color === 'Orange',
-                  'bg-blue-100 text-blue-800': wine.color === 'Sparkling',
-                  'bg-purple-100 text-purple-800': wine.color === 'Dessert',
-                  'bg-gray-100 text-gray-800': wine.color === 'Other',
+                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': wine.color === 'Red',
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': wine.color === 'White',
+                  'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300': wine.color === 'Rosé',
+                  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': wine.color === 'Orange',
+                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': wine.color === 'Sparkling',
+                  'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': wine.color === 'Dessert',
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': wine.color === 'Other',
                 }"
               >
                 {{ wine.color }}
