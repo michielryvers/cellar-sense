@@ -42,25 +42,29 @@ export async function askWineQuestion({
     // Get file reference - throws error if not available
     const fileId = await ensureDatabaseUploaded();
     if (!fileId) {
-      throw new Error("OpenAI file reference is required. Please ensure you are online and try again.");
+      throw new Error(
+        "OpenAI file reference is required. Please ensure you are online and try again."
+      );
     }
-    
+
     // Create messages with system prompt and user question
     const messages = [
       { role: "system" as const, content: systemPrompt },
-      { role: "user" as const, content: userQuestion }
+      { role: "user" as const, content: userQuestion },
     ];
 
     const model = settingsService.openAiModel;
-    
+
     // Create the API request parameters with file reference
     const requestParams = {
-      model: model,
+      model: "gpt-4o-search-preview",
       messages,
       max_tokens: 2000,
       temperature: 0.7,
       file_ids: [fileId],
-      tools: [{ type: "web_search" }]
+      web_search_options: {
+        search_context_size: "low" as "low",
+      },
     };
 
     const response = await openai.chat.completions.create(requestParams);

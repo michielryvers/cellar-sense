@@ -29,7 +29,7 @@ class WineventoryDB extends Dexie {
   wines!: Table<Wine, string>;
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
-  filestore!: Table<KeyValuePair, string>;  // New table for storing file IDs and other key-value data
+  filestore!: Table<KeyValuePair, string>; // New table for storing file IDs and other key-value data
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
@@ -38,90 +38,145 @@ class WineventoryDB extends Dexie {
         wines: "@id, name, vintage, color",
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
-        filestore: "key",  // Key-value store with key as primary key
+        filestore: "key", // Key-value store with key as primary key (use 'key' for both local and cloud)
       });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
         requireAuth: true,
-        customLoginGui: true,
+        //customLoginGui: true,
       });
-      
+
       // Hook into userInteraction to provide custom UI
-      this.cloud.userInteraction.subscribe(event => {
-        console.log("Dexie Cloud auth event:", event.type);
-        
+      this.cloud.userInteraction.subscribe((event) => {
+        if (!event || typeof event !== "object" || !("type" in event)) {
+          console.warn("Dexie Cloud auth event: unknown event", event);
+          return;
+        }
+
         // Reset state
         dexieLoginError.value = "";
         dexieLoginInputPlaceholder.value = "";
         dexieLoginCallback.value = null;
-        
-        switch (event.type) {
-          case "login":
-            dexieLoginTitle.value = "Sign in to Cellar Sense";
-            dexieLoginMessage.value = "Enter your email to sign in or create an account";
-            dexieLoginButtonText.value = "Send magic link";
-            dexieLoginInputPlaceholder.value = "your.email@example.com";
-            dexieLoginCallback.value = (email?: string) => {
-              if (email) event.resolve(email);
-              else event.reject(new Error("Email is required"));
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          case "verify":
-            dexieLoginTitle.value = "Verify your email";
-            dexieLoginMessage.value = `We've sent a magic link to ${event.email}. Click the link to sign in.`;
-            dexieLoginButtonText.value = "OK";
-            dexieLoginCallback.value = () => {
-              event.resolve();
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          case "waitForEmail":
-            dexieLoginTitle.value = "Check your inbox";
-            dexieLoginMessage.value = "Please click the link in the email we sent you to complete the sign-in process.";
-            dexieLoginButtonText.value = "OK";
-            dexieLoginCallback.value = () => {
-              event.resolve();
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          case "accountCreated":
-            dexieLoginTitle.value = "Account created";
-            dexieLoginMessage.value = "Your account has been created!";
-            dexieLoginButtonText.value = "OK";
-            dexieLoginCallback.value = () => {
-              event.resolve();
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          case "error":
-            dexieLoginTitle.value = "Error";
-            dexieLoginMessage.value = event.error?.message || "An error occurred during authentication";
-            dexieLoginButtonText.value = "OK";
-            dexieLoginError.value = event.error?.message || "Authentication error";
-            dexieLoginCallback.value = () => {
-              event.resolve();
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          case "email":
-            dexieLoginTitle.value = "Check your inbox";
-            dexieLoginMessage.value = "Please check your email for a magic link to continue the sign-in process.";
-            dexieLoginButtonText.value = "OK";
-            dexieLoginCallback.value = () => {
-              event.resolve();
-            };
-            showDexieLoginModal.value = true;
-            break;
-            
-          default:
-            console.warn("Unhandled Dexie Cloud auth event type:", event.type);
-            break;
+
+        // Type guards for event types
+        const isLogin = (
+          e: any
+        ): e is {
+          type: "login";
+          resolve: (email: string) => void;
+          reject: (err: Error) => void;
+        } =>
+          e.type === "login" &&
+          typeof e.resolve === "function" &&
+          typeof e.reject === "function";
+        const isVerify = (
+          e: any
+        ): e is { type: "verify"; email: string; resolve: () => void } =>
+          e.type === "verify" &&
+          typeof e.email === "string" &&
+          typeof e.resolve === "function";
+        const isWaitForEmail = (
+          e: any
+        ): e is { type: "waitForEmail"; resolve: () => void } =>
+          e.type === "waitForEmail" && typeof e.resolve === "function";
+        const isAccountCreated = (
+          e: any
+        ): e is { type: "accountCreated"; resolve: () => void } =>
+          e.type === "accountCreated" && typeof e.resolve === "function";
+        const isError = (
+          e: any
+        ): e is {
+          type: "error";
+          error?: { message?: string };
+          resolve: () => void;
+        } => e.type === "error" && typeof e.resolve === "function";
+        const isEmail = (e: any): e is { type: "email"; resolve: () => void } =>
+          e.type === "email" && typeof e.resolve === "function";
+
+        if (isLogin(event)) {
+          const loginEvent = event as {
+            type: "login";
+            resolve: (email: string) => void;
+            reject: (err: Error) => void;
+          };
+          dexieLoginTitle.value = "Sign in to Cellar Sense";
+          dexieLoginMessage.value =
+            "Enter your email to sign in or create an account";
+          dexieLoginButtonText.value = "Send magic link";
+          dexieLoginInputPlaceholder.value = "your.email@example.com";
+          dexieLoginCallback.value = (email?: string) => {
+            if (email) loginEvent.resolve(email);
+            else loginEvent.reject(new Error("Email is required"));
+          };
+          showDexieLoginModal.value = true;
+        } else if (isVerify(event)) {
+          const verifyEvent = event as {
+            type: "verify";
+            email: string;
+            resolve: () => void;
+          };
+          dexieLoginTitle.value = "Verify your email";
+          dexieLoginMessage.value = `We've sent a magic link to ${verifyEvent.email}. Click the link to sign in.`;
+          dexieLoginButtonText.value = "OK";
+          dexieLoginCallback.value = () => {
+            verifyEvent.resolve();
+          };
+          showDexieLoginModal.value = true;
+        } else if (isWaitForEmail(event)) {
+          const waitEvent = event as {
+            type: "waitForEmail";
+            resolve: () => void;
+          };
+          dexieLoginTitle.value = "Check your inbox";
+          dexieLoginMessage.value =
+            "Please click the link in the email we sent you to complete the sign-in process.";
+          dexieLoginButtonText.value = "OK";
+          dexieLoginCallback.value = () => {
+            waitEvent.resolve();
+          };
+          showDexieLoginModal.value = true;
+        } else if (isAccountCreated(event)) {
+          const accountEvent = event as {
+            type: "accountCreated";
+            resolve: () => void;
+          };
+          dexieLoginTitle.value = "Account created";
+          dexieLoginMessage.value = "Your account has been created!";
+          dexieLoginButtonText.value = "OK";
+          dexieLoginCallback.value = () => {
+            accountEvent.resolve();
+          };
+          showDexieLoginModal.value = true;
+        } else if (isError(event)) {
+          const errorEvent = event as {
+            type: "error";
+            error?: { message?: string };
+            resolve: () => void;
+          };
+          dexieLoginTitle.value = "Error";
+          dexieLoginMessage.value =
+            errorEvent.error?.message ||
+            "An error occurred during authentication";
+          dexieLoginButtonText.value = "OK";
+          dexieLoginError.value =
+            errorEvent.error?.message || "Authentication error";
+          dexieLoginCallback.value = () => {
+            errorEvent.resolve();
+          };
+          showDexieLoginModal.value = true;
+        } else if (isEmail(event)) {
+          const emailEvent = event as { type: "email"; resolve: () => void };
+          dexieLoginTitle.value = "Check your inbox";
+          dexieLoginMessage.value =
+            "Please check your email for a magic link to continue the sign-in process.";
+          dexieLoginButtonText.value = "OK";
+          dexieLoginCallback.value = () => {
+            emailEvent.resolve();
+          };
+          showDexieLoginModal.value = true;
+        } else {
+          // Fallback for unknown event types
+          console.warn("Unhandled Dexie Cloud auth event type:", event.type);
         }
       });
     } else {
@@ -130,7 +185,7 @@ class WineventoryDB extends Dexie {
         wines: "++id, name, vintage, color",
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
-        filestore: "key",  // Key-value store with key as primary key
+        filestore: "key", // Key-value store with key as primary key
       });
     }
   }
@@ -165,12 +220,12 @@ wineQuestions$.subscribe((questions) => {
 export async function addWine(wineData: Wine): Promise<string> {
   try {
     const id = await db.wines.add(wineData);
-    
+
     // After adding wine, upload database to OpenAI if online and API key available
     if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
       try {
         // Non-blocking upload to avoid delaying UI
-        uploadDatabaseToOpenAI().catch(err => {
+        uploadDatabaseToOpenAI().catch((err) => {
           console.warn("Background database upload failed:", err);
         });
       } catch (uploadError) {
@@ -178,7 +233,7 @@ export async function addWine(wineData: Wine): Promise<string> {
         console.warn("Failed to upload database to OpenAI:", uploadError);
       }
     }
-    
+
     return id;
   } catch (error) {
     console.error("Failed to add wine:", error);
@@ -223,12 +278,12 @@ export async function updateWine(wineData: Wine): Promise<string> {
     // Dexie's put method updates if exists, or adds if not.
     // It returns the key of the updated/added item.
     const id = await db.wines.put(wineData);
-    
+
     // After updating wine, upload database to OpenAI if online and API key available
     if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
       try {
         // Non-blocking upload to avoid delaying UI
-        uploadDatabaseToOpenAI().catch(err => {
+        uploadDatabaseToOpenAI().catch((err) => {
           console.warn("Background database upload failed:", err);
         });
       } catch (uploadError) {
@@ -236,7 +291,7 @@ export async function updateWine(wineData: Wine): Promise<string> {
         console.warn("Failed to upload database to OpenAI:", uploadError);
       }
     }
-    
+
     return id;
   } catch (error) {
     console.error(`Failed to update wine with id ${wineData.id}:`, error);
@@ -282,12 +337,12 @@ export async function drinkBottle(
         "inventory.bottles": wine.inventory.bottles,
         consumptions: wine.consumptions || [],
       });
-      
+
       // After updating wine, upload database to OpenAI if online and API key available
       if (getOnlineStatus() && settingsService.hasOpenAiKey()) {
         try {
           // Non-blocking upload to avoid delaying UI
-          uploadDatabaseToOpenAI().catch(err => {
+          uploadDatabaseToOpenAI().catch((err) => {
             console.warn("Background database upload failed:", err);
           });
         } catch (uploadError) {
@@ -349,7 +404,10 @@ export async function getFilestoreValue(key: string): Promise<string | null> {
  * @param key The key to set the value for
  * @param value The value to set
  */
-export async function setFilestoreValue(key: string, value: string): Promise<void> {
+export async function setFilestoreValue(
+  key: string,
+  value: string
+): Promise<void> {
   try {
     await db.filestore.put({ key, value });
   } catch (error) {
