@@ -145,6 +145,10 @@ vi.mock("../../services/settings", () => ({
   settingsService: {
     openAiKey: "test-key",
     hasOpenAiKey: vi.fn(),
+    themePreference: "system",
+    applyTheme: vi.fn(),
+    getEffectiveTheme: vi.fn().mockReturnValue("light"),
+    setupThemeListener: vi.fn().mockReturnValue(() => {}),
   },
 }));
 
