@@ -95,4 +95,4 @@ export function base64ToBlob(base64: string) {
   return new Blob([u8arr], { type: mime });
 }
 // Export for test mocks
-export { getAllWines, addWine };
+export { getAllWines, addWine, deleteAllWines };
