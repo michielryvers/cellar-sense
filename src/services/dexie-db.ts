@@ -325,3 +325,15 @@ export async function getWineQuestionById(
     throw error;
   }
 }
+
+// Dexie Cloud Login modal state and handler
+export {
+  showDexieLoginModal,
+  dexieLoginTitle,
+  dexieLoginMessage,
+  dexieLoginButtonText,
+  dexieLoginError,
+  dexieLoginInputPlaceholder,
+  dexieLoginCallback,
+  registerDexieCloudLoginModal,
+};
