@@ -29,6 +29,7 @@ export interface Wine {
     purchaseLocation: string;
   };
   consumptions?: WineConsumption[];
+  sources?: string[];
 }
 
 export interface GrapeEntry {

@@ -63,6 +63,11 @@ export const wineSchema = {
     drink_until: { type: "integer" },
     price: { type: "string" },
     sulfites: { type: "string" },
+    sources: {
+      type: "array",
+      description: "URLs of sources used by OpenAI for research",
+      items: { type: "string", format: "uri" }
+    },
   },
   required: [
     "name",
@@ -95,6 +100,7 @@ function buildPrompt(purchaseLocation: string | undefined) {
   return `
 You are a wine label data extraction assistant. Your job is to extract all possible wine metadata from the provided label images and purchase location. 
 If any required information is missing from the label, do a web search for additional info. Prefer the purchase location as a main source of truth. 
+If you perform a web search, include the URLs you used in the 'sources' array in the response.
 
 Always return a single, complete JSON object (do not include any images fields).
 
