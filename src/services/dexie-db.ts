@@ -109,6 +109,16 @@ class WineventoryDB extends Dexie {
             showDexieLoginModal.value = true;
             break;
             
+          case "email":
+            dexieLoginTitle.value = "Check your inbox";
+            dexieLoginMessage.value = "Please check your email for a magic link to continue the sign-in process.";
+            dexieLoginButtonText.value = "OK";
+            dexieLoginCallback.value = () => {
+              event.resolve();
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
           default:
             console.warn("Unhandled Dexie Cloud auth event type:", event.type);
             break;
