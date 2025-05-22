@@ -3,6 +3,21 @@ import type { RecommendationOption } from "./RecommendationTypes";
 import type { WineQuestionEntry } from "./WineQuestionTypes";
 
 /**
+ * Props for LoginDexieModal component
+ */
+export interface LoginDexieModalProps {
+  show: boolean;
+  title?: string;
+  message?: string;
+  confirmButtonText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  error?: string;
+  inputValue?: string;
+  inputPlaceholder?: string;
+}
+
+/**
  * Props for EditWineForm component
  */
 export interface EditWineFormProps {

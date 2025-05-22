@@ -10,6 +10,7 @@ import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
 import WineQuestionModal from "./components/WineQuestionModal.vue";
 import WineQuestionResultModal from "./components/WineQuestionResultModal.vue";
+import LoginDexieModal from "./components/LoginDexieModal.vue";
 import type {
   RecommendationHistoryEntry,
   RecommendationOption,
@@ -26,6 +27,15 @@ import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
 import { askWineQuestion } from "./services/openai-questions";
 import { settingsService } from "./services/settings";
+import {
+  showDexieLoginModal,
+  dexieLoginTitle,
+  dexieLoginMessage,
+  dexieLoginButtonText,
+  dexieLoginError,
+  dexieLoginInputPlaceholder,
+  dexieLoginCallback
+} from "./services/dexie-db";
 
 // Modal visibility state
 const showSettings = ref(false);
@@ -287,6 +297,23 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       v-model:show="showDetailModal"
       :wine="selectedWine"
       @edit="handleEditWine"
+/**
+ * Handle Dexie login submission
+ */
+function handleDexieLogin(value: string): void {
+  if (dexieLoginCallback.value) {
+    dexieLoginCallback.value(value);
+  }
+}
+
+/**
+ * Handle Dexie login cancellation
+ */
+function handleDexieCancel(): void {
+  if (dexieLoginCallback.value) {
+    dexieLoginCallback.value();
+  }
+}
     />
     <EditWineForm
       v-if="selectedWine"
@@ -308,6 +335,19 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       :response="questionResponse"
       :question="questionText"
       @close="showQuestionResultModal = false"
+    />
+
+    <!-- Dexie Cloud Auth Modal -->
+    <LoginDexieModal
+      :show="showDexieLoginModal"
+      :title="dexieLoginTitle"
+      :message="dexieLoginMessage"
+      :confirm-button-text="dexieLoginButtonText"
+      :error="dexieLoginError"
+      :input-placeholder="dexieLoginInputPlaceholder"
+      @update:show="showDexieLoginModal = $event"
+      @confirm="(value) => { dexieLoginCallback?.(value) }"
+      @cancel="dexieLoginCallback?.()"
     />
   </div>
 </template>

@@ -9,6 +9,15 @@ import { getOnlineStatus } from "./network-status";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
+// Dexie Cloud Login state for custom UI
+export const showDexieLoginModal = ref(false);
+export const dexieLoginTitle = ref("");
+export const dexieLoginMessage = ref("");
+export const dexieLoginButtonText = ref("Continue");
+export const dexieLoginError = ref("");
+export const dexieLoginInputPlaceholder = ref("");
+export const dexieLoginCallback = ref<((value?: string) => void) | null>(null);
+
 // Define a simple key-value table structure
 interface KeyValuePair {
   key: string;
@@ -35,6 +44,75 @@ class WineventoryDB extends Dexie {
         databaseUrl: DEXIE_CLOUD_URL,
         requireAuth: true,
       });
+      
+      // Hook into userInteraction to provide custom UI
+      this.cloud.userInteraction.subscribe(event => {
+        console.log("Dexie Cloud auth event:", event.type);
+        
+        // Reset state
+        dexieLoginError.value = "";
+        dexieLoginInputPlaceholder.value = "";
+        dexieLoginCallback.value = null;
+        
+        switch (event.type) {
+          case "login":
+            dexieLoginTitle.value = "Sign in to Cellar Sense";
+            dexieLoginMessage.value = "Enter your email to sign in or create an account";
+            dexieLoginButtonText.value = "Send magic link";
+            dexieLoginInputPlaceholder.value = "your.email@example.com";
+            dexieLoginCallback.value = (email?: string) => {
+              if (email) event.resolve(email);
+              else event.reject(new Error("Email is required"));
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
+          case "verify":
+            dexieLoginTitle.value = "Verify your email";
+            dexieLoginMessage.value = `We've sent a magic link to ${event.email}. Click the link to sign in.`;
+            dexieLoginButtonText.value = "OK";
+            dexieLoginCallback.value = () => {
+              event.resolve();
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
+          case "waitForEmail":
+            dexieLoginTitle.value = "Check your inbox";
+            dexieLoginMessage.value = "Please click the link in the email we sent you to complete the sign-in process.";
+            dexieLoginButtonText.value = "OK";
+            dexieLoginCallback.value = () => {
+              event.resolve();
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
+          case "accountCreated":
+            dexieLoginTitle.value = "Account created";
+            dexieLoginMessage.value = "Your account has been created!";
+            dexieLoginButtonText.value = "OK";
+            dexieLoginCallback.value = () => {
+              event.resolve();
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
+          case "error":
+            dexieLoginTitle.value = "Error";
+            dexieLoginMessage.value = event.error?.message || "An error occurred during authentication";
+            dexieLoginButtonText.value = "OK";
+            dexieLoginError.value = event.error?.message || "Authentication error";
+            dexieLoginCallback.value = () => {
+              event.resolve();
+            };
+            showDexieLoginModal.value = true;
+            break;
+            
+          default:
+            console.warn("Unhandled Dexie Cloud auth event type:", event.type);
+            break;
+        }
+      });
     } else {
       super("cellar-sense-db");
       this.version(5).stores({
@@ -45,6 +123,7 @@ class WineventoryDB extends Dexie {
       });
     }
   }
+}
 }
 
 export const db = new WineventoryDB();
