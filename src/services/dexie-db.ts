@@ -43,6 +43,7 @@ class WineventoryDB extends Dexie {
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
         requireAuth: true,
+        customLoginGui: true,
       });
       
       // Hook into userInteraction to provide custom UI
@@ -123,7 +124,6 @@ class WineventoryDB extends Dexie {
       });
     }
   }
-}
 }
 
 export const db = new WineventoryDB();

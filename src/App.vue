@@ -207,6 +207,24 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
   showQuestionModal.value = false;
   showQuestionResultModal.value = true;
 }
+
+/**
+ * Handle Dexie login submission
+ */
+function handleDexieLogin(value: string): void {
+  if (dexieLoginCallback.value) {
+    dexieLoginCallback.value(value);
+  }
+}
+
+/**
+ * Handle Dexie login cancellation
+ */
+function handleDexieCancel(): void {
+  if (dexieLoginCallback.value) {
+    dexieLoginCallback.value();
+  }
+}
 </script>
 
 <template>
@@ -297,23 +315,6 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       v-model:show="showDetailModal"
       :wine="selectedWine"
       @edit="handleEditWine"
-/**
- * Handle Dexie login submission
- */
-function handleDexieLogin(value: string): void {
-  if (dexieLoginCallback.value) {
-    dexieLoginCallback.value(value);
-  }
-}
-
-/**
- * Handle Dexie login cancellation
- */
-function handleDexieCancel(): void {
-  if (dexieLoginCallback.value) {
-    dexieLoginCallback.value();
-  }
-}
     />
     <EditWineForm
       v-if="selectedWine"
