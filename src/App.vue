@@ -255,7 +255,7 @@ function handleDexieCancel(): void {
         <img
           src="./assets/cellar-sense.svg"
           alt="CellarSense Logo"
-          class="h-8 md:h-10 mr-3"
+          class="h-8 md:h-10 mr-3 dark:invert dark:brightness-200 transition-all duration-300"
         />
         <div>
           <h1

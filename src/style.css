@@ -8,3 +8,15 @@ html.dark {
   background-color: #111827; /* dark:bg-gray-900 */
   color-scheme: dark;
 }
+
+/* Apply filter to favicon in dark mode */
+@media (prefers-color-scheme: dark) {
+  link[rel="icon"] {
+    filter: invert(1) brightness(200%);
+  }
+}
+
+/* Override media query when explicitly set to light mode */
+html:not(.dark) link[rel="icon"] {
+  filter: none;
+}
