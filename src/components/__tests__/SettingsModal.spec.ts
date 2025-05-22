@@ -14,7 +14,10 @@ vi.mock("../../services/settings", () => ({
     dexieCloudUrl: "test-cloud-url",
     openAiKey: "test-key",
     openAiModel: "gpt-4.1",
+    themePreference: "system",
     setAllSettings: vi.fn().mockReturnValue(false),
+    applyTheme: vi.fn(), // Added applyTheme mock
+    getEffectiveTheme: vi.fn().mockReturnValue("light"), // Added getEffectiveTheme mock
   },
 }));
 
@@ -148,6 +151,7 @@ describe("SettingsModal.vue", () => {
       DEXIE_CLOUD_URL: "test-cloud-url",
       OPENAI_SDK_KEY: "new-key",
       OPENAI_MODEL: "gpt-4.1",
+      THEME_PREFERENCE: "system", // Add the THEME_PREFERENCE parameter
     });
   });
 
