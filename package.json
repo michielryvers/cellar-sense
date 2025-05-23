@@ -14,7 +14,7 @@
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
     "@tailwindcss/vite": "^4.1.7",
-    "@vueuse/rxjs": "^13.2.0",npm ins
+    "@vueuse/rxjs": "^13.2.0",
     "browser-image-compression": "^2.0.2",
     "dexie": "^4.0.11",
     "dexie-cloud-addon": "^4.0.11",
