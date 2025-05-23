@@ -151,7 +151,7 @@ describe("SettingsModal.vue", () => {
       .findAll("button")
       .find((btn) => btn.text().trim() === "Save");
 
-    await saveButton?.trigger("click");    // Verify events and service call
+    await saveButton?.trigger("click"); // Verify events and service call
     expect(wrapper.emitted()).toHaveProperty("save");
     expect(wrapper.emitted()).toHaveProperty("update:show");
     expect(settingsService.setAllSettings).toHaveBeenCalledWith({

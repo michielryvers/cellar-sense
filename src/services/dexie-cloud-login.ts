@@ -44,7 +44,7 @@ export async function login(): Promise<void> {
   if (!db.cloud) {
     throw new Error("Dexie Cloud is not configured");
   }
-  
+
   try {
     await db.cloud.login();
   } catch (error) {
@@ -60,7 +60,7 @@ export async function logout(): Promise<void> {
   if (!db.cloud) {
     throw new Error("Dexie Cloud is not configured");
   }
-  
+
   try {
     await db.cloud.logout();
   } catch (error) {
@@ -76,7 +76,7 @@ export function getSyncStatus() {
   if (!db.cloud) {
     return null;
   }
-  
+
   return {
     syncState: db.cloud.syncState.value,
     currentUser: db.cloud.currentUser.value,

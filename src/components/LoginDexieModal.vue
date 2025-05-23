@@ -42,7 +42,8 @@
         >
           {{ resolveText(alert) }}
         </div>
-      </div>      <!-- Form -->
+      </div>
+      <!-- Form -->
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div
           v-for="([fieldName, field], index) in fieldEntries"
@@ -103,7 +104,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from "vue";
-import { resolveText, type DXCUserInteraction, type DXCInputField } from "dexie-cloud-addon";
+import {
+  resolveText,
+  type DXCUserInteraction,
+  type DXCInputField,
+} from "dexie-cloud-addon";
 
 interface Props {
   ui: DXCUserInteraction | undefined;
@@ -121,7 +126,8 @@ const fieldEntries = computed(() => {
 });
 
 // Reset params when ui changes
-watch(  () => props.ui,
+watch(
+  () => props.ui,
   (newUi) => {
     if (newUi && newUi.fields) {
       // Initialize params with empty strings for all fields

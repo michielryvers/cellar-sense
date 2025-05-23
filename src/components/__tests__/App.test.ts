@@ -327,13 +327,16 @@ describe("App.vue", () => {
 
     // Check if settings modal is shown
     expect((wrapper.vm as any).showSettings).toBe(true);
-  });  it("shows add wine modal when add wine button is clicked", async () => {
+  });
+  it("shows add wine modal when add wine button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showAddModal).toBe(false);
 
     // Click add wine button - find by text content
     const buttons = wrapper.findAll("button");
-    const addButton = buttons.find(button => button.text().includes("Add Wine"));
+    const addButton = buttons.find((button) =>
+      button.text().includes("Add Wine")
+    );
     expect(addButton).toBeDefined();
     await addButton!.trigger("click");
 
@@ -357,7 +360,9 @@ describe("App.vue", () => {
 
     // Click add wine button - find by text content
     const buttons = testWrapper.findAll("button");
-    const addButton = buttons.find(button => button.text().includes("Add Wine"));
+    const addButton = buttons.find((button) =>
+      button.text().includes("Add Wine")
+    );
     expect(addButton).toBeDefined();
     await addButton!.trigger("click");
 
@@ -371,9 +376,11 @@ describe("App.vue", () => {
 
   it("shows recommendation modal when recommend button is clicked", async () => {
     // Initial state check
-    expect((wrapper.vm as any).showRecommendModal).toBe(false);    // Click recommend button - find by text content
+    expect((wrapper.vm as any).showRecommendModal).toBe(false); // Click recommend button - find by text content
     const buttons = wrapper.findAll("button");
-    const recommendButton = buttons.find(button => button.text().includes("Recommend"));
+    const recommendButton = buttons.find((button) =>
+      button.text().includes("Recommend")
+    );
     expect(recommendButton).toBeDefined();
     await recommendButton!.trigger("click");
 
@@ -384,18 +391,21 @@ describe("App.vue", () => {
     expect((wrapper.vm as any).recommendResults).toBeNull();
     expect((wrapper.vm as any).recommendQuery).toBe("");
     expect((wrapper.vm as any).recommendError).toBe("");
-  });  it("shows question modal when ask AI button is clicked", async () => {
+  });
+  it("shows question modal when ask AI button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showQuestionModal).toBe(false);
 
     // Click ask AI button - find by text content
     const buttons = wrapper.findAll("button");
-    const askAiButton = buttons.find(button => button.text().includes("Ask AI"));
+    const askAiButton = buttons.find((button) =>
+      button.text().includes("Ask AI")
+    );
     expect(askAiButton).toBeDefined();
     await askAiButton!.trigger("click");
 
     // Check if question modal is shown
-    expect((wrapper.vm as any).showQuestionModal).toBe(true);    // Check if state is reset
+    expect((wrapper.vm as any).showQuestionModal).toBe(true); // Check if state is reset
     expect((wrapper.vm as any).questionResponse).toBe("");
     expect((wrapper.vm as any).questionText).toBe("");
     expect((wrapper.vm as any).questionError).toBe("");
