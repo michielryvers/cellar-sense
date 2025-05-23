@@ -7,6 +7,7 @@ import {
   importWinesFromJSON,
 } from "../services/importExport";
 import { settingsService, type Settings } from "../services/settings";
+import { currentUser, isLoggedIn, login, logout } from "../services/dexie-cloud-login";
 import type { SettingsModalProps } from "../shared/types";
 
 // Props and emits
@@ -117,6 +118,30 @@ function saveSettings(): void {
     window.location.reload();
   }
 }
+
+/**
+ * Handle cloud login
+ */
+async function handleCloudLogin(): Promise<void> {
+  try {
+    await login();
+  } catch (error) {
+    console.error("Login failed:", error);
+    alert("Login failed. Please try again.");
+  }
+}
+
+/**
+ * Handle cloud logout
+ */
+async function handleCloudLogout(): Promise<void> {
+  try {
+    await logout();
+  } catch (error) {
+    console.error("Logout failed:", error);
+    alert("Logout failed. Please try again.");
+  }
+}
 </script>
 
 <template>
@@ -159,8 +184,7 @@ function saveSettings(): void {
               placeholder="sk-..."
               autocomplete="off"
             />
-          </div>
-          <div class="mb-6">
+          </div>          <div class="mb-6">
             <label
               class="block mb-1 text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase"
               for="DEXIE_CLOUD_URL"
@@ -173,6 +197,41 @@ function saveSettings(): void {
               type="text"
               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
             />
+            <!-- Cloud Status Section -->
+            <div v-if="settings.DEXIE_CLOUD_URL" class="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase">
+                  Cloud Status
+                </span>
+                <div :class="[
+                  'w-2 h-2 rounded-full',
+                  isLoggedIn ? 'bg-green-500' : 'bg-red-500'
+                ]"></div>
+              </div>
+              <div v-if="isLoggedIn && currentUser?.value" class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                <p class="font-medium text-green-600 dark:text-green-400">✓ Connected</p>
+                <p class="text-xs">{{ currentUser.value.email || currentUser.value.name || 'User' }}</p>
+              </div>
+              <div v-else class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                <p class="font-medium text-red-600 dark:text-red-400">✗ Not connected</p>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  v-if="!isLoggedIn"
+                  @click="handleCloudLogin"
+                  class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition-colors"
+                >
+                  Login to Cloud
+                </button>
+                <button
+                  v-if="isLoggedIn"
+                  @click="handleCloudLogout"
+                  class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
           </div>
           <div class="mb-6">
             <label

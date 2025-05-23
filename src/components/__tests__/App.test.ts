@@ -9,6 +9,15 @@ import * as questionService from "../../services/openai-questions";
 // Type for the Vue wrapper
 type AnyWrapper = ReturnType<typeof mount<any>>;
 
+// Mock dexie-cloud-login
+vi.mock("../../services/dexie-cloud-login", () => ({
+  currentUser: { value: null },
+  isLoggedIn: { value: false },
+  userInteraction: { value: null },
+  logout: vi.fn(),
+  initializeDexieCloudLogin: vi.fn(),
+}));
+
 // Mock components
 vi.mock("../../components/WineTable.vue", () => ({
   default: {
@@ -138,13 +147,17 @@ vi.mock("@heroicons/vue/24/outline", () => ({
     name: "XMarkIcon",
     render: () => {},
   },
+  ArrowRightOnRectangleIcon: {
+    name: "ArrowRightOnRectangleIcon",
+    render: () => {},
+  },
 }));
 
 // Mock services
 vi.mock("../../services/settings", () => ({
   settingsService: {
     openAiKey: "test-key",
-    hasOpenAiKey: vi.fn(),
+    hasOpenAiKey: vi.fn().mockReturnValue(true),
     themePreference: "system",
     applyTheme: vi.fn(),
     getEffectiveTheme: vi.fn().mockReturnValue("light"),
@@ -153,6 +166,14 @@ vi.mock("../../services/settings", () => ({
 }));
 
 vi.mock("../../services/dexie-db", () => ({
+  db: {
+    cloud: {
+      currentUser: { value: null },
+    },
+    wines: {
+      toArray: vi.fn(),
+    },
+  },
   getAllWines: vi.fn(),
   showDexieLoginModal: false,
   dexieLoginTitle: "",
@@ -270,9 +291,10 @@ describe("App.vue", () => {
       },
     });
   });
-
   afterEach(() => {
-    wrapper.unmount();
+    if (wrapper) {
+      wrapper.unmount();
+    }
   });
 
   it("renders the header with the app name", () => {
@@ -305,41 +327,55 @@ describe("App.vue", () => {
 
     // Check if settings modal is shown
     expect((wrapper.vm as any).showSettings).toBe(true);
-  });
-
-  it("shows add wine modal when add wine button is clicked", async () => {
+  });  it("shows add wine modal when add wine button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showAddModal).toBe(false);
 
-    // Click add wine button
-    await wrapper.findAll("button")[3].trigger("click");
+    // Click add wine button - find by text content
+    const buttons = wrapper.findAll("button");
+    const addButton = buttons.find(button => button.text().includes("Add Wine"));
+    expect(addButton).toBeDefined();
+    await addButton!.trigger("click");
 
     // Check if add wine modal is shown
     expect((wrapper.vm as any).showAddModal).toBe(true);
   });
-
   it("shows settings modal instead when API key is missing", async () => {
-    // Mock missing API key
+    // Mock missing API key BEFORE mounting
     vi.mocked(settingsService.hasOpenAiKey).mockReturnValue(false);
 
-    // Initial state check
-    expect((wrapper.vm as any).showSettings).toBe(false);
-    expect((wrapper.vm as any).showAddModal).toBe(false);
+    // Create a new wrapper with the mock already set
+    const testWrapper = mount(App, {
+      global: {
+        stubs: ["Teleport"],
+      },
+    });
 
-    // Click add wine button
-    await wrapper.findAll("button")[3].trigger("click");
+    // Initial state check
+    expect((testWrapper.vm as any).showSettings).toBe(false);
+    expect((testWrapper.vm as any).showAddModal).toBe(false);
+
+    // Click add wine button - find by text content
+    const buttons = testWrapper.findAll("button");
+    const addButton = buttons.find(button => button.text().includes("Add Wine"));
+    expect(addButton).toBeDefined();
+    await addButton!.trigger("click");
 
     // Check if settings modal is shown instead of add wine modal
-    expect((wrapper.vm as any).showSettings).toBe(true);
-    expect((wrapper.vm as any).showAddModal).toBe(false);
+    expect((testWrapper.vm as any).showSettings).toBe(true);
+    expect((testWrapper.vm as any).showAddModal).toBe(false);
+
+    // Clean up
+    testWrapper.unmount();
   });
 
   it("shows recommendation modal when recommend button is clicked", async () => {
     // Initial state check
-    expect((wrapper.vm as any).showRecommendModal).toBe(false);
-
-    // Click recommend button
-    await wrapper.findAll("button")[1].trigger("click");
+    expect((wrapper.vm as any).showRecommendModal).toBe(false);    // Click recommend button - find by text content
+    const buttons = wrapper.findAll("button");
+    const recommendButton = buttons.find(button => button.text().includes("Recommend"));
+    expect(recommendButton).toBeDefined();
+    await recommendButton!.trigger("click");
 
     // Check if recommendation modal is shown
     expect((wrapper.vm as any).showRecommendModal).toBe(true);
@@ -348,19 +384,18 @@ describe("App.vue", () => {
     expect((wrapper.vm as any).recommendResults).toBeNull();
     expect((wrapper.vm as any).recommendQuery).toBe("");
     expect((wrapper.vm as any).recommendError).toBe("");
-  });
-
-  it("shows question modal when ask AI button is clicked", async () => {
+  });  it("shows question modal when ask AI button is clicked", async () => {
     // Initial state check
     expect((wrapper.vm as any).showQuestionModal).toBe(false);
 
-    // Click ask AI button
-    await wrapper.findAll("button")[2].trigger("click");
+    // Click ask AI button - find by text content
+    const buttons = wrapper.findAll("button");
+    const askAiButton = buttons.find(button => button.text().includes("Ask AI"));
+    expect(askAiButton).toBeDefined();
+    await askAiButton!.trigger("click");
 
     // Check if question modal is shown
-    expect((wrapper.vm as any).showQuestionModal).toBe(true);
-
-    // Check if state is reset
+    expect((wrapper.vm as any).showQuestionModal).toBe(true);    // Check if state is reset
     expect((wrapper.vm as any).questionResponse).toBe("");
     expect((wrapper.vm as any).questionText).toBe("");
     expect((wrapper.vm as any).questionError).toBe("");

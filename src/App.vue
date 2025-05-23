@@ -10,6 +10,7 @@ import WineRecommendModal from "./components/WineRecommendModal.vue";
 import RecommendationsResultModal from "./components/RecommendationsResultModal.vue";
 import WineQuestionModal from "./components/WineQuestionModal.vue";
 import WineQuestionResultModal from "./components/WineQuestionResultModal.vue";
+import LoginDexieModal from "./components/LoginDexieModal.vue";
 import type {
   RecommendationHistoryEntry,
   RecommendationOption,
@@ -21,11 +22,19 @@ import {
   PlusIcon,
   StarIcon,
   QuestionMarkCircleIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
 import { askWineQuestion } from "./services/openai-questions";
 import { settingsService } from "./services/settings";
+import {
+  initializeDexieCloudLogin,
+  userInteraction,
+  currentUser,
+  isLoggedIn,
+  logout,
+} from "./services/dexie-cloud-login";
 
 // Modal visibility state
 const showSettings = ref(false);
@@ -75,6 +84,9 @@ onMounted(() => {
 
   // Set up listener for system theme changes
   themeCleanup = settingsService.setupThemeListener();
+
+  // Initialize Dexie Cloud login service
+  initializeDexieCloudLogin();
 });
 
 onUnmounted(() => {
@@ -215,6 +227,17 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
   showQuestionModal.value = false;
   showQuestionResultModal.value = true;
 }
+
+/**
+ * Handle logout from Dexie Cloud
+ */
+async function handleLogout(): Promise<void> {
+  try {
+    await logout();
+  } catch (error) {
+    console.error("Failed to logout:", error);
+  }
+}
 </script>
 
 <template>
@@ -224,8 +247,7 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
     <!-- Header Section -->
     <div
       class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 space-y-3 md:space-y-0"
-    >
-      <div class="flex items-center">
+    >      <div class="flex items-center">
         <img
           src="./assets/cellar-sense.svg"
           alt="CellarSense Logo"
@@ -236,14 +258,15 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
             class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent"
           >
             CellarSense
-          </h1>
-          <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mt-1">
+          </h1>          <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mt-1">
             Snap a label, let OpenAI parse it — CellarSense catalogues your
             cellar in seconds.
+            <span v-if="isLoggedIn && currentUser?.value" class="text-purple-600 dark:text-purple-400 font-medium">
+              • Cloud sync enabled ({{ currentUser.value.email || currentUser.value.name || 'User' }})
+            </span>
           </p>
         </div>
-      </div>
-      <div class="flex flex-wrap gap-2 md:gap-3">
+      </div>      <div class="flex flex-wrap gap-2 md:gap-3">
         <button
           @click="showSettings = true"
           class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
@@ -252,6 +275,14 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
           <Cog6ToothIcon class="h-5 w-5 md:mr-2" />
           <span class="hidden md:inline">Settings</span>
         </button>
+        <button
+          v-if="isLoggedIn"
+          @click="handleLogout"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="Logout from Cloud"
+        >
+          <ArrowRightOnRectangleIcon class="h-5 w-5 md:mr-2" />
+          <span class="hidden md:inline">Logout</span>        </button>
         <button
           @click="handleShowRecommend"
           class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
@@ -322,13 +353,15 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       :error="questionError"
       @submit-question="handleSubmitQuestion"
       @show-past-question="handleShowPastQuestion"
-    />
-    <WineQuestionResultModal
+    />    <WineQuestionResultModal
       :show="showQuestionResultModal"
       :response="questionResponse"
       :question="questionText"
       @close="showQuestionResultModal = false"
     />
+
+    <!-- Dexie Cloud Login Modal -->
+    <LoginDexieModal :ui="userInteraction" />
   </div>
 </template>
 

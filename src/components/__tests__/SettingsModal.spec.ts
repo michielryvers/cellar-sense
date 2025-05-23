@@ -9,9 +9,17 @@ import { nextTick } from "vue";
 type AnyWrapper = ReturnType<typeof mount<any>>;
 
 // Mock dependencies
+vi.mock("../../services/dexie-db", () => ({
+  db: {
+    wines: {
+      toArray: vi.fn(),
+    },
+  },
+}));
+
 vi.mock("../../services/settings", () => ({
   settingsService: {
-    dexieCloudUrl: "test-cloud-url",
+    dexieCloudUrl: "https://test-cloud-url.dexie.cloud",
     openAiKey: "test-key",
     openAiModel: "gpt-4.1",
     themePreference: "system",
@@ -95,11 +103,10 @@ describe("SettingsModal.vue", () => {
     await wrapper.setProps({ show: false });
     expect(wrapper.find("h2").exists()).toBe(false);
   });
-
   it("initializes settings from the settingsService", () => {
     const settings = (wrapper.vm as any).settings;
     expect(settings.OPENAI_SDK_KEY).toBe("test-key");
-    expect(settings.DEXIE_CLOUD_URL).toBe("test-cloud-url");
+    expect(settings.DEXIE_CLOUD_URL).toBe("https://test-cloud-url.dexie.cloud");
     expect(settings.OPENAI_MODEL).toBe("gpt-4.1");
   });
 
@@ -144,13 +151,11 @@ describe("SettingsModal.vue", () => {
       .findAll("button")
       .find((btn) => btn.text().trim() === "Save");
 
-    await saveButton?.trigger("click");
-
-    // Verify events and service call
+    await saveButton?.trigger("click");    // Verify events and service call
     expect(wrapper.emitted()).toHaveProperty("save");
     expect(wrapper.emitted()).toHaveProperty("update:show");
     expect(settingsService.setAllSettings).toHaveBeenCalledWith({
-      DEXIE_CLOUD_URL: "test-cloud-url",
+      DEXIE_CLOUD_URL: "https://test-cloud-url.dexie.cloud",
       OPENAI_SDK_KEY: "new-key",
       OPENAI_MODEL: "gpt-4.1",
       THEME_PREFERENCE: "system", // Add the THEME_PREFERENCE parameter
