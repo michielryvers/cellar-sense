@@ -1,196 +1,158 @@
-# Cellar-Sense AR Overlay – Implementation Roadmap
+# Cellar‑Sense AR Overlay — LLM‑Ready Implementation Plan
 
-**Goal.** Extend the CellarSens app that lets users _store_ a bottle of wine by snapping a picture of their rack (with AprilTag stickers as fiducials) and later _retrieve_ the bottle with an on‑camera overlay that points to its exact slot.
-The stack: **apriltag-js** in a Web Worker for real‑time tag detection (≥ 20 FPS @ 480 p), **Three.js** for 3‑D overlay, **Pinia** for state, and **Dexie** for offline bottle metadata.
+> **Mission statement for the agent**
+> “You are a coding assistant working in the _michielryvers/cellar‑sense_ repository. Your goal is to give the user an offline‑first Vue 3 PWA that detects AprilTags stuck on a wine rack and projects a 3‑D arrow onto the live camera preview to guide retrieval of a bottle.”
 
----
+The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM tickets_. A ticket is the smallest chunk you should attempt in a single conversation or pull‑request. Every ticket lists:
 
-## 0  Bootstrap the tool‑chain (½ day)
-
-| What                             | How                                                                                                                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Install deps**                 | `npm i three @pinia/plugin-persist apriltag-js-standalone vite-plugin-wasm vite-plugin-top-level-await`                                                                   |
-| **Serve WASM & threads**         | Register `vite-plugin-wasm` + `vite-plugin-top-level-await` in `vite.config.ts`; add COOP/COEP headers (or use `coi-serviceworker`) so SharedArrayBuffer & PThreads work. |
-| **Reuse camera permission flow** | Leverage the existing photo‑capture flow in your PWA.                                                                                                                     |
+- **Inputs** you must gather or assume.
+- **Output artifacts** the LLM must produce (code, config, tests, docs).
+- **“Done when …” acceptance criteria**.
 
 ---
 
-## 1  Folder / layout conventions
+## Phase 0  Bootstrap the tool‑chain _(½ day)_
 
-```
-src/
- ├─ vision/                  # NEW domain layer
- │   ├─ TagDetectorWorker.ts # Apriltag in WASM
- │   ├─ kalman.ts            # optional jitter smoother
- │   └─ usePoseStore.ts      # Pinia store for (R,t), FPS…
- ├─ components/
- │   ├─ CameraView.vue       # <video> preview
- │   ├─ OverlayCanvas.vue    # Three.js overlay
- ├─ pages/
- │   └─ LocateBottle.vue     # retrieval wizard
-```
-
-Vision state lives in **Pinia** so any component can tap in without prop‑drilling.
+| Ticket  | Work                                                                                                                    | Inputs for LLM            | Output                                    | Done when                                                               |
+| ------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| **0.1** | Add deps: <br>`three` `@pinia/plugin-persist` `apriltag-js-standalone` `vite-plugin-wasm` `vite-plugin-top-level-await` | `package.json`            | `pnpm i` patch commit                     | lock‑file updated, `pnpm build` succeeds                                |
+| **0.2** | Enable WASM+threads                                                                                                     | `vite.config.ts`          | plugin lines + COOP/COEP header injection | Dev server serves COI headers; `SharedArrayBuffer` available in console |
+| **0.3** | Camera permission flow reuse                                                                                            | existing user‑media logic | refactor into `useCamera.ts` composable   | Tests pass, no regression in label‑capture feature                      |
 
 ---
 
-## 2  `TagDetectorWorker.ts`  (\~150 LoC)
+## Phase 1  Real‑time Tag Detection Worker
+
+| Ticket  | Work                                                                           | Inputs                                      | Output                            | Done when                                            |
+| ------- | ------------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------- | ---------------------------------------------------- |
+| **1.1** | Scaffold `src/vision/TagDetectorWorker.ts`                                     | sample snippet below                        | worker file + Vite entry          | `npm run dev` logs first detection on desktop webcam |
+| **1.2** | Define `Detection` TS interface `{id:number,R:number[],t:number[],err:number}` | n/a                                         | interface + export                | TS passes                                            |
+| **1.3** | Unit‑test worker with recorded MP4                                             | `/test/worker.spec.ts` video blob (fixture) | Vitest that counts detections ≥ 1 | CI green                                             |
+
+> **Snippet** (guidance only, LLM may rewrite)
+>
+> ```ts
+> import init, { ApriltagDetector } from "apriltag-js-standalone";
+> await init();
+> const det = new ApriltagDetector({ family: "tag36h11" });
+> self.onmessage = async ({ data }: { data: FrameMsg }) => {
+>   const res = det.detect(data.bitmap, data.intrinsics);
+>   self.postMessage(res);
+>   data.bitmap.close();
+> };
+> ```
+
+---
+
+## Phase 2  Camera Preview Component
+
+| Ticket  | Work                                                  | Inputs                    | Output                      | Done when                                            |
+| ------- | ----------------------------------------------------- | ------------------------- | --------------------------- | ---------------------------------------------------- |
+| **2.1** | Create `<CameraView.vue>`                             | `useCamera.ts` composable | component file              | Renders live video @ 640×480                         |
+| **2.2** | Pump frames to worker through OffscreenCanvas         | TagDetectorWorker ref     | code in component           | Devtools shows ≤ 16 ms main‑thread blocking time     |
+| **2.3** | Bind worker output into Pinia store `usePoseStore.ts` | Tag interface             | Pinia module + subscription | Reactive state shows `pose` objects updating ≥ 15 Hz |
+
+---
+
+## Phase 3  3‑D Overlay Rendering
+
+| Ticket  | Work                                          | Inputs                     | Output              | Done when                                                 |
+| ------- | --------------------------------------------- | -------------------------- | ------------------- | --------------------------------------------------------- |
+| **3.1** | Scaffold `<OverlayCanvas.vue>` (Three.js)     | pose store                 | canvas component    | Overlay transparent canvas sits over video                |
+| **3.2** | Convert worker pose to Three.js camera matrix | sample math                | code update         | Virtual axes line up with printed tag in manual desk test |
+| **3.3** | Draw arrow or quad at `targetPoint`           | `targetPoint` reactive var | arrow helper / Mesh | Moving camera keeps arrow anchored to tag                 |
+
+---
+
+## Phase 4  Mapping & Persistence
+
+| Ticket  | Work                                | Inputs                       | Output                   | Done when                                             |
+| ------- | ----------------------------------- | ---------------------------- | ------------------------ | ----------------------------------------------------- |
+| **4.1** | Tap‑to‑store coordinate capture     | Three.js raycaster; UI event | function in `CameraView` | Console logs `{tagId,localX,Y,Z}`                     |
+| **4.2** | Save bottle record to Dexie         | existing DB schema           | DB migration + DAO       | Record persists & survives reload                     |
+| **4.3** | Retrieval wizard `LocateBottle.vue` | list of bottles              | page component           | Selecting bottle opens overlay with `targetPoint` set |
+
+---
+
+## Phase 5  Pose Smoothing & Multi‑tag Fusion
+
+| Ticket  | Work                                                  | Output       | Done when                                 |
+| ------- | ----------------------------------------------------- | ------------ | ----------------------------------------- |
+| **5.1** | JS Kalman filter wrapper around OpenCV.js             | `kalman.ts`  | Jitter amplitude ≤ 2 px on stress test    |
+| **5.2** | Multi‑tag selection logic (lowest reprojection error) | store update | Overlay stays stable when 2+ tags visible |
+
+---
+
+## Phase 6  UX Polish
+
+| Ticket  | Work                          | Output               | Done when                         |
+| ------- | ----------------------------- | -------------------- | --------------------------------- |
+| **6.1** | FPS & quality badge component | `<StatsBadge.vue>`   | Badge visible, colours match spec |
+| **6.2** | Lost‑tracking overlay         | `<TrackingLost.vue>` | Shows after 500 ms no pose        |
+| **6.3** | Settings toggle               | Pinia preference     | Checkbox disables overlay logic   |
+
+---
+
+## Phase 7  Testing & CI
+
+| Ticket  | Work                                     | Output        | Done when            |
+| ------- | ---------------------------------------- | ------------- | -------------------- |
+| **7.1** | Add Vitest for Kalman module             | unit test     | Passes locally & CI  |
+| **7.2** | GitHub Action: `pnpm test && pnpm build` | workflow YAML | CI turns green on PR |
+
+---
+
+## Phase 8  Performance & Deployment
+
+| Ticket  | Work                                             | Output          | Done when                                  |
+| ------- | ------------------------------------------------ | --------------- | ------------------------------------------ |
+| **8.1** | Frame‑skipping heuristic (process every N frame) | config param    | Bottlenecked devices keep ≥ 10 FPS overlay |
+| **8.2** | Pre‑cache `apriltag.wasm`                        | vite‑pwa config | Offline first launch < 2 s                 |
+| **8.3** | Production build on GitHub Pages                 | workflow step   | Live demo URL shared                       |
+
+---
+
+### Glossary / Data structures
 
 ```ts
-import initWasm, { ApriltagDetector } from "apriltag-js-standalone";
+// Pinia pose store
+interface PoseState {
+  viewMatrix: number[]; // 4×4 column‑major
+  timestamp: number; // ms
+  fps: number;
+  quality: "green" | "amber" | "red";
+}
 
-await initWasm();
-const detector = new ApriltagDetector({ family: "tag36h11" });
-
-self.onmessage = async ({ data }) => {
-  const { bitmap, intrinsics } = data as {
-    bitmap: ImageBitmap;
-    intrinsics: number[];
-  };
-  const detections = detector.detect(bitmap, intrinsics); // [{id,R,t,corners,err}]
-  self.postMessage(detections);
-  bitmap.close();
-};
-```
-
-Compile as a web‑worker entry via `new URL('./TagDetectorWorker.ts', import.meta.url)`.
-
----
-
-## 3  `CameraView.vue`
-
-```vue
-<template>
-  <video ref="video" class="w-full h-auto" playsinline muted />
-</template>
-
-<script setup lang="ts">
-const video = ref<HTMLVideoElement>();
-const worker = new Worker(
-  new URL("@/vision/TagDetectorWorker.ts", import.meta.url)
-);
-const poseStore = usePoseStore();
-
-onMounted(async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment", width: 640, height: 480 },
-  });
-  video.value!.srcObject = stream;
-  await video.value!.play();
-
-  const off = new OffscreenCanvas(640, 480);
-  const ctx = off.getContext("2d")!;
-
-  const loop = () => {
-    ctx.drawImage(video.value!, 0, 0, 640, 480);
-    off.convertToBlob({ type: "image/jpeg" }).then(async (blob) => {
-      const bmp = await createImageBitmap(blob);
-      worker.postMessage({ bitmap: bmp, intrinsics: poseStore.cameraK }, [bmp]);
-    });
-    requestAnimationFrame(loop);
-  };
-  loop();
-});
-
-worker.onmessage = (e) => poseStore.update(e.data);
-</script>
-```
-
-_Off‑thread detection keeps UI fluid; passing `ImageBitmap` is zero‑copy._
-
----
-
-## 4  `OverlayCanvas.vue`
-
-```vue
-<template><canvas ref="overlay" class="absolute inset-0" /></template>
-
-<script setup lang="ts">
-import {
-  PerspectiveCamera,
-  Scene,
-  WebGLRenderer,
-  ArrowHelper,
-  Vector3,
-} from "three";
-const { pose, targetPoint } = storeToRefs(usePoseStore());
-
-const scene = new Scene();
-const cam3d = new PerspectiveCamera(64, 640 / 480, 0.05, 5);
-const arrow = new ArrowHelper(new Vector3(0, 0, -1), new Vector3(), 0.2);
-scene.add(arrow);
-
-onMounted(() => {
-  const renderer = new WebGLRenderer({ canvas: overlay.value!, alpha: true });
-  renderer.setSize(640, 480);
-
-  const render = () => {
-    if (pose.value) cam3d.matrix.fromArray(pose.value.viewMatrix).invert();
-    arrow.position.copy(targetPoint.value); // where the bottle lives
-    cam3d.updateMatrixWorld();
-    renderer.render(scene, cam3d);
-    requestAnimationFrame(render);
-  };
-  render();
-});
-</script>
+interface BottleRecord {
+  id: string;
+  wine: string;
+  stored: Date;
+  tagId: number;
+  localX: number;
+  localY: number;
+  localZ: number;
+}
 ```
 
 ---
 
-## 5  Persisting cell positions
+### Timeline at a glance (optional guideline)
 
-| Moment              | Action                                                                                                                                                          |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Store bottle**    | After pose available, cast a ray through the user’s tap → intersect virtual rack plane → save `{tagId, localX, localY, localZ}` in Dexie alongside bottle data. |
-| **Retrieve bottle** | Load record, compute world position `worldPt = tagPose * localPt`, feed to `OverlayCanvas` so the arrow/quad points exactly there.                              |
-
-Because coordinates are _relative to the nearest tag_, the system stays robust to viewpoint changes.
-
----
-
-## 6  Smoothing & multi‑tag fusion
-
-- Per‑axis **Kalman filter** on translation to kill jitter.
-- If multiple tags visible, keep the pose with the _lowest reprojection error_ or fuse by averaging in SE‑3.
+```
+W1  Phase 0‑1 complete, first tag detection
+W2  Phase 2 live preview + Pinia pose
+W3  Phase 3 overlay aligns with tag
+W4  Phase 4 mapping & retrieval
+W5  Clean‑ups, UX, CI, deploy
+```
 
 ---
 
-## 7  UX polish
+## How to use this document
 
-- FPS + tag‑quality badge (green ≥ 15 FPS, amber 5 – 15, red < 5).
-- “Lost tracking” overlay when no tag seen for > 500 ms.
-- Settings toggle to enable/disable AR overlay.
+1. **Pick the next open ticket** and feed its _Work_ + _Inputs_ to the LLM.
+2. Ask the LLM to emit the **exact Output artifacts** and a minimal PR message.
+3. Validate against the _Done when_ bullet.
+4. Merge, then move to the subsequent ticket.
 
----
-
-## 8  Testing & CI
-
-- **Vitest**: pipe a recorded 480 p video through the worker and assert detection counts.
-- GitHub Actions runs tests on every push.
-- Pre‑cache `apriltag.wasm` via Vite‑PWA so offline launches are instant.
-
----
-
-## 9  Performance checklist
-
-| Tip                                         | Reason                                              |
-| ------------------------------------------- | --------------------------------------------------- |
-| Serve with **crossOriginIsolated**          | unlocks SharedArrayBuffer → multi‑threaded Apriltag |
-| Down‑scale to **480 p**                     | detection cost ∝ pixels; keeps ≥ 20 FPS             |
-| Send every 2nd frame to worker              | prevents UI jank on low‑end phones                  |
-| `<video>` with `image-rendering: pixelated` | crisp preview despite down‑scale                    |
-
----
-
-## Suggested timeline
-
-| Order | Milestone                                    |
-| ----- | -------------------------------------------- |
-| **1** | Deps compiled, camera preview runs under COI |
-| **2** | Tag detection & pose visualised              |
-| **3** | Tap‑to‑store workflow, Dexie persistence     |
-| **4** | Retrieval overlay, Kalman smoothing          |
-| **5** | Edge cases, UX polish, CI, docs              |
-
----
+> 🥂 With this breakdown an LLM can work incrementally, producing review‑able PRs without context over‑load or scope creep.
