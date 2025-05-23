@@ -159,7 +159,7 @@ async function handleSubmit(): Promise<void> {
         front: cleanFormData.images.front,
         back: cleanFormData.images.back,
       },
-      sources: cleanFormData.sources?.filter(s => s.trim() !== ''),
+      sources: cleanFormData.sources?.filter((s) => s.trim() !== ""),
     };
 
     await updateWine(wineData);
@@ -223,8 +223,12 @@ function handleOutsideClick(e: MouseEvent): void {
           <!-- Form Sections -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Basic Info Section -->
-            <div class="lg:col-span-1 space-y-6 bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-              <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <div
+              class="lg:col-span-1 space-y-6 bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
+            >
+              <h3
+                class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+              >
                 Basic Information
               </h3>
               <div class="space-y-6">
@@ -305,7 +309,9 @@ function handleOutsideClick(e: MouseEvent): void {
             <div class="lg:col-span-2 grid grid-cols-1 gap-8">
               <!-- Region & Classification -->
               <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-                <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+                <h3
+                  class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+                >
                   Region & Classification
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -345,7 +351,9 @@ function handleOutsideClick(e: MouseEvent): void {
 
               <!-- Technical Details -->
               <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-                <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+                <h3
+                  class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+                >
                   Technical Details
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -404,13 +412,15 @@ function handleOutsideClick(e: MouseEvent): void {
           <!-- Grapes Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-semibold text-gray-800 text-lg">
+              <h3
+                class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+              >
                 Grape Varieties
               </h3>
               <button
                 type="button"
                 @click="addGrape"
-                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors shadow-sm"
               >
                 <PlusIcon class="h-5 w-5 mr-2" />
                 Add Grape
@@ -420,12 +430,12 @@ function handleOutsideClick(e: MouseEvent): void {
               <div
                 v-for="(grape, index) in formData.grapes"
                 :key="'grape-' + index"
-                class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm"
               >
                 <input
                   type="text"
                   v-model="grape.name"
-                  class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Grape variety"
                 />
                 <input
@@ -433,13 +443,13 @@ function handleOutsideClick(e: MouseEvent): void {
                   v-model="grape.percentage"
                   min="0"
                   max="100"
-                  class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-24 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="%"
                 />
                 <button
                   type="button"
                   @click="removeGrape(index)"
-                  class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                  class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 >
                   <MinusCircleIcon class="h-5 w-5" />
                 </button>
@@ -450,13 +460,15 @@ function handleOutsideClick(e: MouseEvent): void {
           <!-- Vinification Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-semibold text-gray-800 text-lg">
+              <h3
+                class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+              >
                 Vinification Steps
               </h3>
               <button
                 type="button"
                 @click="addVinificationStep"
-                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors shadow-sm"
               >
                 <PlusIcon class="h-5 w-5 mr-2" />
                 Add Step
@@ -466,24 +478,24 @@ function handleOutsideClick(e: MouseEvent): void {
               <div
                 v-for="(step, index) in formData.vinification"
                 :key="'vinification-' + index"
-                class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm"
               >
                 <input
                   type="text"
                   v-model="step.step"
-                  class="w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-1/3 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Step name"
                 />
                 <input
                   type="text"
                   v-model="step.description"
-                  class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Description"
                 />
                 <button
                   type="button"
                   @click="removeVinificationStep(index)"
-                  class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                  class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 >
                   <MinusCircleIcon class="h-5 w-5" />
                 </button>
@@ -496,11 +508,15 @@ function handleOutsideClick(e: MouseEvent): void {
             <!-- Nose -->
             <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-gray-800 text-lg">Nose</h3>
+                <h3
+                  class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+                >
+                  Nose
+                </h3>
                 <button
                   type="button"
                   @click="addTastingNote('nose')"
-                  class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                  class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors shadow-sm"
                 >
                   <PlusIcon class="h-5 w-5 mr-2" />
                   Add Note
@@ -510,18 +526,18 @@ function handleOutsideClick(e: MouseEvent): void {
                 <div
                   v-for="(note, index) in formData.tasting_notes.nose"
                   :key="'nose-' + index"
-                  class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                  class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm"
                 >
                   <input
                     type="text"
                     v-model="formData.tasting_notes.nose[index]"
-                    class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Nose characteristic"
                   />
                   <button
                     type="button"
                     @click="removeTastingNote('nose', index)"
-                    class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                   >
                     <MinusCircleIcon class="h-5 w-5" />
                   </button>
@@ -532,11 +548,15 @@ function handleOutsideClick(e: MouseEvent): void {
             <!-- Palate -->
             <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-gray-800 text-lg">Palate</h3>
+                <h3
+                  class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+                >
+                  Palate
+                </h3>
                 <button
                   type="button"
                   @click="addTastingNote('palate')"
-                  class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                  class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors shadow-sm"
                 >
                   <PlusIcon class="h-5 w-5 mr-2" />
                   Add Note
@@ -546,18 +566,18 @@ function handleOutsideClick(e: MouseEvent): void {
                 <div
                   v-for="(note, index) in formData.tasting_notes.palate"
                   :key="'palate-' + index"
-                  class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                  class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm"
                 >
                   <input
                     type="text"
                     v-model="formData.tasting_notes.palate[index]"
-                    class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Palate characteristic"
                   />
                   <button
                     type="button"
                     @click="removeTastingNote('palate', index)"
-                    class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                   >
                     <MinusCircleIcon class="h-5 w-5" />
                   </button>
@@ -568,7 +588,11 @@ function handleOutsideClick(e: MouseEvent): void {
 
           <!-- Inventory Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">Inventory</h3>
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
+              Inventory
+            </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label
@@ -622,7 +646,9 @@ function handleOutsideClick(e: MouseEvent): void {
 
           <!-- Drinking Window Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Drinking Window
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -678,7 +704,9 @@ function handleOutsideClick(e: MouseEvent): void {
 
           <!-- Additional Details Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Additional Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -699,17 +727,19 @@ function handleOutsideClick(e: MouseEvent): void {
               </div>
             </div>
           </div>
-          
+
           <!-- Sources Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-semibold text-gray-800 text-lg">
+              <h3
+                class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+              >
                 Data Sources
               </h3>
               <button
                 type="button"
                 @click="addSource"
-                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                class="inline-flex items-center px-4 py-2 rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors shadow-sm"
               >
                 <PlusIcon class="h-5 w-5 mr-2" />
                 Add Source
@@ -717,25 +747,29 @@ function handleOutsideClick(e: MouseEvent): void {
             </div>
             <div class="space-y-3">
               <div
-                v-for="(source, index) in formData.sources"
+                v-for="(source, index) in formData.sources || []"
                 :key="'source-' + index"
-                class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                class="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm"
               >
                 <input
                   type="url"
-                  v-model="formData.sources[index]"
-                  class="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  :value="formData.sources && formData.sources[index]"
+                  @input="(e) => formData.sources && (formData.sources[index] = (e.target as HTMLInputElement)?.value)"
+                  class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="https://example.com"
                 />
                 <button
                   type="button"
                   @click="removeSource(index)"
-                  class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                  class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 >
                   <MinusCircleIcon class="h-5 w-5" />
                 </button>
               </div>
-              <div v-if="!formData.sources || formData.sources.length === 0" class="text-gray-500 dark:text-gray-400 italic">
+              <div
+                v-if="!formData.sources || formData.sources.length === 0"
+                class="text-gray-500 dark:text-gray-400 italic"
+              >
                 No data sources added
               </div>
             </div>

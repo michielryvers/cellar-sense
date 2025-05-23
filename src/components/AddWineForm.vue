@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { XMarkIcon, SignalSlashIcon } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { addWineQuery } from "../services/dexie-db";
-import { resizeImageToBlob, createImagePreview } from "../utils/imageHelpers";
+import { createImagePreview } from "../utils/imageHelpers";
 import { isOnline$ } from "../services/network-status";
 import { Subscription } from "rxjs";
 import { getDistinctPurchaseLocations } from "../services/dexie-db";
@@ -178,9 +178,7 @@ async function handleSubmit(): Promise<void> {
 
   // If online, check for API key. If offline, we can still queue without a key
   if (isOnline.value) {
-    console.time("🔑 check-api-key");
     const apiKey = settingsService.openAiKey;
-    console.timeEnd("🔑 check-api-key");
     if (!apiKey) {
       error.value = "OpenAI API key is required";
       emit("missing-api-key");
@@ -193,7 +191,6 @@ async function handleSubmit(): Promise<void> {
   await nextTick(); // 2️⃣ make sure spinner is painted
 
   try {
-    console.time("💾 addWineQuery");
     await addWineQuery({
       frontImage: frontLabelFile.value as Blob,
       backImage: backLabelFile.value as Blob | null,
@@ -202,7 +199,6 @@ async function handleSubmit(): Promise<void> {
       needsResize: true,
       status: "pending",
     });
-    console.timeEnd("💾 addWineQuery");
 
     emit("wine-added");
     closeModal();
@@ -211,7 +207,6 @@ async function handleSubmit(): Promise<void> {
     console.error("Error adding wine query:", err);
   } finally {
     isLoading.value = false;
-    console.timeEnd("🟣 handleSubmit — total"); // 3️⃣ stop overall timer
   }
 }
 </script>
@@ -254,7 +249,7 @@ async function handleSubmit(): Promise<void> {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Front Label -->
             <div
-              class="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
+              class="bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:hover:border-gray-500 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
             >
               <label
                 for="frontLabelImage"
@@ -278,7 +273,7 @@ async function handleSubmit(): Promise<void> {
               >
                 <div
                   v-if="!frontPreview"
-                  class="flex flex-col items-center justify-center h-40 bg-white rounded-lg"
+                  class="flex flex-col items-center justify-center h-40 bg-white dark:bg-gray-700 rounded-lg"
                 >
                   <svg
                     class="w-12 h-12 text-gray-400 dark:text-gray-500"
@@ -308,7 +303,7 @@ async function handleSubmit(): Promise<void> {
 
             <!-- Back Label -->
             <div
-              class="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
+              class="bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:hover:border-gray-500 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors"
             >
               <label
                 for="backLabelImage"
@@ -332,7 +327,7 @@ async function handleSubmit(): Promise<void> {
               >
                 <div
                   v-if="!backPreview"
-                  class="flex flex-col items-center justify-center h-40 bg-white rounded-lg"
+                  class="flex flex-col items-center justify-center h-40 bg-white dark:bg-gray-700 rounded-lg"
                 >
                   <svg
                     class="w-12 h-12 text-gray-400 dark:text-gray-500"

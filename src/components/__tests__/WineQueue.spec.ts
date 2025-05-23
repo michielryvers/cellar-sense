@@ -6,7 +6,7 @@ import WineQueue from "../WineQueue.vue";
 import * as networkService from "../../services/network-status";
 import * as openaiService from "../../services/openai-background";
 import * as dbService from "../../services/dexie-db";
-import { WineQuery } from "../../shared/types/WineQuery";
+import type { WineQuery } from "../../shared/types";
 
 // Type for the Vue wrapper
 type AnyWrapper = ReturnType<typeof mount<any>>;
@@ -18,15 +18,23 @@ interface SubscriptionMock {
 
 // Mock Blob to base64 conversion function
 const mockBase64Data = "data:image/jpeg;base64,mockImageData";
-// Mock File Reader for blob conversion
-global.FileReader = vi.fn().mockImplementation(function() {
-  this.readAsDataURL = vi.fn().mockImplementation(() => {
-    setTimeout(() => {
-      this.onload({ target: { result: mockBase64Data } });
-    }, 0);
-  });
-  return this;
-});
+// Proper FileReader mock with static properties
+vi.stubGlobal(
+  "FileReader",
+  vi.fn(function FileReaderMock(this: any) {
+    this.readAsDataURL = vi.fn(() => {
+      setTimeout(() => {
+        if (this.onload) this.onload({ target: { result: mockBase64Data } });
+      }, 0);
+    });
+    this.onload = null;
+    this.onerror = null;
+    return this;
+  }) as unknown as typeof FileReader
+);
+(global.FileReader as any).EMPTY = 0;
+(global.FileReader as any).LOADING = 1;
+(global.FileReader as any).DONE = 2;
 
 describe("WineQueue.vue", () => {
   let wrapper: AnyWrapper;
@@ -99,9 +107,10 @@ describe("WineQueue.vue", () => {
     // Set online status
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
+
     // Trigger the processingStatus$ callback with missing API key
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: false,
       isOnline: true,
@@ -120,9 +129,10 @@ describe("WineQueue.vue", () => {
     // Set online status and API key
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
+
     // Trigger the processingStatus$ callback with running state
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: true,
       isOnline: true,
@@ -139,19 +149,20 @@ describe("WineQueue.vue", () => {
     // Set online status, API key and not running
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: false,
       isOnline: true,
       hasApiKey: true,
     });
-    
+
     // Trigger the wineQueries$ callback with wine queries
     const mockWineQueries: WineQuery[] = [
       {
         id: 1,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         backImage: null,
         bottles: 2,
         needsResize: false,
@@ -160,7 +171,7 @@ describe("WineQueue.vue", () => {
         status: "pending",
       },
     ];
-    
+
     // Direct call to simulate async behavior
     const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
     await wineQueriesCallback(mockWineQueries);
@@ -175,14 +186,15 @@ describe("WineQueue.vue", () => {
     // Set online status, API key and not running
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: false,
       isOnline: true,
       hasApiKey: true,
     });
-    
+
     // Trigger the wineQueries$ callback with empty array
     const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
     await wineQueriesCallback([]);
@@ -197,19 +209,20 @@ describe("WineQueue.vue", () => {
     // Setup for multiple wines
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: false,
       isOnline: true,
       hasApiKey: true,
     });
-    
+
     // Trigger the wineQueries$ callback with multiple wine queries
     const mockWineQueries: WineQuery[] = [
       {
         id: 1,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         backImage: null,
         bottles: 2,
         needsResize: false,
@@ -219,7 +232,7 @@ describe("WineQueue.vue", () => {
       },
       {
         id: 2,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         backImage: null,
         bottles: 1,
         needsResize: false,
@@ -228,13 +241,15 @@ describe("WineQueue.vue", () => {
         status: "pending",
       },
     ];
-    
+
     const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
     await wineQueriesCallback(mockWineQueries);
     await nextTick();
 
     // Verify status message
-    expect(wrapper.find("span").text()).toBe("2 wines waiting to be processed.");
+    expect(wrapper.find("span").text()).toBe(
+      "2 wines waiting to be processed."
+    );
     expect(wrapper.find(".bg-purple-50").exists()).toBe(true);
   });
 
@@ -242,19 +257,20 @@ describe("WineQueue.vue", () => {
     // Setup with wine queries
     const isOnlineCallback = isOnlineMock.subscribe.mock.calls[0][0];
     isOnlineCallback(true);
-    
-    const processingStatusCallback = processingStatusMock.subscribe.mock.calls[0][0];
+
+    const processingStatusCallback =
+      processingStatusMock.subscribe.mock.calls[0][0];
     processingStatusCallback({
       isRunning: false,
       isOnline: true,
       hasApiKey: true,
     });
-    
+
     // Create mock wine queries with frontBase64 already added
     const mockWineQueries = [
       {
         id: 1,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         frontBase64: mockBase64Data,
         backImage: null,
         bottles: 2,
@@ -264,25 +280,27 @@ describe("WineQueue.vue", () => {
         status: "pending",
       },
     ];
-    
+
     // Simulate loading completed
-    wrapper.vm.loading = false;
-    wrapper.vm.wineQueries = mockWineQueries;
+    const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
+    await wineQueriesCallback(mockWineQueries);
+
+    await flushPromises();
     await nextTick();
 
     // Verify the list is rendered
     const listItems = wrapper.findAll("li");
     expect(listItems.length).toBe(1);
-    
+
     // Check image
     const img = wrapper.find("img");
     expect(img.exists()).toBe(true);
     expect(img.attributes("src")).toBe(mockBase64Data);
     expect(img.attributes("alt")).toBe("Front label");
-    
+
     // Check purchase location
     expect(wrapper.find(".font-medium").text()).toBe("Test Wine Shop");
-    
+
     // Check bottles info
     expect(wrapper.find(".text-xs").text()).toContain("Bottles: 2");
   });
@@ -292,7 +310,7 @@ describe("WineQueue.vue", () => {
     const mockWineQueries = [
       {
         id: 1,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         frontBase64: mockBase64Data,
         backImage: null,
         bottles: 1,
@@ -301,7 +319,7 @@ describe("WineQueue.vue", () => {
         status: "pending",
       },
     ];
-    
+
     const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
     await wineQueriesCallback(mockWineQueries);
     await nextTick();
@@ -315,7 +333,7 @@ describe("WineQueue.vue", () => {
     const mockWineQueries = [
       {
         id: 1,
-        frontImage: new Blob([''], { type: 'image/jpeg' }),
+        frontImage: new Blob([""], { type: "image/jpeg" }),
         backImage: null,
         bottles: 2,
         needsResize: false,
@@ -324,14 +342,14 @@ describe("WineQueue.vue", () => {
         status: "pending",
       },
     ];
-    
+
     // Simulate the conversion happening
-    // Note: We're testing the functionality more than implementation details
-    wrapper.vm.loading = false;
-    wrapper.vm.wineQueries = [{
-      ...mockWineQueries[0],
-      frontBase64: mockBase64Data
-    }];
+    const wineQueriesCallback = wineQueriesMock.subscribe.mock.calls[0][0];
+    await wineQueriesCallback([
+      { ...mockWineQueries[0], frontBase64: mockBase64Data },
+    ]);
+
+    await flushPromises();
     await nextTick();
 
     // Check if the image is displayed with the base64 data
@@ -343,16 +361,16 @@ describe("WineQueue.vue", () => {
   it("cleans up subscriptions when unmounted", async () => {
     // Simulate some subscriptions
     const mockUnsubscribe = vi.fn();
-    
+
     // Replace wineQueries$ mock to return a function directly
     wineQueriesMock.subscribe.mockReturnValue(mockUnsubscribe);
-    
+
     // Create a new wrapper to trigger the subscription setup
     const newWrapper = mount(WineQueue);
-    
+
     // Unmount the component
     newWrapper.unmount();
-    
+
     // Check that mockUnsubscribe was called
     // Since we can't directly test private component variables,
     // we infer from the mock that the cleanup should happen

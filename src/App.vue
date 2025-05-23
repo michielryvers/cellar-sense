@@ -34,7 +34,7 @@ import {
   dexieLoginButtonText,
   dexieLoginError,
   dexieLoginInputPlaceholder,
-  dexieLoginCallback
+  dexieLoginCallback,
 } from "./services/dexie-db";
 
 // Modal visibility state
@@ -82,7 +82,7 @@ let themeCleanup: (() => void) | null = null;
 onMounted(() => {
   // Apply theme on initial load
   settingsService.applyTheme();
-  
+
   // Set up listener for system theme changes
   themeCleanup = settingsService.setupThemeListener();
 });
@@ -227,9 +227,9 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
 }
 
 /**
- * Handle Dexie login submission
+ * Handle Dexie login submission (accepts optional value for type compatibility)
  */
-function handleDexieLogin(value: string): void {
+function handleDexieLogin(value?: string): void {
   if (dexieLoginCallback.value) {
     dexieLoginCallback.value(value);
   }
@@ -246,7 +246,9 @@ function handleDexieCancel(): void {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+  <div
+    class="container mx-auto px-4 py-8 dark:bg-gray-900 min-h-screen transition-colors duration-300"
+  >
     <!-- Header Section -->
     <div
       class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 space-y-3 md:space-y-0"
@@ -365,7 +367,7 @@ function handleDexieCancel(): void {
       :error="dexieLoginError"
       :input-placeholder="dexieLoginInputPlaceholder"
       @update:show="showDexieLoginModal = $event"
-      @confirm="(value) => { dexieLoginCallback?.(value) }"
+      @confirm="handleDexieLogin"
       @cancel="dexieLoginCallback?.()"
     />
   </div>

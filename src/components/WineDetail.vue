@@ -56,15 +56,19 @@ const vinificationSteps = computed(() => {
 const consumptionHistory = computed(() => {
   if (!props.wine.consumptions) return [];
   // Sort by date descending (most recent first)
-  return [...props.wine.consumptions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
+  return [...props.wine.consumptions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 });
 
 const averageRating = computed(() => {
-  if (!props.wine.consumptions || props.wine.consumptions.length === 0) return 0;
-  
-  const sum = props.wine.consumptions.reduce((acc, consumption) => acc + consumption.rating, 0);
+  if (!props.wine.consumptions || props.wine.consumptions.length === 0)
+    return 0;
+
+  const sum = props.wine.consumptions.reduce(
+    (acc, consumption) => acc + consumption.rating,
+    0
+  );
   return Math.round((sum / props.wine.consumptions.length) * 10) / 10; // Round to 1 decimal place
 });
 
@@ -138,7 +142,11 @@ useEscapeKey(closeModal);
             v-if="frontImageUrl || backImageUrl"
             class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
           >
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">Labels</h3>
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
+              Labels
+            </h3>
             <div class="flex flex-wrap gap-6">
               <div v-if="frontImageUrl" class="relative group">
                 <img
@@ -167,55 +175,94 @@ useEscapeKey(closeModal);
 
           <!-- Basic Info Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Basic Information
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
                   >Appellation</span
                 >
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.appellation || "-" }}</p>
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.appellation || "-" }}
+                </p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Region</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.region || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Region</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.region || "-" }}
+                </p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Color</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.color || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Color</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.color || "-" }}
+                </p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Price</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.price || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Price</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.price || "-" }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- Technical Details Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Technical Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Volume</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.volume || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Volume</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.volume || "-" }}
+                </p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Alcohol</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.alcohol || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Alcohol</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.alcohol || "-" }}
+                </p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Farming</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.farming || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Farming</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.farming || "-" }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- Grape Varieties Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Grape Varieties
             </h3>
             <div class="flex flex-wrap gap-2">
@@ -237,19 +284,29 @@ useEscapeKey(closeModal);
 
           <!-- Vinification Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Vinification Process
             </h3>
             <div class="space-y-3">
               <div
                 v-for="step in vinificationSteps"
                 :key="step.step"
-                class="bg-white p-4 rounded-lg shadow-sm"
+                class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm"
               >
-                <span class="font-medium text-purple-800">{{ step.step }}</span>
-                <p class="text-gray-700 dark:text-gray-300 mt-1">{{ step.description }}</p>
+                <span
+                  class="font-medium text-purple-800 dark:text-purple-300"
+                  >{{ step.step }}</span
+                >
+                <p class="text-gray-700 dark:text-gray-300 mt-1">
+                  {{ step.description }}
+                </p>
               </div>
-              <div v-if="!vinificationSteps.length" class="text-gray-500">
+              <div
+                v-if="!vinificationSteps.length"
+                class="text-gray-500 dark:text-gray-400"
+              >
                 No vinification details available
               </div>
             </div>
@@ -257,41 +314,51 @@ useEscapeKey(closeModal);
 
           <!-- Tasting Notes Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Tasting Notes
             </h3>
             <div class="space-y-4">
               <div>
-                <h4 class="text-sm font-medium text-gray-600 mb-2">Nose</h4>
+                <h4
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2"
+                >
+                  Nose
+                </h4>
                 <div class="flex flex-wrap gap-2">
                   <span
                     v-for="note in wine.tasting_notes?.nose"
                     :key="note"
-                    class="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm"
+                    class="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-300 rounded-full text-sm"
                   >
                     {{ note }}
                   </span>
                   <span
                     v-if="!wine.tasting_notes?.nose?.length"
-                    class="text-gray-500"
+                    class="text-gray-500 dark:text-gray-400"
                   >
                     No nose characteristics specified
                   </span>
                 </div>
               </div>
               <div>
-                <h4 class="text-sm font-medium text-gray-600 mb-2">Palate</h4>
+                <h4
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2"
+                >
+                  Palate
+                </h4>
                 <div class="flex flex-wrap gap-2">
                   <span
                     v-for="note in wine.tasting_notes?.palate"
                     :key="note"
-                    class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm"
+                    class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 rounded-full text-sm"
                   >
                     {{ note }}
                   </span>
                   <span
                     v-if="!wine.tasting_notes?.palate?.length"
-                    class="text-gray-500"
+                    class="text-gray-500 dark:text-gray-400"
                   >
                     No palate characteristics specified
                   </span>
@@ -302,96 +369,160 @@ useEscapeKey(closeModal);
 
           <!-- Drinking Window Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Drinking Window
             </h3>
             <div class="flex items-center justify-center space-x-8">
               <div class="text-center">
-                <span class="text-sm font-medium text-gray-600 block mb-1"
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-1"
                   >From</span
                 >
-                <span class="text-2xl font-bold text-purple-800">{{
-                  wine.drink_from || "-"
-                }}</span>
+                <span
+                  class="text-2xl font-bold text-purple-800 dark:text-purple-300"
+                  >{{ wine.drink_from || "-" }}</span
+                >
               </div>
-              <div class="h-px w-12 bg-gray-300"></div>
+              <div class="h-px w-12 bg-gray-300 dark:bg-gray-600"></div>
               <div class="text-center">
-                <span class="text-sm font-medium text-gray-600 block mb-1"
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-1"
                   >Until</span
                 >
-                <span class="text-2xl font-bold text-purple-800">{{
-                  wine.drink_until || "-"
-                }}</span>
+                <span
+                  class="text-2xl font-bold text-purple-800 dark:text-purple-300"
+                  >{{ wine.drink_until || "-" }}</span
+                >
               </div>
             </div>
           </div>
 
           <!-- Additional Details Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Additional Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Sulfites</span>
-                <p class="text-gray-800 dark:text-gray-200">{{ wine.sulfites || "-" }}</p>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Sulfites</span
+                >
+                <p class="text-gray-800 dark:text-gray-200">
+                  {{ wine.sulfites || "-" }}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <!-- Sources Section -->
-          <div v-if="wine.sources && wine.sources.length > 0" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
+          <div
+            v-if="wine.sources && wine.sources.length > 0"
+            class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
+          >
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
               Data Sources
             </h3>
             <div class="space-y-2">
-              <div v-for="(source, index) in wine.sources" :key="'source-' + index">
-                <a 
-                  :href="source" 
-                  target="_blank" 
+              <div
+                v-for="(source, index) in wine.sources"
+                :key="'source-' + index"
+              >
+                <a
+                  :href="source"
+                  target="_blank"
                   rel="noopener noreferrer"
                   class="text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center group"
                 >
                   <span class="truncate">{{ source }}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-blue-500 group-hover:text-blue-700" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 ml-1 text-blue-500 group-hover:text-blue-700"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                    />
+                    <path
+                      d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"
+                    />
                   </svg>
                 </a>
               </div>
             </div>
           </div>
-          
+
           <!-- Consumption History Section -->
-          <div v-if="consumptionHistory.length > 0" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+          <div
+            v-if="consumptionHistory.length > 0"
+            class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
+          >
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-semibold text-gray-800 text-lg">
+              <h3
+                class="font-semibold text-gray-800 dark:text-gray-200 text-lg"
+              >
                 Consumption History
               </h3>
               <div v-if="averageRating > 0" class="flex items-center">
-                <span class="text-sm font-medium text-gray-600 mr-2">Average Rating:</span>
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400 mr-2"
+                  >Average Rating:</span
+                >
                 <div class="flex items-center">
-                  <span class="text-lg font-semibold text-yellow-600 mr-1">{{ averageRating }}</span>
-                  <StarIcon class="h-5 w-5 text-yellow-400" />
+                  <span
+                    class="text-lg font-semibold text-yellow-600 dark:text-yellow-400 mr-1"
+                    >{{ averageRating }}</span
+                  >
+                  <StarIcon
+                    class="h-5 w-5 text-yellow-400 dark:text-yellow-300"
+                  />
                 </div>
               </div>
             </div>
-            
+
             <div class="space-y-4">
-              <div v-for="(consumption, index) in consumptionHistory" :key="index" class="bg-white p-4 rounded-lg shadow-sm">
+              <div
+                v-for="(consumption, index) in consumptionHistory"
+                :key="index"
+                class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm"
+              >
                 <div class="flex justify-between items-start">
                   <div>
                     <div class="flex items-center mb-2">
                       <div class="flex">
-                        <StarIcon v-for="i in consumption.rating" :key="i" class="h-4 w-4 text-yellow-400" />
-                        <StarIconOutline v-for="i in 5-consumption.rating" :key="i+consumption.rating" class="h-4 w-4 text-gray-300" />
+                        <StarIcon
+                          v-for="i in consumption.rating"
+                          :key="i"
+                          class="h-4 w-4 text-yellow-400 dark:text-yellow-300"
+                        />
+                        <StarIconOutline
+                          v-for="i in 5 - consumption.rating"
+                          :key="i + consumption.rating"
+                          class="h-4 w-4 text-gray-300 dark:text-gray-600"
+                        />
                       </div>
-                      <span class="text-xs text-gray-500 ml-2">
+                      <span
+                        class="text-xs text-gray-500 dark:text-gray-400 ml-2"
+                      >
                         {{ new Date(consumption.date).toLocaleDateString() }}
                       </span>
                     </div>
-                    <p v-if="consumption.notes" class="text-gray-700 dark:text-gray-300">{{ consumption.notes }}</p>
-                    <p v-else class="text-gray-500 italic text-sm">No notes provided</p>
+                    <p
+                      v-if="consumption.notes"
+                      class="text-gray-700 dark:text-gray-300"
+                    >
+                      {{ consumption.notes }}
+                    </p>
+                    <p v-else class="text-gray-500 italic text-sm">
+                      No notes provided
+                    </p>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import DrinkWineModal from "../DrinkWineModal.vue";
 import { nextTick } from "vue";
 import * as useEscapeKeyModule from "../../composables/useEscapeKey";
@@ -42,7 +42,7 @@ const mockWine = {
 };
 
 describe("DrinkWineModal.vue", () => {
-  let wrapper;
+  let wrapper: VueWrapper<any>;
 
   beforeEach(() => {
     // Reset mocks
@@ -103,7 +103,7 @@ describe("DrinkWineModal.vue", () => {
     // Hover over the fourth star
     await starButtons[3].trigger("mouseenter");
     expect((wrapper.vm as any).hoverRating).toBe(4);
-    
+
     // Call the handler directly to simulate mouseleave
     (wrapper.vm as any).handleStarLeave();
     expect((wrapper.vm as any).hoverRating).toBe(0);
@@ -149,10 +149,12 @@ describe("DrinkWineModal.vue", () => {
 
     // Verify emitted events
     expect(wrapper.emitted()).toHaveProperty("save");
-    const saveEvent = wrapper.emitted().save[0][0];
-    expect(saveEvent.rating).toBe(expectedConsumption.rating);
-    expect(saveEvent.notes).toBe(expectedConsumption.notes);
-    expect(saveEvent.date).toBeDefined(); // Date might differ slightly due to ISO string format
+    const emitted = wrapper.emitted().save;
+    expect(emitted).toBeTruthy();
+    const saveEvent = emitted && emitted[0] && (emitted[0] as unknown[])[0];
+    expect((saveEvent as any).rating).toBe(expectedConsumption.rating);
+    expect((saveEvent as any).notes).toBe(expectedConsumption.notes);
+    expect((saveEvent as any).date).toBeDefined(); // Date might differ slightly due to ISO string format
 
     // Verify form was reset
     expect((wrapper.vm as any).rating).toBe(0);
@@ -196,7 +198,7 @@ describe("DrinkWineModal.vue", () => {
   it("closes modal when escape key is pressed", async () => {
     // Get the escape key handler that was registered
     const useEscapeKeySpy = vi.spyOn(useEscapeKeyModule, "useEscapeKey");
-    
+
     // Simulate the mounting phase and capture the callback
     const component = mount(DrinkWineModal, {
       props: {
@@ -210,15 +212,15 @@ describe("DrinkWineModal.vue", () => {
 
     // The first argument passed to useEscapeKey should be the closeModal function
     const closeModalFunc = useEscapeKeySpy.mock.calls[0][0];
-    
+
     // Call the captured function directly to simulate pressing escape
     closeModalFunc();
-    
+
     // Verify the modal was closed
     expect(component.emitted()).toHaveProperty("update:show");
     expect(component.emitted()["update:show"][0]).toEqual([false]);
     expect(component.emitted()).toHaveProperty("cancel");
-    
+
     component.unmount();
   });
 
@@ -227,14 +229,14 @@ describe("DrinkWineModal.vue", () => {
     // Set values in the form
     await wrapper.findAll("button[type='button']")[3].trigger("click");
     await wrapper.find("textarea").setValue("Test notes");
-    
+
     // Verify values are set
     expect((wrapper.vm as any).rating).toBe(4);
     expect((wrapper.vm as any).notes).toBe("Test notes");
-    
+
     // Close the modal
     await wrapper.find("button[aria-label='Close modal']").trigger("click");
-    
+
     // Verify form was reset
     expect((wrapper.vm as any).rating).toBe(0);
     expect((wrapper.vm as any).notes).toBe("");

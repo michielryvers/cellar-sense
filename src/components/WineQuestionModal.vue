@@ -70,7 +70,9 @@ function handleShowPast(entry: WineQuestionEntry) {
       class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 dark:from-gray-900/90 dark:via-gray-900/90 dark:to-purple-900/90 backdrop-blur-sm"
       @click.self="closeModal"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-8 relative">
+      <div
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-8 relative"
+      >
         <div class="flex justify-between items-center mb-4">
           <h2
             class="text-xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent"
@@ -79,7 +81,7 @@ function handleShowPast(entry: WineQuestionEntry) {
           </h2>
           <button
             @click="closeModal"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-700 p-1 rounded-lg transition-colors"
             aria-label="Close modal"
           >
             <XMarkIcon class="h-6 w-6" />
@@ -116,16 +118,21 @@ function handleShowPast(entry: WineQuestionEntry) {
               @click="handleShowPast(entry)"
             >
               <div class="flex items-center gap-2">
-                <span class="block w-2 h-2 rounded-full bg-purple-300 dark:bg-purple-500"></span>
+                <span
+                  class="block w-2 h-2 rounded-full bg-purple-300 dark:bg-purple-500"
+                ></span>
                 <span
                   class="font-medium text-purple-800 dark:text-purple-300 text-sm line-clamp-1"
                   >{{ entry.question }}</span
                 >
-                <span class="ml-auto text-xs text-gray-400 dark:text-gray-500">{{
-                  new Date(entry.createdAt).toLocaleString()
-                }}</span>
+                <span
+                  class="ml-auto text-xs text-gray-400 dark:text-gray-500"
+                  >{{ new Date(entry.createdAt).toLocaleString() }}</span
+                >
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+              <div
+                class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2"
+              >
                 {{
                   entry.response.substring(0, 100) +
                   (entry.response.length > 100 ? "..." : "")
@@ -135,7 +142,9 @@ function handleShowPast(entry: WineQuestionEntry) {
           </ul>
         </div>
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Ask a question about your wine collection:
           </label>
           <textarea
@@ -146,7 +155,9 @@ function handleShowPast(entry: WineQuestionEntry) {
             :disabled="loading"
             required
           />
-          <div v-if="error" class="text-red-600 dark:text-red-400 text-sm">{{ error }}</div>
+          <div v-if="error" class="text-red-600 dark:text-red-400 text-sm">
+            {{ error }}
+          </div>
           <button
             type="submit"
             :disabled="loading || !userQuestion.trim()"

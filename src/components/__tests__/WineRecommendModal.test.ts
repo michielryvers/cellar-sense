@@ -15,19 +15,19 @@ vi.mock("@heroicons/vue/24/outline", () => ({
 
 // Mock liveQuery and recommendations service
 const unsubscribeMock = vi.fn();
-const mockSubscribe = vi.fn(cb => {
-  cb.next([]);  // Default to empty array
+const mockSubscribe = vi.fn((cb) => {
+  cb.next([]); // Default to empty array
   return { unsubscribe: unsubscribeMock };
 });
 
 vi.mock("dexie", () => ({
   liveQuery: vi.fn(() => ({
-    subscribe: mockSubscribe
-  }))
+    subscribe: mockSubscribe,
+  })),
 }));
 
 vi.mock("../../services/recommendations-idb", () => ({
-  getAllRecommendations: vi.fn().mockResolvedValue([])
+  getAllRecommendations: vi.fn().mockResolvedValue([]),
 }));
 
 // Sample recommendation history entries for testing
@@ -64,10 +64,10 @@ const sampleRecommendations: RecommendationHistoryEntry[] = [
 
 describe("WineRecommendModal", () => {
   let wrapper: ReturnType<typeof mount<typeof WineRecommendModal>>;
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSubscribe.mockImplementation(cb => {
+    mockSubscribe.mockImplementation((cb) => {
       cb.next([]);
       return { unsubscribe: unsubscribeMock };
     });
@@ -90,7 +90,9 @@ describe("WineRecommendModal", () => {
     });
 
     expect(wrapper.find(".rounded-xl").exists()).toBe(true);
-    expect(wrapper.find("h2").text()).toContain("Ask for a Wine Recommendation");
+    expect(wrapper.find("h2").text()).toContain(
+      "Ask for a Wine Recommendation"
+    );
     expect(wrapper.find("textarea").exists()).toBe(true);
     expect(wrapper.find("button[type='submit']").exists()).toBe(true);
   });
@@ -178,18 +180,18 @@ describe("WineRecommendModal", () => {
 
     // Click toggle button
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
-    
+
     // Check if toggle state changed
     expect((wrapper.vm as any).showPast).toBe(true);
   });
 
   it("shows 'no recommendations' message when past recommendations are empty", async () => {
     // Setup with empty recommendations
-    mockSubscribe.mockImplementation(cb => {
+    mockSubscribe.mockImplementation((cb) => {
       cb.next([]);
       return { unsubscribe: unsubscribeMock };
     });
-    
+
     wrapper = mount(WineRecommendModal, {
       props: {
         show: true,
@@ -204,17 +206,17 @@ describe("WineRecommendModal", () => {
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
     await nextTick();
-    
+
     expect(wrapper.text()).toContain("No previous recommendations yet.");
   });
 
   it("displays past recommendations when available", async () => {
     // Setup with sample recommendations
-    mockSubscribe.mockImplementation(cb => {
+    mockSubscribe.mockImplementation((cb) => {
       cb.next(sampleRecommendations);
       return { unsubscribe: unsubscribeMock };
     });
-    
+
     wrapper = mount(WineRecommendModal, {
       props: {
         show: true,
@@ -229,11 +231,13 @@ describe("WineRecommendModal", () => {
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
     await nextTick();
-    
+
     // Check if recommendations are displayed
     const listItems = wrapper.findAll("li");
     expect(listItems.length).toBe(2);
-    expect(listItems[0].text()).toContain("Looking for a red wine to go with steak");
+    expect(listItems[0].text()).toContain(
+      "Looking for a red wine to go with steak"
+    );
     expect(listItems[0].text()).toContain("Cabernet Sauvignon");
   });
 
@@ -252,7 +256,7 @@ describe("WineRecommendModal", () => {
     const testQuery = "I need a wine for pasta dinner";
     await wrapper.find("textarea").setValue(testQuery);
     await wrapper.find("form").trigger("submit");
-    
+
     expect(wrapper.emitted()["submit-query"]).toBeTruthy();
     expect(wrapper.emitted()["submit-query"][0]).toEqual([testQuery]);
   });
@@ -271,17 +275,17 @@ describe("WineRecommendModal", () => {
 
     await wrapper.find("textarea").setValue("   ");
     await wrapper.find("form").trigger("submit");
-    
+
     expect(wrapper.emitted()["submit-query"]).toBeFalsy();
   });
 
   it("emits show-past-result event when clicking on a past recommendation", async () => {
     // Setup with sample recommendations
-    mockSubscribe.mockImplementation(cb => {
+    mockSubscribe.mockImplementation((cb) => {
       cb.next(sampleRecommendations);
       return { unsubscribe: unsubscribeMock };
     });
-    
+
     wrapper = mount(WineRecommendModal, {
       props: {
         show: true,
@@ -296,12 +300,14 @@ describe("WineRecommendModal", () => {
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
     await nextTick();
-    
+
     // Click on the first recommendation
     await wrapper.findAll("li")[0].trigger("click");
-    
+
     expect(wrapper.emitted()["show-past-result"]).toBeTruthy();
-    expect(wrapper.emitted()["show-past-result"][0][0]).toEqual(sampleRecommendations[0]);
+    expect((wrapper.emitted()["show-past-result"] as any[])[0][0]).toEqual(
+      sampleRecommendations[0]
+    );
   });
 
   it("displays proper button text and state when loading", async () => {

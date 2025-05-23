@@ -22,7 +22,9 @@ vi.mock("../../services/settings", () => ({
 }));
 
 vi.mock("../../services/importExport", () => ({
-  exportWinesToJSON: vi.fn().mockResolvedValue(new Blob(["test"], { type: "application/json" })),
+  exportWinesToJSON: vi
+    .fn()
+    .mockResolvedValue(new Blob(["test"], { type: "application/json" })),
   importWinesFromJSON: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -33,7 +35,7 @@ const originalRevokeObjectURL = URL.revokeObjectURL;
 
 describe("SettingsModal.vue", () => {
   let wrapper: AnyWrapper;
-  let mockAnchorElement: { href: string; download: string; click: Function; };
+  let mockAnchorElement: { href: string; download: string; click: Function };
 
   beforeEach(() => {
     // Mock DOM methods
@@ -109,10 +111,10 @@ describe("SettingsModal.vue", () => {
 
   it("emits update:show event when cancel button is clicked", async () => {
     // Find the button with "Cancel" text
-    const cancelButton = wrapper.findAll("button").find(
-      (btn) => btn.text() === "Cancel"
-    );
-    
+    const cancelButton = wrapper
+      .findAll("button")
+      .find((btn) => btn.text() === "Cancel");
+
     expect(cancelButton).toBeDefined();
     await cancelButton?.trigger("click");
     expect(wrapper.emitted()).toHaveProperty("update:show");
@@ -138,12 +140,12 @@ describe("SettingsModal.vue", () => {
     // Modify a setting
     await wrapper.find("#openaiKeyInput").setValue("new-key");
     // Click save
-    const saveButton = wrapper.findAll("button").find(
-      (btn) => btn.text().trim() === "Save"
-    );
-    
+    const saveButton = wrapper
+      .findAll("button")
+      .find((btn) => btn.text().trim() === "Save");
+
     await saveButton?.trigger("click");
-    
+
     // Verify events and service call
     expect(wrapper.emitted()).toHaveProperty("save");
     expect(wrapper.emitted()).toHaveProperty("update:show");
@@ -158,52 +160,54 @@ describe("SettingsModal.vue", () => {
   it("reloads the page if Dexie cloud URL change requires refresh", async () => {
     // Mock the return value to indicate refresh needed
     (settingsService.setAllSettings as any).mockReturnValueOnce(true);
-    
+
     // Mock window.location.reload
     const originalLocation = window.location;
     // @ts-ignore - We need to mock the location
     delete window.location;
     // @ts-ignore - Create a new mockable object
     window.location = { reload: vi.fn() };
-    
+
     // Modify settings and save
     await wrapper.find("#DEXIE_CLOUD_URL").setValue("new-cloud-url");
-    
+
     // Click save
-    const saveButton = wrapper.findAll("button").find(
-      (btn) => btn.text().trim() === "Save"
-    );
-    
+    const saveButton = wrapper
+      .findAll("button")
+      .find((btn) => btn.text().trim() === "Save");
+
     await saveButton?.trigger("click");
-    
+
     // Verify reload was called
     expect(window.location.reload).toHaveBeenCalled();
-    
+
     // Restore original
-    window.location = originalLocation;
+    window.location = originalLocation as any;
   });
 
   it("handles data export", async () => {
     // Find and click export button
-    const exportButton = wrapper.findAll("button").find(
-      (btn) => btn.text().includes("Export Data")
-    );
-    
+    const exportButton = wrapper
+      .findAll("button")
+      .find((btn) => btn.text().includes("Export Data"));
+
     await exportButton?.trigger("click");
-    
+
     // Verify the export service was called
     expect(importExport.exportWinesToJSON).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalled();
-    
+
     // Verify a download was initiated
     expect(mockAnchorElement.href).toBe("blob:test-url");
-    expect(mockAnchorElement.download).toMatch(/cellar-sense-backup-\d{4}-\d{2}-\d{2}\.json/);
+    expect(mockAnchorElement.download).toMatch(
+      /cellar-sense-backup-\d{4}-\d{2}-\d{2}\.json/
+    );
     expect(mockAnchorElement.click).toHaveBeenCalled();
     expect(document.body.appendChild).toHaveBeenCalled();
-    
+
     // Fast-forward timers
     vi.runAllTimers();
-    
+
     // Check cleanup
     expect(document.body.removeChild).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test-url");
@@ -211,36 +215,36 @@ describe("SettingsModal.vue", () => {
 
   it("handles data import", async () => {
     // Create a mock file
-    const mockFile = new File(['[]'], 'backup.json', {
-      type: 'application/json'
+    const mockFile = new File(["[]"], "backup.json", {
+      type: "application/json",
     });
-    
+
     // Mock alert since JSDOM doesn't support it
     const originalAlert = window.alert;
     window.alert = vi.fn();
-    
+
     // Mock file.text method
-    Object.defineProperty(mockFile, 'text', {
-      value: vi.fn().mockResolvedValue('[]')
+    Object.defineProperty(mockFile, "text", {
+      value: vi.fn().mockResolvedValue("[]"),
     });
-    
+
     // Find import input and trigger change
     const importInput = wrapper.find('input[type="file"]');
-    
+
     // Mock files property
-    Object.defineProperty(importInput.element, 'files', {
+    Object.defineProperty(importInput.element, "files", {
       value: [mockFile],
-      writable: true
+      writable: true,
     });
-    
-    await importInput.trigger('change');
-    
+
+    await importInput.trigger("change");
+
     // Wait for the async operation
     await flushPromises();
-    
+
     // Verify the import function was called
     expect(importExport.importWinesFromJSON).toHaveBeenCalled();
-    
+
     // Restore original
     window.alert = originalAlert;
   });
@@ -249,26 +253,26 @@ describe("SettingsModal.vue", () => {
     // Set loading state
     (wrapper.vm as any).isExporting = true;
     await nextTick();
-    
+
     // Verify loading indicator is shown
-    const exportButton = wrapper.findAll("button").find(
-      (btn) => btn.text().includes("Exporting…")
-    );
-    
+    const exportButton = wrapper
+      .findAll("button")
+      .find((btn) => btn.text().includes("Exporting…"));
+
     expect(exportButton).toBeDefined();
-    expect(wrapper.find('.animate-spin').exists()).toBe(true);
+    expect(wrapper.find(".animate-spin").exists()).toBe(true);
   });
 
   it("displays import loading state", async () => {
     // Set loading state
     (wrapper.vm as any).isImporting = true;
     await nextTick();
-    
+
     // Find the label that contains the import button
-    const importLabel = wrapper.find('label.w-full');
+    const importLabel = wrapper.find("label.w-full");
     // Get the span inside the label that shows the text
-    const importSpan = importLabel.find('span');
-    
+    const importSpan = importLabel.find("span");
+
     // Verify loading indicator is shown
     expect(importSpan.text()).toContain("Importing…");
   });

@@ -20,13 +20,15 @@ export async function importWinesFromJSON(data: any) {
     const url = URL.createObjectURL(backupBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `cellar-sense-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `cellar-sense-backup-${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
 
     // Handle Dexie export format
     if (data instanceof Blob) {
-      await importDB(data, { clearTablesBeforeImport: true });
+      await importDB(data);
     } else {
       throw new Error("Invalid import data format - expected Blob");
     }

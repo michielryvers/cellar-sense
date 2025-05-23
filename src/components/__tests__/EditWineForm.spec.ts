@@ -84,17 +84,25 @@ describe("EditWineForm.vue", () => {
   });
 
   it("initializes with the provided wine data", () => {
-    expect(wrapper.find("#wineName").element.value).toBe(mockWine.name);
-    expect(wrapper.find("#wineVintner").element.value).toBe(mockWine.vintner);
-    expect(wrapper.find("#wineVintage").element.value).toBe(mockWine.vintage.toString());
-    expect(wrapper.find("#wineColor").element.value).toBe(mockWine.color);
+    expect((wrapper.find("#wineName").element as HTMLInputElement).value).toBe(
+      mockWine.name
+    );
+    expect(
+      (wrapper.find("#wineVintner").element as HTMLInputElement).value
+    ).toBe(mockWine.vintner);
+    expect(
+      (wrapper.find("#wineVintage").element as HTMLInputElement).value
+    ).toBe(mockWine.vintage.toString());
+    expect((wrapper.find("#wineColor").element as HTMLInputElement).value).toBe(
+      mockWine.color
+    );
   });
 
   it("updates formData when inputs change", async () => {
     const nameInput = wrapper.find("#wineName");
     await nameInput.setValue("Updated Wine Name");
     expect((wrapper.vm as any).formData.name).toBe("Updated Wine Name");
-    
+
     const vintnerInput = wrapper.find("#wineVintner");
     await vintnerInput.setValue("Updated Vintner");
     expect((wrapper.vm as any).formData.vintner).toBe("Updated Vintner");
@@ -105,7 +113,9 @@ describe("EditWineForm.vue", () => {
     // Call the method directly
     (wrapper.vm as any).addGrape();
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.grapes.length).toBe(initialGrapesCount + 1);
+    expect((wrapper.vm as any).formData.grapes.length).toBe(
+      initialGrapesCount + 1
+    );
     expect((wrapper.vm as any).formData.grapes[initialGrapesCount]).toEqual({
       name: "",
       percentage: 0,
@@ -117,7 +127,9 @@ describe("EditWineForm.vue", () => {
     // Call the method directly
     (wrapper.vm as any).removeGrape(0);
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.grapes.length).toBe(initialGrapesCount - 1);
+    expect((wrapper.vm as any).formData.grapes.length).toBe(
+      initialGrapesCount - 1
+    );
   });
 
   it("adds a vinification step when addVinificationStep is called", async () => {
@@ -125,7 +137,9 @@ describe("EditWineForm.vue", () => {
     // Call the method directly
     (wrapper.vm as any).addVinificationStep();
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.vinification.length).toBe(initialCount + 1);
+    expect((wrapper.vm as any).formData.vinification.length).toBe(
+      initialCount + 1
+    );
     expect((wrapper.vm as any).formData.vinification[initialCount]).toEqual({
       step: "",
       description: "",
@@ -135,9 +149,11 @@ describe("EditWineForm.vue", () => {
   it("adds a tasting note when addTastingNote is called", async () => {
     const initialNoseCount = mockWine.tasting_notes.nose.length;
     // Call the method directly
-    (wrapper.vm as any).addTastingNote('nose');
+    (wrapper.vm as any).addTastingNote("nose");
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.tasting_notes.nose.length).toBe(initialNoseCount + 1);
+    expect((wrapper.vm as any).formData.tasting_notes.nose.length).toBe(
+      initialNoseCount + 1
+    );
   });
 
   it("adds a source when addSource is called", async () => {
@@ -145,7 +161,9 @@ describe("EditWineForm.vue", () => {
     // Call the method directly
     (wrapper.vm as any).addSource();
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.sources.length).toBe(initialSourcesCount + 1);
+    expect((wrapper.vm as any).formData.sources.length).toBe(
+      initialSourcesCount + 1
+    );
     expect((wrapper.vm as any).formData.sources[initialSourcesCount]).toBe("");
   });
 
@@ -153,7 +171,7 @@ describe("EditWineForm.vue", () => {
     // Set error
     (wrapper.vm as any).error = "Test error message";
     await wrapper.vm.$nextTick();
-    
+
     // Check error display
     const errorDiv = wrapper.find(".bg-red-50");
     expect(errorDiv.exists()).toBe(true);
@@ -164,7 +182,7 @@ describe("EditWineForm.vue", () => {
     // Call closeModal directly
     (wrapper.vm as any).closeModal();
     await wrapper.vm.$nextTick();
-    
+
     // Verify event emission
     expect(wrapper.emitted("update:show")).toBeTruthy();
     expect(wrapper.emitted("update:show")![0]).toEqual([false]);
@@ -172,12 +190,15 @@ describe("EditWineForm.vue", () => {
 
   it("handles outside click to close the modal", async () => {
     // Create a mock event with target and currentTarget being the same
-    const mockEvent = { target: "test", currentTarget: "test" } as unknown as MouseEvent;
-    
+    const mockEvent = {
+      target: "test",
+      currentTarget: "test",
+    } as unknown as MouseEvent;
+
     // Call handleOutsideClick
     (wrapper.vm as any).handleOutsideClick(mockEvent);
     await wrapper.vm.$nextTick();
-    
+
     // Verify event emission
     expect(wrapper.emitted("update:show")).toBeTruthy();
     expect(wrapper.emitted("update:show")![0]).toEqual([false]);
@@ -185,12 +206,15 @@ describe("EditWineForm.vue", () => {
 
   it("doesn't close modal when clicking on inner elements", async () => {
     // Create a mock event with different target and currentTarget
-    const mockEvent = { target: "test1", currentTarget: "test2" } as unknown as MouseEvent;
-    
+    const mockEvent = {
+      target: "test1",
+      currentTarget: "test2",
+    } as unknown as MouseEvent;
+
     // Call handleOutsideClick
     (wrapper.vm as any).handleOutsideClick(mockEvent);
     await wrapper.vm.$nextTick();
-    
+
     // Verify no event emission
     expect(wrapper.emitted("update:show")).toBeFalsy();
   });
@@ -198,17 +222,17 @@ describe("EditWineForm.vue", () => {
   it("submits the form and calls updateWine with correct data", async () => {
     // Update a form field
     await wrapper.find("#wineName").setValue("Updated Wine");
-    
+
     // Submit the form
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
-    
+
     // Check if updateWine was called with the correct data
     expect(dbService.updateWine).toHaveBeenCalled();
     const updateWineArg = vi.mocked(dbService.updateWine).mock.calls[0][0];
     expect(updateWineArg.name).toBe("Updated Wine");
     expect(updateWineArg.id).toBe(mockWine.id);
-    
+
     // Verify events were emitted
     expect(wrapper.emitted("wine-updated")).toBeTruthy();
     expect(wrapper.emitted("update:show")).toBeTruthy();
@@ -217,21 +241,23 @@ describe("EditWineForm.vue", () => {
   it("handles errors during form submission", async () => {
     // Setup updateWine to reject
     const errorMessage = "Failed to update wine";
-    vi.mocked(dbService.updateWine).mockRejectedValueOnce(new Error(errorMessage));
-    
+    vi.mocked(dbService.updateWine).mockRejectedValueOnce(
+      new Error(errorMessage)
+    );
+
     // Submit the form
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
-    
+
     // Check if error state is updated
     expect((wrapper.vm as any).error).toBe(errorMessage);
     expect((wrapper.vm as any).isLoading).toBe(false);
-    
+
     // Verify error message is displayed
     const errorDiv = wrapper.find(".bg-red-50");
     expect(errorDiv.exists()).toBe(true);
     expect(errorDiv.text()).toBe(errorMessage);
-    
+
     // Verify no events were emitted
     expect(wrapper.emitted("wine-updated")).toBeFalsy();
     expect(wrapper.emitted("update:show")).toBeFalsy();
@@ -241,7 +267,7 @@ describe("EditWineForm.vue", () => {
     // Set loading state
     (wrapper.vm as any).isLoading = true;
     await wrapper.vm.$nextTick();
-    
+
     // Check submit button is disabled
     const submitButton = wrapper.find("button[type='submit']");
     expect(submitButton.attributes("disabled")).toBe("");
@@ -253,15 +279,19 @@ describe("EditWineForm.vue", () => {
     // Call the method directly
     (wrapper.vm as any).removeVinificationStep(0);
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.vinification.length).toBe(initialCount - 1);
+    expect((wrapper.vm as any).formData.vinification.length).toBe(
+      initialCount - 1
+    );
   });
 
   it("removes a tasting note when removeTastingNote is called", async () => {
     const initialCount = mockWine.tasting_notes.nose.length;
     // Call the method directly
-    (wrapper.vm as any).removeTastingNote('nose', 0);
+    (wrapper.vm as any).removeTastingNote("nose", 0);
     await wrapper.vm.$nextTick();
-    expect((wrapper.vm as any).formData.tasting_notes.nose.length).toBe(initialCount - 1);
+    expect((wrapper.vm as any).formData.tasting_notes.nose.length).toBe(
+      initialCount - 1
+    );
   });
 
   it("removes a source when removeSource is called", async () => {

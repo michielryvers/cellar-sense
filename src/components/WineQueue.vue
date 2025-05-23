@@ -51,8 +51,12 @@ onMounted(() => {
     // Process each query to convert blobs to base64 when needed
     const processedQueries = await Promise.all(
       queries.map(async (query) => {
-        // Add base64 representation of the front image for display
-        if (query.frontImage) {
+        // Only convert to base64 if not already present
+        if (
+          query.frontImage &&
+          !("frontBase64" in query) &&
+          !(query as any).frontBase64
+        ) {
           const frontBase64 = await blobToBase64(query.frontImage);
           return { ...query, frontBase64 };
         }

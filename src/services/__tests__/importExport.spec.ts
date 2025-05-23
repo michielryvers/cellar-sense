@@ -15,9 +15,9 @@ vi.mock("dexie-export-import", () => ({
 
 // Mock document methods for testing
 document.createElement = vi.fn().mockImplementation(() => ({
-  href: '',
-  download: '',
-  click: vi.fn()
+  href: "",
+  download: "",
+  click: vi.fn(),
 }));
 URL.createObjectURL = vi.fn().mockReturnValue("mock-url");
 URL.revokeObjectURL = vi.fn();
@@ -35,10 +35,10 @@ describe("importExport service", () => {
       const blob = await importExport.exportWinesToJSON();
       expect(blob).toBe(mockBlob);
       expect(exportDB).toHaveBeenCalled();
-      
+
       // Verify exportDB was called with the right parameters
       expect(exportDB).toHaveBeenCalledWith(
-        expect.anything(), 
+        expect.anything(),
         expect.objectContaining({ prettyJson: true })
       );
     });
@@ -48,19 +48,18 @@ describe("importExport service", () => {
     it("imports blob data using Dexie's importDB", async () => {
       const mockBlob = new Blob(["test"], { type: "application/json" });
       await importExport.importWinesFromJSON(mockBlob);
-      
+
       expect(importDB).toHaveBeenCalled();
-      
+
       // Verify importDB was called with the correct parameters
-      expect(importDB).toHaveBeenCalledWith(mockBlob, expect.objectContaining({
-        clearTablesBeforeImport: true
-      }));
+      expect(importDB).toHaveBeenCalledWith(mockBlob);
     });
 
     it("throws an error for invalid data format", async () => {
       // Try to import something that's not a Blob
-      await expect(importExport.importWinesFromJSON("invalid data"))
-        .rejects.toThrow("Invalid import data format - expected Blob");
+      await expect(
+        importExport.importWinesFromJSON("invalid data")
+      ).rejects.toThrow("Invalid import data format - expected Blob");
     });
   });
 });
