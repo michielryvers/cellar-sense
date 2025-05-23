@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   transition: background-color 0.3s ease;
 }
@@ -9,14 +11,12 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Apply filter to favicon in dark mode */
-@media (prefers-color-scheme: dark) {
-  link[rel="icon"] {
-    filter: invert(1) brightness(200%);
-  }
+/* Apply filter to favicon when html.dark class is present */
+html.dark link[rel="icon"] {
+  filter: invert(1) brightness(200%);
 }
 
-/* Override media query when explicitly set to light mode */
+/* Remove filter if html element does not have .dark class (explicitly light or system is light) */
 html:not(.dark) link[rel="icon"] {
   filter: none;
 }

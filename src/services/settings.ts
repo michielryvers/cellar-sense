@@ -30,7 +30,9 @@ const loadInitialSettings = (): Settings => {
     OPENAI_MODEL:
       localStorage.getItem("OPENAI_MODEL") || DEFAULT_SETTINGS.OPENAI_MODEL,
     THEME_PREFERENCE:
-      (localStorage.getItem("THEME_PREFERENCE") as Settings["THEME_PREFERENCE"]) || DEFAULT_SETTINGS.THEME_PREFERENCE,
+      (localStorage.getItem(
+        "THEME_PREFERENCE"
+      ) as Settings["THEME_PREFERENCE"]) || DEFAULT_SETTINGS.THEME_PREFERENCE,
   };
 };
 
@@ -62,8 +64,14 @@ const setAllSettings = (newSettings: Partial<Settings>): boolean => {
   Object.entries(newSettings).forEach(([key, value]) => {
     if (key in DEFAULT_SETTINGS && value !== undefined) {
       localStorage.setItem(key, value as string);
-      settingsReactive[key as keyof Settings] =
-        value as Settings[keyof Settings];
+
+      // Handle each setting with proper type checking
+      const typedKey = key as keyof Settings;
+      if (typedKey === "THEME_PREFERENCE") {
+        settingsReactive[typedKey] = value as Settings["THEME_PREFERENCE"];
+      } else {
+        settingsReactive[typedKey] = value as any;
+      }
 
       // Check if Dexie Cloud URL changed, which requires page reload
       if (key === "DEXIE_CLOUD_URL" && value !== prevCloudUrl) {
@@ -108,7 +116,7 @@ export const settingsService = {
   get openAiModel(): string {
     return settingsReactive.OPENAI_MODEL;
   },
-  
+
   get themePreference(): Settings["THEME_PREFERENCE"] {
     return settingsReactive.THEME_PREFERENCE;
   },
@@ -127,7 +135,7 @@ export const settingsService = {
   setOpenAiModel(model: string): void {
     setSetting("OPENAI_MODEL", model);
   },
-  
+
   setThemePreference(theme: Settings["THEME_PREFERENCE"]): void {
     setSetting("THEME_PREFERENCE", theme);
   },
@@ -141,34 +149,38 @@ export const settingsService = {
   getEffectiveTheme(): "light" | "dark" {
     const preference = settingsReactive.THEME_PREFERENCE;
     if (preference === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches 
-        ? "dark" 
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
         : "light";
     }
     return preference;
   },
-  
+
   applyTheme(): void {
     const theme = this.getEffectiveTheme();
-    if (theme === "dark") {
+    if (
+      theme === "dark" ||
+      (settingsReactive.THEME_PREFERENCE === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   },
-  
+
   setupThemeListener(): () => void {
     // Only set up listener if using system preference
     if (settingsReactive.THEME_PREFERENCE !== "system") {
       return () => {}; // Return empty cleanup function
     }
-    
+
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const listener = () => this.applyTheme();
-    
+
     // Add listener
     mediaQuery.addEventListener("change", listener);
-    
+
     // Return cleanup function to remove listener
     return () => mediaQuery.removeEventListener("change", listener);
   },
