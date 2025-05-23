@@ -54,7 +54,7 @@ watch(
     class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm dark:from-purple-900/80 dark:via-neutral-900/80 dark:to-pink-900/80"
   >
     <div
-      class="relative bg-white/90 rounded-2xl shadow-2xl max-w-lg w-full px-0 py-0 overflow-hidden border border-purple-100 dark:bg-neutral-800/90 dark:border-purple-800"
+      class="relative bg-white/90 rounded-2xl shadow-2xl max-w-3xl w-full p-8 overflow-hidden border border-purple-100 dark:bg-neutral-800/90 dark:border-purple-800"
     >
       <div
         class="flex items-center justify-between px-6 pt-6 pb-2 border-b border-purple-50 bg-gradient-to-r from-purple-50/80 to-pink-50/80 dark:border-purple-700/50 dark:from-purple-800/30 dark:to-pink-800/30"

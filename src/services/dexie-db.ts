@@ -10,18 +10,6 @@ import {
   WineQuestionEntry,
 } from "../shared/types";
 
-// Dexie Cloud Login modal state and handler
-import {
-  showDexieLoginModal,
-  dexieLoginTitle,
-  dexieLoginMessage,
-  dexieLoginButtonText,
-  dexieLoginError,
-  dexieLoginInputPlaceholder,
-  dexieLoginCallback,
-  registerDexieCloudLoginModal,
-} from "./dexie-cloud-login";
-
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 
 // Define the database
@@ -43,11 +31,8 @@ class WineventoryDB extends Dexie {
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
         requireAuth: true,
-        //customLoginGui: true,
+        customLoginGui: true,
       });
-
-      // Register Dexie Cloud login modal handler
-      registerDexieCloudLoginModal(this.cloud.userInteraction);
     } else {
       super("cellar-sense-db");
       this.version(5).stores({
@@ -350,15 +335,3 @@ export async function getRecommendationById(
 ): Promise<RecommendationHistoryEntry | undefined> {
   return db.recommendations.get(id);
 }
-
-// Dexie Cloud Login modal state and handler
-export {
-  showDexieLoginModal,
-  dexieLoginTitle,
-  dexieLoginMessage,
-  dexieLoginButtonText,
-  dexieLoginError,
-  dexieLoginInputPlaceholder,
-  dexieLoginCallback,
-  registerDexieCloudLoginModal,
-};
