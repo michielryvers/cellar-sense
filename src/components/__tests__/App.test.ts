@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
+import { createTestingPinia } from "@pinia/testing";
 import App from "../../App.vue";
 import { settingsService } from "../../services/settings";
 import * as dbService from "../../services/dexie-db";
@@ -192,6 +193,18 @@ vi.mock("../../services/openai-questions", () => ({
   askWineQuestion: vi.fn(),
 }));
 
+// Mock AR components
+vi.mock("../../components/ARView.vue", () => ({
+  default: {
+    name: "ARView",
+    props: ["show"],
+    emits: ["update:show"],
+    setup() {
+      return () => {};
+    },
+  },
+}));
+
 describe("App.vue", () => {
   let wrapper: AnyWrapper;
 
@@ -288,6 +301,15 @@ describe("App.vue", () => {
     wrapper = mount(App, {
       global: {
         stubs: ["Teleport"],
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false, // Allow actions to execute
+            initialState: {
+              // Initialize any store state if needed
+            },
+          }),
+        ],
       },
     });
   });
@@ -351,6 +373,15 @@ describe("App.vue", () => {
     const testWrapper = mount(App, {
       global: {
         stubs: ["Teleport"],
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false, // Allow actions to execute
+            initialState: {
+              // Initialize any store state if needed
+            },
+          }),
+        ],
       },
     });
 
