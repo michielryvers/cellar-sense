@@ -4,11 +4,13 @@ import type { Wine } from "../shared/Wine";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
 import {
+  RecommendationHistoryEntry,
+  RecommendationOption,
   WineQuery,
   WineQuestionEntry,
-  RecommendationOption,
-  RecommendationHistoryEntry,
 } from "../shared/types";
+
+// Dexie Cloud Login modal state and handler
 import {
   showDexieLoginModal,
   dexieLoginTitle,
@@ -21,6 +23,8 @@ import {
 } from "./dexie-cloud-login";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
+
+// Define the database
 class WineventoryDB extends Dexie {
   wines!: Table<Wine, string>;
   winequeries!: Table<WineQuery, number>;
@@ -57,30 +61,6 @@ class WineventoryDB extends Dexie {
 }
 
 export const db = new WineventoryDB();
-
-// Recommendations methods (outside class)
-export async function saveRecommendation(
-  query: string,
-  results: RecommendationOption[]
-): Promise<number> {
-  return db.recommendations.add({
-    query,
-    results,
-    createdAt: Date.now(),
-  });
-}
-
-export async function getAllRecommendations(): Promise<
-  RecommendationHistoryEntry[]
-> {
-  return db.recommendations.orderBy("createdAt").reverse().toArray();
-}
-
-export async function getRecommendationById(
-  id: number
-): Promise<RecommendationHistoryEntry | undefined> {
-  return db.recommendations.get(id);
-}
 
 // Wine queries liveQuery
 export const wineQueries$ = liveQuery(() => db.winequeries.toArray());
@@ -345,6 +325,30 @@ export async function getWineQuestionById(
     console.error(`Failed to get wine question with id ${id}:`, error);
     throw error;
   }
+}
+
+// Recommendations methods (outside class)
+export async function saveRecommendation(
+  query: string,
+  results: RecommendationOption[]
+): Promise<number> {
+  return db.recommendations.add({
+    query,
+    results,
+    createdAt: Date.now(),
+  });
+}
+
+export async function getAllRecommendations(): Promise<
+  RecommendationHistoryEntry[]
+> {
+  return db.recommendations.orderBy("createdAt").reverse().toArray();
+}
+
+export async function getRecommendationById(
+  id: number
+): Promise<RecommendationHistoryEntry | undefined> {
+  return db.recommendations.get(id);
 }
 
 // Dexie Cloud Login modal state and handler
