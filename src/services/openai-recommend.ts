@@ -1,8 +1,8 @@
 import { OpenAI } from "openai";
 import type { Wine } from "../shared/Wine";
 import type { RecommendationOption } from "../shared/types";
-import { saveRecommendation } from "./recommendations-idb";
 import { settingsService } from "./settings";
+import { saveRecommendation } from "./dexie-db";
 
 export async function getWineRecommendations({
   apiKey,
@@ -79,10 +79,20 @@ export async function getWineRecommendations({
   const content = response.choices?.[0]?.message?.content;
 
   try {
-    if (typeof content === "string") {
-      result = JSON.parse(content);
+    let trimmed = typeof content === "string" ? content.trim() : content;
+    // Sometimes the model returns a single object, not an array or wrapped in a key
+    // Try to parse as JSON, fallback to wrapping in array if needed
+    if (typeof trimmed === "string") {
+      // Remove leading/trailing non-JSON characters (e.g., newlines)
+      // Try to find the first { and last }
+      const firstBrace = trimmed.indexOf("{");
+      const lastBrace = trimmed.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        trimmed = trimmed.slice(firstBrace, lastBrace + 1);
+      }
+      result = JSON.parse(trimmed);
     } else {
-      result = content;
+      result = trimmed;
     }
 
     let recs: RecommendationOption[];
@@ -92,6 +102,14 @@ export async function getWineRecommendations({
       recs = result.recommendations;
     } else if (result && "results" in result) {
       recs = result.results;
+    } else if (
+      result &&
+      typeof result === "object" &&
+      result.id &&
+      result.name
+    ) {
+      // Single recommendation object, wrap in array
+      recs = [result];
     } else {
       throw new Error("Invalid recommendation format");
     }

@@ -1,8 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mount, flushPromises } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import WineRecommendModal from "../WineRecommendModal.vue";
 import type { RecommendationHistoryEntry } from "../../shared/types";
+import { subscribe } from "diagnostics_channel";
+
+// Mock the database service (getAllRecommendations only)
+vi.mock("../../services/dexie-db", () => ({
+  getAllRecommendations: vi.fn().mockResolvedValue([]),
+}));
+
+// Mock Dexie's liveQuery globally for this test file
+vi.mock("dexie", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  return {
+    ...actual,
+    liveQuery: () => ({ subscribe: mockSubscribe }),
+  };
+});
 
 // Mock the heroicons
 vi.mock("@heroicons/vue/24/outline", () => ({
@@ -15,20 +30,14 @@ vi.mock("@heroicons/vue/24/outline", () => ({
 
 // Mock liveQuery and recommendations service
 const unsubscribeMock = vi.fn();
-const mockSubscribe = vi.fn((cb) => {
-  cb.next([]); // Default to empty array
+// This mock matches Dexie's liveQuery subscribe signature
+const mockSubscribe = vi.fn((observer) => {
+  // observer: { next, error }
+  if (observer && typeof observer.next === "function") {
+    observer.next([]);
+  }
   return { unsubscribe: unsubscribeMock };
 });
-
-vi.mock("dexie", () => ({
-  liveQuery: vi.fn(() => ({
-    subscribe: mockSubscribe,
-  })),
-}));
-
-vi.mock("../../services/recommendations-idb", () => ({
-  getAllRecommendations: vi.fn().mockResolvedValue([]),
-}));
 
 // Sample recommendation history entries for testing
 const sampleRecommendations: RecommendationHistoryEntry[] = [
@@ -67,8 +76,10 @@ describe("WineRecommendModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSubscribe.mockImplementation((cb) => {
-      cb.next([]);
+    mockSubscribe.mockImplementation((observer) => {
+      if (observer && typeof observer.next === "function") {
+        observer.next([]);
+      }
       return { unsubscribe: unsubscribeMock };
     });
   });
@@ -187,8 +198,10 @@ describe("WineRecommendModal", () => {
 
   it("shows 'no recommendations' message when past recommendations are empty", async () => {
     // Setup with empty recommendations
-    mockSubscribe.mockImplementation((cb) => {
-      cb.next([]);
+    mockSubscribe.mockImplementation((observer) => {
+      if (observer && typeof observer.next === "function") {
+        observer.next([]);
+      }
       return { unsubscribe: unsubscribeMock };
     });
 
@@ -206,14 +219,20 @@ describe("WineRecommendModal", () => {
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
     await nextTick();
+    await nextTick(); // Ensure DOM updates
 
     expect(wrapper.text()).toContain("No previous recommendations yet.");
   });
 
   it("displays past recommendations when available", async () => {
     // Setup with sample recommendations
-    mockSubscribe.mockImplementation((cb) => {
-      cb.next(sampleRecommendations);
+    mockSubscribe.mockImplementation((observer) => {
+      // Simulate async update as in real Dexie liveQuery
+      setTimeout(() => {
+        if (observer && typeof observer.next === "function") {
+          observer.next(sampleRecommendations);
+        }
+      }, 0);
       return { unsubscribe: unsubscribeMock };
     });
 
@@ -230,6 +249,8 @@ describe("WineRecommendModal", () => {
 
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 10));
     await nextTick();
 
     // Check if recommendations are displayed
@@ -281,8 +302,12 @@ describe("WineRecommendModal", () => {
 
   it("emits show-past-result event when clicking on a past recommendation", async () => {
     // Setup with sample recommendations
-    mockSubscribe.mockImplementation((cb) => {
-      cb.next(sampleRecommendations);
+    mockSubscribe.mockImplementation((observer) => {
+      setTimeout(() => {
+        if (observer && typeof observer.next === "function") {
+          observer.next(sampleRecommendations);
+        }
+      }, 0);
       return { unsubscribe: unsubscribeMock };
     });
 
@@ -300,9 +325,13 @@ describe("WineRecommendModal", () => {
     // Toggle past recommendations
     await wrapper.find("button.flex.items-center.gap-2").trigger("click");
     await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
 
     // Click on the first recommendation
-    await wrapper.findAll("li")[0].trigger("click");
+    const listItems = wrapper.findAll("li");
+    expect(listItems.length).toBeGreaterThan(0);
+    await listItems[0].trigger("click");
 
     expect(wrapper.emitted()["show-past-result"]).toBeTruthy();
     expect((wrapper.emitted()["show-past-result"] as any[])[0][0]).toEqual(

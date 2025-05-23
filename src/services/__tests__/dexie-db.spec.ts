@@ -1,4 +1,42 @@
-import { db, addWine, getWine, updateWine, deleteWine } from "../dexie-db";
+import {
+  db,
+  addWine,
+  getWine,
+  updateWine,
+  deleteWine,
+  saveRecommendation,
+  getAllRecommendations,
+  getRecommendationById,
+} from "../dexie-db";
+describe("recommendations (migrated)", () => {
+  beforeEach(async () => {
+    await db.recommendations.clear();
+  });
+  afterEach(async () => {
+    await db.recommendations.clear();
+  });
+
+  const sampleResults = [
+    { id: "1", name: "Wine A", vintner: "V1", vintage: 2020, reason: "Good" },
+    { id: "2", name: "Wine B", vintner: "V2", vintage: 2021, reason: "Nice" },
+  ];
+
+  it("saves and retrieves recommendations", async () => {
+    const id = await saveRecommendation("Best red", sampleResults);
+    expect(typeof id).toBe("number");
+    const all = await getAllRecommendations();
+    expect(all.length).toBe(1);
+    expect(all[0].query).toBe("Best red");
+    expect(all[0].results.length).toBe(2);
+  });
+
+  it("gets recommendation by id", async () => {
+    const id = await saveRecommendation("Best white", sampleResults);
+    const rec = await getRecommendationById(id);
+    expect(rec).toBeDefined();
+    expect(rec?.query).toBe("Best white");
+  });
+});
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 const sampleWine = {
@@ -268,5 +306,35 @@ describe("dexie-db", () => {
     const { drinkBottle } = await import("../dexie-db");
     const result = await drinkBottle("zero-bottles");
     expect(result).toBe(0);
+  });
+});
+
+const sampleResults = [
+  { label: "Wine A", score: 0.9 },
+  { label: "Wine B", score: 0.8 },
+];
+
+describe("recommendations (dexie-db)", () => {
+  beforeEach(async () => {
+    await db.recommendations.clear();
+  });
+  afterEach(async () => {
+    await db.recommendations.clear();
+  });
+
+  it("saves and retrieves recommendations", async () => {
+    const id = await saveRecommendation("Best red", sampleResults as any);
+    expect(typeof id).toBe("number");
+    const all = await getAllRecommendations();
+    expect(all.length).toBe(1);
+    expect(all[0].query).toBe("Best red");
+    expect(all[0].results.length).toBe(2);
+  });
+
+  it("gets recommendation by id", async () => {
+    const id = await saveRecommendation("Best white", sampleResults as any);
+    const rec = await getRecommendationById(id);
+    expect(rec).toBeDefined();
+    expect(rec?.query).toBe("Best white");
   });
 });

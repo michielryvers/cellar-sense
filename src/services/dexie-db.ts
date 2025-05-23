@@ -3,12 +3,12 @@ import dexieCloud from "dexie-cloud-addon";
 import type { Wine } from "../shared/Wine";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
-import { WineQuery, WineQuestionEntry } from "../shared/types";
-
-const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
-
-
-// Dexie Cloud Login modal state and handler
+import {
+  WineQuery,
+  WineQuestionEntry,
+  RecommendationOption,
+  RecommendationHistoryEntry,
+} from "../shared/types";
 import {
   showDexieLoginModal,
   dexieLoginTitle,
@@ -20,25 +20,21 @@ import {
   registerDexieCloudLoginModal,
 } from "./dexie-cloud-login";
 
-// Define a simple key-value table structure
-interface KeyValuePair {
-  key: string;
-  value: string;
-}
-
-// Define the database
+const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
 class WineventoryDB extends Dexie {
   wines!: Table<Wine, string>;
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
+  recommendations!: Table<RecommendationHistoryEntry, number>;
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(4).stores({
+      this.version(5).stores({
         wines: "@id, name, vintage, color",
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
+        recommendations: "@id, createdAt",
       });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
@@ -50,16 +46,41 @@ class WineventoryDB extends Dexie {
       registerDexieCloudLoginModal(this.cloud.userInteraction);
     } else {
       super("cellar-sense-db");
-      this.version(4).stores({
+      this.version(5).stores({
         wines: "++id, name, vintage, color",
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
+        recommendations: "++id, createdAt",
       });
     }
   }
 }
 
 export const db = new WineventoryDB();
+
+// Recommendations methods (outside class)
+export async function saveRecommendation(
+  query: string,
+  results: RecommendationOption[]
+): Promise<number> {
+  return db.recommendations.add({
+    query,
+    results,
+    createdAt: Date.now(),
+  });
+}
+
+export async function getAllRecommendations(): Promise<
+  RecommendationHistoryEntry[]
+> {
+  return db.recommendations.orderBy("createdAt").reverse().toArray();
+}
+
+export async function getRecommendationById(
+  id: number
+): Promise<RecommendationHistoryEntry | undefined> {
+  return db.recommendations.get(id);
+}
 
 // Wine queries liveQuery
 export const wineQueries$ = liveQuery(() => db.winequeries.toArray());

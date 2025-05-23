@@ -133,12 +133,16 @@ async function handleSaveConsumption(
 <template>
   <div class="container mx-auto px-4 py-8">
     <!-- Responsive Table/List Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+    <div
+      class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden"
+    >
       <!-- Desktop Table -->
       <div class="hidden sm:block">
         <table class="min-w-full">
           <thead>
-            <tr class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-800 dark:to-gray-700">
+            <tr
+              class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-800 dark:to-gray-700"
+            >
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
@@ -160,12 +164,12 @@ async function handleSaveConsumption(
                 </div>
               </th>
               <th
-                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 Vintage
               </th>
               <th
-                class="py-3 px-4 text-left text-xs font-semibold text-purple-900"
+                class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
               >
                 <div class="flex items-center gap-1">
                   <select
@@ -205,11 +209,16 @@ async function handleSaveConsumption(
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             <tr v-if="filteredWines.length === 0">
-              <td colspan="7" class="py-8 px-6 text-center text-gray-500 dark:text-gray-400">
+              <td
+                colspan="7"
+                class="py-8 px-6 text-center text-gray-500 dark:text-gray-400"
+              >
                 <div
                   class="flex flex-col items-center justify-center space-y-3"
                 >
-                  <ClockIcon class="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                  <ClockIcon
+                    class="h-12 w-12 text-gray-400 dark:text-gray-500"
+                  />
                   <p class="text-lg font-medium">No wines in inventory</p>
                   <p class="text-sm text-gray-400 dark:text-gray-500">
                     Add your first wine to get started
@@ -224,22 +233,35 @@ async function handleSaveConsumption(
               :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
               @click="handleRowClick(wine)"
             >
-              <td class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+              <td
+                class="py-3 px-4 font-medium text-gray-900 dark:text-gray-100"
+              >
                 {{ wine.name }}
               </td>
-              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">{{ wine.vintner }}</td>
-              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">{{ wine.vintage }}</td>
+              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">
+                {{ wine.vintner }}
+              </td>
+              <td class="py-3 px-4 text-gray-600 dark:text-gray-300">
+                {{ wine.vintage }}
+              </td>
               <td class="py-3 px-4">
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                   :class="{
-                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': wine.color === 'Red',
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': wine.color === 'White',
-                    'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300': wine.color === 'Rosé',
-                    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': wine.color === 'Orange',
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': wine.color === 'Sparkling',
-                    'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': wine.color === 'Dessert',
-                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': wine.color === 'Other',
+                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300':
+                      wine.color === 'Red',
+                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
+                      wine.color === 'White',
+                    'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300':
+                      wine.color === 'Rosé',
+                    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300':
+                      wine.color === 'Orange',
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300':
+                      wine.color === 'Sparkling',
+                    'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300':
+                      wine.color === 'Dessert',
+                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
+                      wine.color === 'Other',
                   }"
                 >
                   {{ wine.color }}
@@ -256,7 +278,8 @@ async function handleSaveConsumption(
                       'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
                         wine.inventory?.bottles > 0 &&
                         wine.inventory?.bottles <= 3,
-                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': !wine.inventory?.bottles,
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
+                        !wine.inventory?.bottles,
                     }"
                   >
                     {{ wine.inventory?.bottles || 0 }}
@@ -335,7 +358,8 @@ async function handleSaveConsumption(
                     wine.inventory?.bottles > 3,
                   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
                     wine.inventory?.bottles > 0 && wine.inventory?.bottles <= 3,
-                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': !wine.inventory?.bottles,
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
+                    !wine.inventory?.bottles,
                 }"
               >
                 {{ wine.inventory?.bottles || 0 }}
@@ -354,13 +378,20 @@ async function handleSaveConsumption(
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="{
-                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': wine.color === 'Red',
-                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': wine.color === 'White',
-                  'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300': wine.color === 'Rosé',
-                  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300': wine.color === 'Orange',
-                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': wine.color === 'Sparkling',
-                  'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': wine.color === 'Dessert',
-                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': wine.color === 'Other',
+                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300':
+                    wine.color === 'Red',
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300':
+                    wine.color === 'White',
+                  'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300':
+                    wine.color === 'Rosé',
+                  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300':
+                    wine.color === 'Orange',
+                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300':
+                    wine.color === 'Sparkling',
+                  'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300':
+                    wine.color === 'Dessert',
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
+                    wine.color === 'Other',
                 }"
               >
                 {{ wine.color }}

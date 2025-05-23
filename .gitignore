@@ -28,4 +28,4 @@ dexie-cloud.key
 
 coverage
 
-cellar-db.json
+cellar-db*.json
