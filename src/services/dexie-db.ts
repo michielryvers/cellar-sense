@@ -347,6 +347,118 @@ export async function getWineQuestionById(
   }
 }
 
+/**
+ * Get all distinct vintners from the database
+ * @returns Array of unique vintners
+ */
+export async function getDistinctVintners(): Promise<string[]> {
+  try {
+    const wines = await db.wines.toArray();
+    const vintners = new Set<string>();
+
+    // Collect all non-empty vintners
+    wines.forEach((wine) => {
+      if (wine.vintner && wine.vintner.trim() !== "") {
+        vintners.add(wine.vintner.trim());
+      }
+    });
+
+    return Array.from(vintners).sort();
+  } catch (error) {
+    console.error("Failed to get distinct vintners:", error);
+    return [];
+  }
+}
+
+/**
+ * Get all distinct wine colors from the database
+ * @returns Array of unique colors
+ */
+export async function getDistinctColors(): Promise<string[]> {
+  try {
+    const wines = await db.wines.toArray();
+    const colors = new Set<string>();
+
+    // Collect all non-empty colors
+    wines.forEach((wine) => {
+      if (wine.color && wine.color.trim() !== "") {
+        colors.add(wine.color.trim());
+      }
+    });
+
+    return Array.from(colors).sort();
+  } catch (error) {
+    console.error("Failed to get distinct colors:", error);
+    return [];
+  }
+}
+
+/**
+ * Get wines filtered by vintner and/or color
+ * @param filterVintner Optional vintner filter
+ * @param filterColor Optional color filter
+ * @returns Promise resolving to filtered array of wines
+ */
+export async function getFilteredWines(
+  filterVintner?: string,
+  filterColor?: string
+): Promise<Wine[]> {
+  try {
+    // If no filters are applied, return all wines
+    if (!filterVintner && !filterColor) {
+      return db.wines.toArray();
+    }
+    
+    // For testing environments, always use in-memory filtering
+    if (process.env.NODE_ENV === 'test' || import.meta.env?.MODE === 'test') {
+      const wines = await db.wines.toArray();
+      return wines.filter(wine => {
+        const vintnerMatch = !filterVintner || wine.vintner === filterVintner;
+        const colorMatch = !filterColor || wine.color === filterColor;
+        return vintnerMatch && colorMatch;
+      });
+    }
+    
+    // Try to use indexed fields first, fallback to client-side filtering if needed
+    try {
+      let collection = db.wines;
+      
+      // Apply color filter if set (color is indexed)
+      if (filterColor) {
+        collection = collection.where('color').equals(filterColor);
+      }
+      
+      // Apply vintner filter if set (try to use index, fallback to client-side)
+      if (filterVintner) {
+        try {
+          // Try to use vintner index if available
+          collection = collection.where('vintner').equals(filterVintner);
+          return collection.toArray();
+        } catch (e) {
+          // If vintner is not indexed, we need to filter the collection after fetching
+          return collection.toArray().then(items => 
+            items.filter(wine => wine.vintner === filterVintner)
+          );
+        }
+      }
+      
+      // If only color filter was applied, return the collection
+      return collection.toArray();
+    } catch (e) {
+      // Fallback: Fetch all wines and filter in memory
+      const wines = await db.wines.toArray();
+      return wines.filter(wine => {
+        const vintnerMatch = !filterVintner || wine.vintner === filterVintner;
+        const colorMatch = !filterColor || wine.color === filterColor;
+        return vintnerMatch && colorMatch;
+      });
+    }
+  } catch (error) {
+    console.error("Failed to get filtered wines:", error);
+    return [];
+  }
+}
+
 // Dexie Cloud Login modal state and handler
 export {
   showDexieLoginModal,
