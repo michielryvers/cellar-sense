@@ -11,7 +11,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 0 Bootstrap the tool‑chain _(½ day)_
+## Phase 0 Bootstrap the tool‑chain _(½ day)_ ✅
 
 | Ticket  | Work                                                                                           | Inputs for LLM            | Output                                    | Done when                                                               |
 | ------- | ---------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
@@ -31,7 +31,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 1 Real‑time Tag Detection Worker
+## Phase 1 Real‑time Tag Detection Worker ✅
 
 | Ticket  | Work                                                                           | Inputs                                      | Output                            | Done when                                            |
 | ------- | ------------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------- | ---------------------------------------------------- |
@@ -180,6 +180,13 @@ W3  Phase 3 overlay aligns with tag
 W4  Phase 4 mapping & retrieval
 W5  Clean‑ups, UX, CI, deploy
 ```
+
+## Copilot instructions
+
+- Commit after each phase
+- Always run `npm run build` to make sure we haven't introduced errors before committing a phase
+- Always run `npm run test` and see all tests pass before comitting
+- Always write tests for each new typescript file you create
 
 ---
 

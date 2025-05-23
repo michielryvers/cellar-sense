@@ -21,6 +21,7 @@
     "dexie-export-import": "^4.1.4",
     "idb": "^8.0.3",
     "openai": "^4.98.0",
+    "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.3.0",
     "rxjs": "^7.8.2",
     "tailwindcss": "^4.1.7",
