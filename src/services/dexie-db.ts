@@ -347,6 +347,52 @@ export async function getWineQuestionById(
   }
 }
 
+/**
+ * Get all distinct vintners from the database
+ * @returns Array of unique vintners
+ */
+export async function getDistinctVintners(): Promise<string[]> {
+  try {
+    const wines = await db.wines.toArray();
+    const vintners = new Set<string>();
+
+    // Collect all non-empty vintners
+    wines.forEach((wine) => {
+      if (wine.vintner && wine.vintner.trim() !== "") {
+        vintners.add(wine.vintner.trim());
+      }
+    });
+
+    return Array.from(vintners).sort();
+  } catch (error) {
+    console.error("Failed to get distinct vintners:", error);
+    return [];
+  }
+}
+
+/**
+ * Get all distinct wine colors from the database
+ * @returns Array of unique colors
+ */
+export async function getDistinctColors(): Promise<string[]> {
+  try {
+    const wines = await db.wines.toArray();
+    const colors = new Set<string>();
+
+    // Collect all non-empty colors
+    wines.forEach((wine) => {
+      if (wine.color && wine.color.trim() !== "") {
+        colors.add(wine.color.trim());
+      }
+    });
+
+    return Array.from(colors).sort();
+  } catch (error) {
+    console.error("Failed to get distinct colors:", error);
+    return [];
+  }
+}
+
 // Dexie Cloud Login modal state and handler
 export {
   showDexieLoginModal,

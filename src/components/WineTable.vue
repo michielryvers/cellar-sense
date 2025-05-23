@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, Ref, onUnmounted, computed } from "vue";
-import { deleteWine, updateWine, db, drinkBottle } from "../services/dexie-db";
+import { ref, Ref, onUnmounted, computed, watchEffect } from "vue";
+import { deleteWine, updateWine, db, drinkBottle, getDistinctVintners, getDistinctColors } from "../services/dexie-db";
 import {
   ClockIcon,
   MinusCircleIcon,
@@ -17,31 +17,18 @@ import { liveQuery } from "dexie";
 const wines: Ref<Wine[]> = ref([]);
 const filterVintner = ref<string>("");
 const filterColor = ref<string>("");
+const vintnerOptions = ref<string[]>([]);
+const colorOptions = ref<string[]>([]);
 
-// Compute unique vintners and colors for dropdowns
-const vintnerOptions = computed(() => {
-  const set = new Set<string>();
-  wines.value.forEach((w) => {
-    if (w.vintner) set.add(w.vintner);
-  });
-  return Array.from(set).sort();
-});
-const colorOptions = computed(() => {
-  const set = new Set<string>();
-  wines.value.forEach((w) => {
-    if (w.color) set.add(w.color);
-  });
-  return Array.from(set).sort();
-});
+// Load filter options (vintners and colors)
+async function loadFilterOptions(): Promise<void> {
+  vintnerOptions.value = await getDistinctVintners();
+  colorOptions.value = await getDistinctColors();
+}
 
-const filteredWines = computed(() => {
-  return wines.value.filter((wine) => {
-    const vintnerMatch =
-      !filterVintner.value || wine.vintner === filterVintner.value;
-    const colorMatch = !filterColor.value || wine.color === filterColor.value;
-    return vintnerMatch && colorMatch; // UPDATED
-  });
-});
+// Initial load of filter options
+loadFilterOptions();
+
 let subscription: any;
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
@@ -63,18 +50,52 @@ useEscapeKey(() => {
   }
 });
 
-// liveQuery subscription for real-time updates
+// liveQuery subscription for real-time updates with database filtering
 function loadWines(): void {
   // No-op, kept for compatibility with EditWineForm and others
+  // The actual loading is done via liveQuery
 }
 
-subscription = liveQuery(() => db.wines.toArray()).subscribe({
-  next: (result: Wine[]) => {
-    wines.value = result;
-  },
-  error: (err: any) => {
-    console.error("liveQuery error", err);
-  },
+// Update the liveQuery to filter in the database
+watchEffect(() => {
+  if (subscription) {
+    subscription.unsubscribe();
+  }
+
+  const query = () => {
+    let collection = db.wines;
+    
+    // Apply vintner filter if set
+    if (filterVintner.value) {
+      collection = collection.where('vintner').equals(filterVintner.value);
+    }
+    
+    // Apply color filter if set
+    if (filterColor.value) {
+      // If we already have a vintner filter, we need to filter the collection further
+      if (filterVintner.value) {
+        // First get the matching vintner items, then filter by color
+        return collection.toArray().then(items => 
+          items.filter(wine => wine.color === filterColor.value)
+        );
+      } else {
+        // If no vintner filter, just query by color directly
+        return collection.where('color').equals(filterColor.value).toArray();
+      }
+    }
+    
+    // If no color filter (but possibly vintner filter), just return the collection
+    return collection.toArray();
+  };
+
+  subscription = liveQuery(query).subscribe({
+    next: (result: Wine[]) => {
+      wines.value = result;
+    },
+    error: (err: any) => {
+      console.error("liveQuery error", err);
+    },
+  });
 });
 
 onUnmounted(() => {
@@ -208,7 +229,7 @@ async function handleSaveConsumption(
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-            <tr v-if="filteredWines.length === 0">
+            <tr v-if="wines.length === 0">
               <td
                 colspan="7"
                 class="py-8 px-6 text-center text-gray-500 dark:text-gray-400"
@@ -227,7 +248,7 @@ async function handleSaveConsumption(
               </td>
             </tr>
             <tr
-              v-for="wine in filteredWines"
+              v-for="wine in wines"
               :key="wine.id"
               class="group hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
               :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
@@ -341,7 +362,7 @@ async function handleSaveConsumption(
         </div>
         <ul v-else class="divide-y divide-gray-100 dark:divide-gray-700">
           <li
-            v-for="wine in filteredWines"
+            v-for="wine in wines"
             :key="wine.id"
             class="group px-3 py-3 flex flex-col gap-1 bg-white hover:bg-purple-50 transition-colors cursor-pointer relative"
             :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
