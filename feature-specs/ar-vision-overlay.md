@@ -1,50 +1,78 @@
-# Cellar‑Sense AR Overlay — LLM‑Ready Implementation Plan
+# Cellar‑Sense AR Overlay — LLM‑Ready Implementation Plan
 
 > **Mission statement for the agent**
-> “You are a coding assistant working in the _michielryvers/cellar‑sense_ repository. Your goal is to give the user an offline‑first Vue 3 PWA that detects AprilTags stuck on a wine rack and projects a 3‑D arrow onto the live camera preview to guide retrieval of a bottle.”
+> "You are a coding assistant working in the _michielryvers/cellar‑sense_ repository. Your goal is to give the user an offline‑first Vue 3 PWA that detects AprilTags stuck on a wine rack and projects a 3‑D arrow onto the live camera preview to guide retrieval of a bottle."
 
 The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM tickets_. A ticket is the smallest chunk you should attempt in a single conversation or pull‑request. Every ticket lists:
 
 - **Inputs** you must gather or assume.
 - **Output artifacts** the LLM must produce (code, config, tests, docs).
-- **“Done when …” acceptance criteria**.
+- **"Done when …" acceptance criteria**.
 
 ---
 
-## Phase 0  Bootstrap the tool‑chain _(½ day)_
+## Phase 0 Bootstrap the tool‑chain _(½ day)_
 
-| Ticket  | Work                                                                                                                    | Inputs for LLM            | Output                                    | Done when                                                               |
-| ------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| **0.1** | Add deps: <br>`three` `@pinia/plugin-persist` `apriltag-js-standalone` `vite-plugin-wasm` `vite-plugin-top-level-await` | `package.json`            | `pnpm i` patch commit                     | lock‑file updated, `pnpm build` succeeds                                |
-| **0.2** | Enable WASM+threads                                                                                                     | `vite.config.ts`          | plugin lines + COOP/COEP header injection | Dev server serves COI headers; `SharedArrayBuffer` available in console |
-| **0.3** | Camera permission flow reuse                                                                                            | existing user‑media logic | refactor into `useCamera.ts` composable   | Tests pass, no regression in label‑capture feature                      |
+| Ticket  | Work                                                                                           | Inputs for LLM            | Output                                    | Done when                                                               |
+| ------- | ---------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| **0.1** | Add deps: <br>`three` `@pinia/plugin-persist` `vite-plugin-wasm` `vite-plugin-top-level-await` | `package.json`            | `pnpm i` patch commit                     | lock‑file updated, `pnpm build` succeeds                                |
+| **0.2** | Enable WASM+threads                                                                            | `vite.config.ts`          | plugin lines + COOP/COEP header injection | Dev server serves COI headers; `SharedArrayBuffer` available in console |
+| **0.3** | Camera permission flow reuse                                                                   | existing user‑media logic | refactor into `useCamera.ts` composable   | Tests pass, no regression in label‑capture feature                      |
+| **0.4** | Place compiled AprilTag files                                                                  | compiled WASM/JS files    | files in `src/lib/` directory             | Files accessible at `/src/lib/apriltag.wasm` and `/src/lib/apriltag.js` |
+
+> **AprilTag Library Setup**
+>
+> The AprilTag library has been compiled from source. Place the compiled files in:
+>
+> - `src/lib/apriltag.wasm` - The WebAssembly binary
+> - `src/lib/apriltag.js` - The JavaScript wrapper/loader
+>
+> These files will be served statically and imported directly in the worker.
 
 ---
 
-## Phase 1  Real‑time Tag Detection Worker
+## Phase 1 Real‑time Tag Detection Worker
 
 | Ticket  | Work                                                                           | Inputs                                      | Output                            | Done when                                            |
 | ------- | ------------------------------------------------------------------------------ | ------------------------------------------- | --------------------------------- | ---------------------------------------------------- |
 | **1.1** | Scaffold `src/vision/TagDetectorWorker.ts`                                     | sample snippet below                        | worker file + Vite entry          | `npm run dev` logs first detection on desktop webcam |
 | **1.2** | Define `Detection` TS interface `{id:number,R:number[],t:number[],err:number}` | n/a                                         | interface + export                | TS passes                                            |
-| **1.3** | Unit‑test worker with recorded MP4                                             | `/test/worker.spec.ts` video blob (fixture) | Vitest that counts detections ≥ 1 | CI green                                             |
+| **1.3** | Unit‑test worker with recorded MP4                                             | `/test/worker.spec.ts` video blob (fixture) | Vitest that counts detections ≥ 1 | CI green                                             |
 
 > **Snippet** (guidance only, LLM may rewrite)
 >
 > ```ts
-> import init, { ApriltagDetector } from "apriltag-js-standalone";
-> await init();
-> const det = new ApriltagDetector({ family: "tag36h11" });
+> // Import from compiled files in public directory
+> importScripts("lib/apriltag.js");
+>
+> let detector = null;
+>
+> // Initialize the AprilTag detector
+> const initDetector = async () => {
+>   // The compiled JS file should expose a global AprilTag object
+>   if (typeof AprilTag !== "undefined") {
+>     detector = new AprilTag.Detector({ family: "tag36h11" });
+>     return true;
+>   }
+>   return false;
+> };
+>
 > self.onmessage = async ({ data }: { data: FrameMsg }) => {
->   const res = det.detect(data.bitmap, data.intrinsics);
->   self.postMessage(res);
+>   if (!detector) {
+>     await initDetector();
+>   }
+>
+>   if (detector) {
+>     const res = detector.detect(data.bitmap, data.intrinsics);
+>     self.postMessage(res);
+>   }
 >   data.bitmap.close();
 > };
 > ```
 
 ---
 
-## Phase 2  Camera Preview Component
+## Phase 2 Camera Preview Component
 
 | Ticket  | Work                                                  | Inputs                    | Output                      | Done when                                            |
 | ------- | ----------------------------------------------------- | ------------------------- | --------------------------- | ---------------------------------------------------- |
@@ -54,7 +82,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 3  3‑D Overlay Rendering
+## Phase 3 3‑D Overlay Rendering
 
 | Ticket  | Work                                          | Inputs                     | Output              | Done when                                                 |
 | ------- | --------------------------------------------- | -------------------------- | ------------------- | --------------------------------------------------------- |
@@ -64,7 +92,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 4  Mapping & Persistence
+## Phase 4 Mapping & Persistence
 
 | Ticket  | Work                                | Inputs                       | Output                   | Done when                                             |
 | ------- | ----------------------------------- | ---------------------------- | ------------------------ | ----------------------------------------------------- |
@@ -74,7 +102,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 5  Pose Smoothing & Multi‑tag Fusion
+## Phase 5 Pose Smoothing & Multi‑tag Fusion
 
 | Ticket  | Work                                                  | Output       | Done when                                 |
 | ------- | ----------------------------------------------------- | ------------ | ----------------------------------------- |
@@ -83,7 +111,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 6  UX Polish
+## Phase 6 UX Polish
 
 | Ticket  | Work                          | Output               | Done when                         |
 | ------- | ----------------------------- | -------------------- | --------------------------------- |
@@ -93,7 +121,7 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 7  Testing & CI
+## Phase 7 Testing & CI
 
 | Ticket  | Work                                     | Output        | Done when            |
 | ------- | ---------------------------------------- | ------------- | -------------------- |
@@ -102,13 +130,20 @@ The plan is organised into **eight phases**. Each phase contains 1‑to‑n _LLM
 
 ---
 
-## Phase 8  Performance & Deployment
+## Phase 8 Performance & Deployment
 
 | Ticket  | Work                                             | Output          | Done when                                  |
 | ------- | ------------------------------------------------ | --------------- | ------------------------------------------ |
-| **8.1** | Frame‑skipping heuristic (process every N frame) | config param    | Bottlenecked devices keep ≥ 10 FPS overlay |
-| **8.2** | Pre‑cache `apriltag.wasm`                        | vite‑pwa config | Offline first launch < 2 s                 |
+| **8.1** | Frame‑skipping heuristic (process every N frame) | config param    | Bottlenecked devices keep ≥ 10 FPS overlay |
+| **8.2** | Pre‑cache compiled AprilTag files                | vite‑pwa config | Offline first launch < 2 s                 |
 | **8.3** | Production build on GitHub Pages                 | workflow step   | Live demo URL shared                       |
+
+> **Pre-caching Note for 8.2**: Update the PWA configuration to include:
+>
+> ```js
+> // In vite.config.ts PWA plugin options
+> includeAssets: ["apriltag/apriltag.wasm", "apriltag/apriltag.js"];
+> ```
 
 ---
 
