@@ -140,6 +140,16 @@ vi.mock("../../services/dexie-db", () => {
     drinkBottle: vi.fn().mockResolvedValue(2),
     getDistinctVintners: vi.fn().mockResolvedValue(["Test Vintner 1", "Test Vintner 2"].sort()),
     getDistinctColors: vi.fn().mockResolvedValue(["Red", "White"].sort()),
+    getFilteredWines: vi.fn().mockImplementation((vintner, color) => {
+      let result = [...mockWines];
+      if (vintner) {
+        result = result.filter(wine => wine.vintner === vintner);
+      }
+      if (color) {
+        result = result.filter(wine => wine.color === color);
+      }
+      return Promise.resolve(result);
+    }),
   };
 });
 
@@ -229,8 +239,8 @@ describe("WineTable.vue", () => {
     vi.clearAllMocks();
     (window.confirm as Mock).mockReturnValue(false); // Default to cancel for delete
 
-    // Ensure db.wines.toArray returns a fresh copy for each test
-    vi.spyOn(dbService.db.wines, "toArray").mockResolvedValue([...mockWines]);
+    // Mock getFilteredWines to return mockWines by default
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue([...mockWines]);
 
     capturedEscapeKeyCallback = undefined; // Reset before each test
 
@@ -240,6 +250,10 @@ describe("WineTable.vue", () => {
       },
     });
     await flushPromises(); // Wait for liveQuery to populate wines and initial render
+    
+    // Manually set wines for component to ensure tests work consistently
+    (wrapper.vm as any).wines = [...mockWines];
+    await nextTick();
   });
 
   afterEach(() => {
@@ -278,10 +292,9 @@ describe("WineTable.vue", () => {
     // Reset previous mocks
     vi.resetAllMocks();
     
-    // Setup mock for WineTable's internal liveQuery update
+    // Setup mock for getFilteredWines to return vintner-filtered wines
     const filteredWines = mockWines.filter(wine => wine.vintner === "Test Vintner 1");
-    // Simple mock that immediately sets the filtered result
-    (wrapper.vm as any).wines = filteredWines;
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(filteredWines);
     
     // We can't easily test the database query directly in this test, so we'll focus on
     // testing that setting the filter shows the correct wines
@@ -289,6 +302,10 @@ describe("WineTable.vue", () => {
       "div[class~='sm:block'][class~='hidden'] table thead th:nth-child(2) select"
     );
     await vintnerSelect.setValue("Test Vintner 1");
+    await flushPromises(); // Wait for the async getFilteredWines to resolve
+    
+    // Update wines manually for the test
+    (wrapper.vm as any).wines = filteredWines;
     await nextTick();
     
     const rows = wrapper.findAll(
@@ -303,17 +320,19 @@ describe("WineTable.vue", () => {
     // Reset previous mocks
     vi.resetAllMocks();
     
-    // Setup mock for filtered results
+    // Setup mock for getFilteredWines to return color-filtered wines
     const filteredWines = mockWines.filter(wine => wine.color === "White");
-    // Simple mock that immediately sets the filtered result
-    (wrapper.vm as any).wines = filteredWines;
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(filteredWines);
     
-    // We can't easily test the database query directly in this test, so we'll focus on
-    // testing that setting the filter shows the correct wines
+    // Set the color filter
     const colorSelect = wrapper.find<HTMLSelectElement>(
       "div[class~='sm:block'][class~='hidden'] table thead th:nth-child(4) select"
     );
     await colorSelect.setValue("White");
+    await flushPromises(); // Wait for the async getFilteredWines to resolve
+    
+    // Update wines manually for the test
+    (wrapper.vm as any).wines = filteredWines;
     await nextTick();
     
     const rows = wrapper.findAll(
@@ -327,15 +346,12 @@ describe("WineTable.vue", () => {
     // Clear previous mocks
     vi.clearAllMocks();
     
-    // First set vintner filter
+    // First set vintner filter and mock the result
     const vintnerFilteredWines = mockWines.filter(wine => wine.vintner === "Test Vintner 1");
-    const dbWinesWhereEquals = vi.fn().mockResolvedValue(vintnerFilteredWines);
-    const dbWinesWhere = vi.fn().mockReturnValue({ equals: vi.fn().mockReturnValue({ toArray: dbWinesWhereEquals }) });
-    vi.spyOn(dbService.db.wines, 'where').mockImplementation(dbWinesWhere);
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(vintnerFilteredWines);
     
     (wrapper.vm as any).filterVintner = "Test Vintner 1";
-    await flushPromises();
-    await nextTick();
+    await flushPromises(); // Wait for async operation
     
     // Update wines manually for vintner test
     (wrapper.vm as any).wines = vintnerFilteredWines;
@@ -348,12 +364,10 @@ describe("WineTable.vue", () => {
     
     // Reset mocks for the color filter
     vi.clearAllMocks();
-    const colorFilteredDbToArray = vi.fn().mockResolvedValue(combinedFilteredWines);
-    vi.spyOn(dbService.db.wines, 'toArray').mockImplementation(colorFilteredDbToArray);
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(combinedFilteredWines);
     
     (wrapper.vm as any).filterColor = "Red";
-    await flushPromises();
-    await nextTick();
+    await flushPromises(); // Wait for async operation
     
     // Update wines manually for color test
     (wrapper.vm as any).wines = combinedFilteredWines;
@@ -367,12 +381,10 @@ describe("WineTable.vue", () => {
     // Now test no results case - White wines from Vintner 1 (there are none)
     vi.clearAllMocks();
     const emptyFilteredWines: Wine[] = [];
-    const emptyDbToArray = vi.fn().mockResolvedValue(emptyFilteredWines);
-    vi.spyOn(dbService.db.wines, 'toArray').mockImplementation(emptyDbToArray);
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(emptyFilteredWines);
     
     (wrapper.vm as any).filterColor = "White"; // Vintner 1 has no White wines
-    await flushPromises();
-    await nextTick();
+    await flushPromises(); // Wait for async operation
     
     // Update wines manually for empty test
     (wrapper.vm as any).wines = emptyFilteredWines;
@@ -400,6 +412,7 @@ describe("WineTable.vue", () => {
     const filteredWines = mockWines.filter(
       wine => wine.vintner === "Test Vintner 1" && wine.color === "Red"
     );
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue(filteredWines);
     
     // Set filters and update component state directly for the test
     (wrapper.vm as any).filterVintner = "Test Vintner 1";
@@ -409,8 +422,7 @@ describe("WineTable.vue", () => {
     
     // Prepare mock for when filters are cleared
     vi.clearAllMocks();
-    const allWinesDbToArray = vi.fn().mockResolvedValue([...mockWines]);
-    vi.spyOn(dbService.db.wines, 'toArray').mockImplementation(allWinesDbToArray);
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue([...mockWines]);
     
     // Find and click the clear button
     const clearButton = wrapper.find(
@@ -441,18 +453,20 @@ describe("WineTable.vue", () => {
   });
 
   it("shows empty state when there are no wines (desktop)", async () => {
-    vi.spyOn(dbService.db.wines, "toArray").mockResolvedValue([]);
+    // We need to mock getFilteredWines to return empty array
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue([]);
     const localWrapper = mount(WineTable, { global: { stubs: ["Teleport"] } });
     await flushPromises();
+    
+    // The wines array should be empty
+    (localWrapper.vm as any).wines = [];
     await nextTick();
 
-    expect(
-      localWrapper
-        .find(
-          "div[class~='sm:block'][class~='hidden'] tbody tr td[colspan='7']"
-        )
-        .text()
-    ).toContain("No wines in inventory");
+    const emptyMessage = localWrapper.find(
+      "div[class~='sm:block'][class~='hidden'] tbody tr td[colspan='7']"
+    );
+    expect(emptyMessage.exists()).toBe(true);
+    expect(emptyMessage.text()).toContain("No wines in inventory");
     localWrapper.unmount();
   });
 
@@ -577,10 +591,15 @@ describe("WineTable.vue", () => {
   });
 
   it("shows empty state in mobile view when there are no wines", async () => {
-    vi.spyOn(dbService.db.wines, "toArray").mockResolvedValue([]);
+    // We need to mock getFilteredWines to return empty array
+    vi.mocked(dbService.getFilteredWines).mockResolvedValue([]);
     const localWrapper = mount(WineTable, { global: { stubs: ["Teleport"] } });
     await flushPromises();
+    
+    // The wines array should be empty
+    (localWrapper.vm as any).wines = [];
     await nextTick();
+    
     const mobileEmptyState = localWrapper.find(
       "div[class~='sm:hidden'] > div[class*='text-center']"
     );

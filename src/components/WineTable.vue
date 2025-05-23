@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, Ref, onUnmounted, computed, watchEffect } from "vue";
-import { deleteWine, updateWine, db, drinkBottle, getDistinctVintners, getDistinctColors } from "../services/dexie-db";
+import { deleteWine, updateWine, db, drinkBottle, getDistinctVintners, getDistinctColors, getFilteredWines } from "../services/dexie-db";
 import {
   ClockIcon,
   MinusCircleIcon,
@@ -63,29 +63,7 @@ watchEffect(() => {
   }
 
   const query = () => {
-    let collection = db.wines;
-    
-    // Apply vintner filter if set
-    if (filterVintner.value) {
-      collection = collection.where('vintner').equals(filterVintner.value);
-    }
-    
-    // Apply color filter if set
-    if (filterColor.value) {
-      // If we already have a vintner filter, we need to filter the collection further
-      if (filterVintner.value) {
-        // First get the matching vintner items, then filter by color
-        return collection.toArray().then(items => 
-          items.filter(wine => wine.color === filterColor.value)
-        );
-      } else {
-        // If no vintner filter, just query by color directly
-        return collection.where('color').equals(filterColor.value).toArray();
-      }
-    }
-    
-    // If no color filter (but possibly vintner filter), just return the collection
-    return collection.toArray();
+    return getFilteredWines(filterVintner.value, filterColor.value);
   };
 
   subscription = liveQuery(query).subscribe({

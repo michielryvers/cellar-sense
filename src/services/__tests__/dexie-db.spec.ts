@@ -7,6 +7,7 @@ import {
   saveRecommendation,
   getAllRecommendations,
   getRecommendationById,
+  getFilteredWines,
 } from "../dexie-db";
 describe("recommendations (migrated)", () => {
   beforeEach(async () => {
@@ -306,6 +307,76 @@ describe("dexie-db", () => {
     const { drinkBottle } = await import("../dexie-db");
     const result = await drinkBottle("zero-bottles");
     expect(result).toBe(0);
+  });
+  
+  it("getFilteredWines returns all wines when no filters are provided", async () => {
+    await addWine({ ...sampleWine, id: "id1", name: "Wine 1", vintner: "Vintner A", color: "Red" } as any);
+    await addWine({ ...sampleWine, id: "id2", name: "Wine 2", vintner: "Vintner B", color: "White" } as any);
+    
+    const result = await getFilteredWines();
+    expect(result.length).toBe(2);
+  });
+  
+  it("getFilteredWines filters by vintner", async () => {
+    // Create test data without actually using indices
+    const testWines = [
+      { ...sampleWine, id: "id1", name: "Wine 1", vintner: "Vintner A", color: "Red" },
+      { ...sampleWine, id: "id2", name: "Wine 2", vintner: "Vintner B", color: "White" }
+    ];
+    
+    // Add test wines to the database
+    await addWine(testWines[0] as any);
+    await addWine(testWines[1] as any);
+    
+    // Mock db.wines.toArray to return our test data
+    const toArrayMock = vi.spyOn(db.wines, 'toArray');
+    toArrayMock.mockResolvedValue(testWines as any);
+    
+    // Test filtering by vintner using in-memory filtering from our function
+    const result = await getFilteredWines("Vintner A");
+    
+    // Check that our filter works as expected
+    expect(result.length).toBe(1);
+    expect(result[0].name).toBe("Wine 1");
+    
+    // Restore the original implementation
+    toArrayMock.mockRestore();
+  });
+  
+  it("getFilteredWines filters by color", async () => {
+    await addWine({ ...sampleWine, id: "id1", name: "Wine 1", vintner: "Vintner A", color: "Red" } as any);
+    await addWine({ ...sampleWine, id: "id2", name: "Wine 2", vintner: "Vintner B", color: "White" } as any);
+    
+    const result = await getFilteredWines(undefined, "White");
+    expect(result.length).toBe(1);
+    expect(result[0].name).toBe("Wine 2");
+  });
+  
+  it("getFilteredWines filters by both vintner and color", async () => {
+    // Since vintner is not indexed, we'll mock the implementation to simulate filtering
+    const testWines = [
+      { ...sampleWine, id: "id1", name: "Wine 1", vintner: "Vintner A", color: "Red" },
+      { ...sampleWine, id: "id2", name: "Wine 2", vintner: "Vintner B", color: "White" },
+      { ...sampleWine, id: "id3", name: "Wine 3", vintner: "Vintner A", color: "White" }
+    ];
+    
+    // Add the test wines to the database
+    await addWine(testWines[0] as any);
+    await addWine(testWines[1] as any);
+    await addWine(testWines[2] as any);
+    
+    // Mock the implementation for this test
+    const originalToArray = db.wines.toArray;
+    db.wines.toArray = async () => testWines as any;
+    
+    try {
+      const result = await getFilteredWines("Vintner A", "White");
+      expect(result.length).toBe(1);
+      expect(result[0].name).toBe("Wine 3");
+    } finally {
+      // Restore the original implementation
+      db.wines.toArray = originalToArray;
+    }
   });
 });
 
