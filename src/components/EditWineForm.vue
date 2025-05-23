@@ -188,15 +188,15 @@ function handleOutsideClick(e: MouseEvent): void {
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 dark:from-gray-900/90 dark:via-gray-900/90 dark:to-purple-900/90 backdrop-blur-sm"
       @click="handleOutsideClick"
     >
       <div
-        class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
       >
         <!-- Header -->
         <div
-          class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4"
+          class="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4"
         >
           <h2
             class="text-2xl font-bold bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent"
@@ -205,7 +205,7 @@ function handleOutsideClick(e: MouseEvent): void {
           </h2>
           <button
             @click="closeModal"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             aria-label="Close modal"
           >
             <XMarkIcon class="h-6 w-6" />
@@ -215,7 +215,7 @@ function handleOutsideClick(e: MouseEvent): void {
         <form @submit.prevent="handleSubmit" class="space-y-8">
           <div
             v-if="error"
-            class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 mb-4 shadow-sm"
+            class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg border border-red-200 dark:border-red-800 mb-4 shadow-sm"
           >
             {{ error }}
           </div>
@@ -223,15 +223,15 @@ function handleOutsideClick(e: MouseEvent): void {
           <!-- Form Sections -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Basic Info Section -->
-            <div class="lg:col-span-1 space-y-6 bg-gray-50 p-6 rounded-xl">
-              <h3 class="font-semibold text-gray-800 text-lg mb-4">
+            <div class="lg:col-span-1 space-y-6 bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+              <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
                 Basic Information
               </h3>
               <div class="space-y-6">
                 <div>
                   <label
                     for="wineName"
-                    class="block text-sm font-medium text-gray-700 mb-2"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Wine Name<span class="text-red-500">*</span>
                   </label>
@@ -239,7 +239,7 @@ function handleOutsideClick(e: MouseEvent): void {
                     type="text"
                     id="wineName"
                     v-model="formData.name"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Enter wine name"
                   />
                 </div>
@@ -247,7 +247,7 @@ function handleOutsideClick(e: MouseEvent): void {
                 <div>
                   <label
                     for="wineVintner"
-                    class="block text-sm font-medium text-gray-700 mb-2"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Vintner<span class="text-red-500">*</span>
                   </label>
@@ -255,7 +255,7 @@ function handleOutsideClick(e: MouseEvent): void {
                     type="text"
                     id="wineVintner"
                     v-model="formData.vintner"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Enter vintner name"
                   />
                 </div>
@@ -263,7 +263,7 @@ function handleOutsideClick(e: MouseEvent): void {
                 <div>
                   <label
                     for="wineVintage"
-                    class="block text-sm font-medium text-gray-700 mb-2"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Vintage
                   </label>
@@ -271,7 +271,7 @@ function handleOutsideClick(e: MouseEvent): void {
                     type="number"
                     id="wineVintage"
                     v-model="formData.vintage"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Enter vintage year"
                   />
                 </div>
@@ -279,14 +279,14 @@ function handleOutsideClick(e: MouseEvent): void {
                 <div>
                   <label
                     for="wineColor"
-                    class="block text-sm font-medium text-gray-700 mb-2"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Color<span class="text-red-500">*</span>
                   </label>
                   <select
                     id="wineColor"
                     v-model="formData.color"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value="" disabled>Select wine color</option>
                     <option
@@ -304,15 +304,15 @@ function handleOutsideClick(e: MouseEvent): void {
             <!-- Wine Details -->
             <div class="lg:col-span-2 grid grid-cols-1 gap-8">
               <!-- Region & Classification -->
-              <div class="bg-gray-50 p-6 rounded-xl">
-                <h3 class="font-semibold text-gray-800 text-lg mb-4">
+              <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+                <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
                   Region & Classification
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label
                       for="wineAppellation"
-                      class="block text-sm font-medium text-gray-700 mb-2"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                     >
                       Appellation
                     </label>
@@ -320,7 +320,7 @@ function handleOutsideClick(e: MouseEvent): void {
                       type="text"
                       id="wineAppellation"
                       v-model="formData.appellation"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Enter appellation"
                     />
                   </div>
@@ -328,7 +328,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   <div>
                     <label
                       for="wineRegion"
-                      class="block text-sm font-medium text-gray-700 mb-2"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                     >
                       Region
                     </label>
@@ -336,7 +336,7 @@ function handleOutsideClick(e: MouseEvent): void {
                       type="text"
                       id="wineRegion"
                       v-model="formData.region"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Enter region"
                     />
                   </div>
@@ -344,15 +344,15 @@ function handleOutsideClick(e: MouseEvent): void {
               </div>
 
               <!-- Technical Details -->
-              <div class="bg-gray-50 p-6 rounded-xl">
-                <h3 class="font-semibold text-gray-800 text-lg mb-4">
+              <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+                <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
                   Technical Details
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label
                       for="wineVolume"
-                      class="block text-sm font-medium text-gray-700 mb-2"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                     >
                       Volume
                     </label>
@@ -360,7 +360,7 @@ function handleOutsideClick(e: MouseEvent): void {
                       type="text"
                       id="wineVolume"
                       v-model="formData.volume"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="e.g., 750ml"
                     />
                   </div>
@@ -368,7 +368,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   <div>
                     <label
                       for="wineAlcohol"
-                      class="block text-sm font-medium text-gray-700 mb-2"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                     >
                       Alcohol
                     </label>
@@ -376,7 +376,7 @@ function handleOutsideClick(e: MouseEvent): void {
                       type="text"
                       id="wineAlcohol"
                       v-model="formData.alcohol"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="e.g., 13.5%"
                     />
                   </div>
@@ -384,7 +384,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   <div>
                     <label
                       for="wineFarming"
-                      class="block text-sm font-medium text-gray-700 mb-2"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                     >
                       Farming
                     </label>
@@ -392,7 +392,7 @@ function handleOutsideClick(e: MouseEvent): void {
                       type="text"
                       id="wineFarming"
                       v-model="formData.farming"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="e.g., Organic"
                     />
                   </div>
@@ -402,7 +402,7 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
 
           <!-- Grapes Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-semibold text-gray-800 text-lg">
                 Grape Varieties
@@ -448,7 +448,7 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
 
           <!-- Vinification Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-semibold text-gray-800 text-lg">
                 Vinification Steps
@@ -494,7 +494,7 @@ function handleOutsideClick(e: MouseEvent): void {
           <!-- Tasting Notes -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Nose -->
-            <div class="bg-gray-50 p-6 rounded-xl">
+            <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-gray-800 text-lg">Nose</h3>
                 <button
@@ -530,7 +530,7 @@ function handleOutsideClick(e: MouseEvent): void {
             </div>
 
             <!-- Palate -->
-            <div class="bg-gray-50 p-6 rounded-xl">
+            <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-gray-800 text-lg">Palate</h3>
                 <button
@@ -567,13 +567,13 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
 
           <!-- Inventory Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">Inventory</h3>
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">Inventory</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label
                   for="bottles"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Number of Bottles
                 </label>
@@ -582,7 +582,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   id="bottles"
                   v-model="formData.inventory.bottles"
                   min="0"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Enter quantity"
                 />
               </div>
@@ -590,7 +590,7 @@ function handleOutsideClick(e: MouseEvent): void {
               <div>
                 <label
                   for="purchaseDate"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Purchase Date
                 </label>
@@ -598,14 +598,14 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="date"
                   id="purchaseDate"
                   v-model="formData.inventory.purchaseDate"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <div>
                 <label
                   for="purchaseLocation"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Purchase Location
                 </label>
@@ -613,7 +613,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="text"
                   id="purchaseLocation"
                   v-model="formData.inventory.purchaseLocation"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Where did you buy it?"
                 />
               </div>
@@ -621,15 +621,15 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
 
           <!-- Drinking Window Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Drinking Window
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label
                   for="drinkFrom"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Drink From
                 </label>
@@ -637,7 +637,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="number"
                   id="drinkFrom"
                   v-model="formData.drink_from"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Start year"
                 />
               </div>
@@ -645,7 +645,7 @@ function handleOutsideClick(e: MouseEvent): void {
               <div>
                 <label
                   for="drinkUntil"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Drink Until
                 </label>
@@ -653,7 +653,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="number"
                   id="drinkUntil"
                   v-model="formData.drink_until"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="End year"
                 />
               </div>
@@ -661,7 +661,7 @@ function handleOutsideClick(e: MouseEvent): void {
               <div>
                 <label
                   for="price"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Price
                 </label>
@@ -669,7 +669,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="text"
                   id="price"
                   v-model="formData.price"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="e.g., €10.50"
                 />
               </div>
@@ -677,15 +677,15 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
 
           <!-- Additional Details Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Additional Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
                   for="sulfites"
-                  class="block text-sm font-medium text-gray-700 mb-2"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Sulfites
                 </label>
@@ -693,7 +693,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   type="text"
                   id="sulfites"
                   v-model="formData.sulfites"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="e.g., Low-sulfite"
                 />
               </div>
@@ -701,7 +701,7 @@ function handleOutsideClick(e: MouseEvent): void {
           </div>
           
           <!-- Sources Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-semibold text-gray-800 text-lg">
                 Data Sources
@@ -735,7 +735,7 @@ function handleOutsideClick(e: MouseEvent): void {
                   <MinusCircleIcon class="h-5 w-5" />
                 </button>
               </div>
-              <div v-if="!formData.sources || formData.sources.length === 0" class="text-gray-500 italic">
+              <div v-if="!formData.sources || formData.sources.length === 0" class="text-gray-500 dark:text-gray-400 italic">
                 No data sources added
               </div>
             </div>
@@ -746,14 +746,14 @@ function handleOutsideClick(e: MouseEvent): void {
             <button
               type="button"
               @click="closeModal"
-              class="px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+              class="px-6 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="isLoading"
-              class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 dark:from-purple-700 dark:to-purple-900 dark:hover:from-purple-800 dark:hover:to-purple-950 text-white rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <span v-if="isLoading" class="flex items-center">
                 <svg

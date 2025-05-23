@@ -92,15 +92,15 @@ useEscapeKey(closeModal);
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 dark:from-gray-900/90 dark:via-gray-900/90 dark:to-purple-900/90 backdrop-blur-sm"
       @click="handleOutsideClick"
     >
       <div
-        class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
       >
         <!-- Header -->
         <div
-          class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4"
+          class="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4"
         >
           <div>
             <h2
@@ -108,7 +108,7 @@ useEscapeKey(closeModal);
             >
               {{ wine.name || "Unnamed Wine" }}
             </h2>
-            <p class="text-gray-600 mt-1">
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
               {{ wine.vintner || "" }}
               {{ wine.vintage ? `(${wine.vintage})` : "" }}
             </p>
@@ -116,14 +116,14 @@ useEscapeKey(closeModal);
           <div class="flex gap-2">
             <button
               @click="handleEdit"
-              class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-md transition-all transform hover:scale-105"
+              class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 rounded-lg shadow-md transition-all transform hover:scale-105"
             >
               <PencilIcon class="h-4 w-4 mr-2" />
               Edit
             </button>
             <button
               @click="closeModal"
-              class="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               aria-label="Close modal"
             >
               <XMarkIcon class="h-6 w-6" />
@@ -136,9 +136,9 @@ useEscapeKey(closeModal);
           <!-- Images Section -->
           <div
             v-if="frontImageUrl || backImageUrl"
-            class="bg-gray-50 p-6 rounded-xl"
+            class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
           >
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">Labels</h3>
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">Labels</h3>
             <div class="flex flex-wrap gap-6">
               <div v-if="frontImageUrl" class="relative group">
                 <img
@@ -166,56 +166,56 @@ useEscapeKey(closeModal);
           </div>
 
           <!-- Basic Info Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Basic Information
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600"
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400"
                   >Appellation</span
                 >
-                <p class="text-gray-800">{{ wine.appellation || "-" }}</p>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.appellation || "-" }}</p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600">Region</span>
-                <p class="text-gray-800">{{ wine.region || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Region</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.region || "-" }}</p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600">Color</span>
-                <p class="text-gray-800">{{ wine.color || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Color</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.color || "-" }}</p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600">Price</span>
-                <p class="text-gray-800">{{ wine.price || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Price</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.price || "-" }}</p>
               </div>
             </div>
           </div>
 
           <!-- Technical Details Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Technical Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600">Volume</span>
-                <p class="text-gray-800">{{ wine.volume || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Volume</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.volume || "-" }}</p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600">Alcohol</span>
-                <p class="text-gray-800">{{ wine.alcohol || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Alcohol</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.alcohol || "-" }}</p>
               </div>
               <div>
-                <span class="text-sm font-medium text-gray-600">Farming</span>
-                <p class="text-gray-800">{{ wine.farming || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Farming</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.farming || "-" }}</p>
               </div>
             </div>
           </div>
 
           <!-- Grape Varieties Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Grape Varieties
             </h3>
             <div class="flex flex-wrap gap-2">
@@ -236,8 +236,8 @@ useEscapeKey(closeModal);
           </div>
 
           <!-- Vinification Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Vinification Process
             </h3>
             <div class="space-y-3">
@@ -247,7 +247,7 @@ useEscapeKey(closeModal);
                 class="bg-white p-4 rounded-lg shadow-sm"
               >
                 <span class="font-medium text-purple-800">{{ step.step }}</span>
-                <p class="text-gray-700 mt-1">{{ step.description }}</p>
+                <p class="text-gray-700 dark:text-gray-300 mt-1">{{ step.description }}</p>
               </div>
               <div v-if="!vinificationSteps.length" class="text-gray-500">
                 No vinification details available
@@ -256,8 +256,8 @@ useEscapeKey(closeModal);
           </div>
 
           <!-- Tasting Notes Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Tasting Notes
             </h3>
             <div class="space-y-4">
@@ -301,8 +301,8 @@ useEscapeKey(closeModal);
           </div>
 
           <!-- Drinking Window Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Drinking Window
             </h3>
             <div class="flex items-center justify-center space-x-8">
@@ -327,21 +327,21 @@ useEscapeKey(closeModal);
           </div>
 
           <!-- Additional Details Section -->
-          <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Additional Details
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span class="text-sm font-medium text-gray-600">Sulfites</span>
-                <p class="text-gray-800">{{ wine.sulfites || "-" }}</p>
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Sulfites</span>
+                <p class="text-gray-800 dark:text-gray-200">{{ wine.sulfites || "-" }}</p>
               </div>
             </div>
           </div>
           
           <!-- Sources Section -->
-          <div v-if="wine.sources && wine.sources.length > 0" class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold text-gray-800 text-lg mb-4">
+          <div v-if="wine.sources && wine.sources.length > 0" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4">
               Data Sources
             </h3>
             <div class="space-y-2">
@@ -363,7 +363,7 @@ useEscapeKey(closeModal);
           </div>
           
           <!-- Consumption History Section -->
-          <div v-if="consumptionHistory.length > 0" class="bg-gray-50 p-6 rounded-xl">
+          <div v-if="consumptionHistory.length > 0" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-semibold text-gray-800 text-lg">
                 Consumption History
@@ -390,7 +390,7 @@ useEscapeKey(closeModal);
                         {{ new Date(consumption.date).toLocaleDateString() }}
                       </span>
                     </div>
-                    <p v-if="consumption.notes" class="text-gray-700">{{ consumption.notes }}</p>
+                    <p v-if="consumption.notes" class="text-gray-700 dark:text-gray-300">{{ consumption.notes }}</p>
                     <p v-else class="text-gray-500 italic text-sm">No notes provided</p>
                   </div>
                 </div>

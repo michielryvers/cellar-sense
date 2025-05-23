@@ -220,11 +220,11 @@ async function handleSubmit(): Promise<void> {
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-100/80 via-white/80 to-pink-100/80 dark:from-gray-900/90 dark:via-gray-900/90 dark:to-purple-900/90 backdrop-blur-sm"
       @click="handleOutsideClick"
     >
       <div
-        class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative"
       >
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
@@ -235,7 +235,7 @@ async function handleSubmit(): Promise<void> {
           </h2>
           <button
             @click="closeModal"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             aria-label="Close modal"
           >
             <XMarkIcon class="h-6 w-6" />
@@ -245,7 +245,7 @@ async function handleSubmit(): Promise<void> {
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <div
             v-if="error"
-            class="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 mb-4"
+            class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-4 rounded-lg border border-red-200 dark:border-red-800 mb-4"
           >
             {{ error }}
           </div>
@@ -258,7 +258,7 @@ async function handleSubmit(): Promise<void> {
             >
               <label
                 for="frontLabelImage"
-                class="block text-sm font-medium text-gray-700 mb-2"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Front Label Image
                 <span class="text-red-500">*</span>
@@ -281,7 +281,7 @@ async function handleSubmit(): Promise<void> {
                   class="flex flex-col items-center justify-center h-40 bg-white rounded-lg"
                 >
                   <svg
-                    class="w-12 h-12 text-gray-400"
+                    class="w-12 h-12 text-gray-400 dark:text-gray-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -293,7 +293,7 @@ async function handleSubmit(): Promise<void> {
                       d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                  <span class="mt-2 text-sm text-gray-500"
+                  <span class="mt-2 text-sm text-gray-500 dark:text-gray-400"
                     >Click to upload front label</span
                   >
                 </div>
@@ -312,10 +312,10 @@ async function handleSubmit(): Promise<void> {
             >
               <label
                 for="backLabelImage"
-                class="block text-sm font-medium text-gray-700 mb-2"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Back Label Image
-                <span class="text-gray-400">(Optional)</span>
+                <span class="text-gray-400 dark:text-gray-500">(Optional)</span>
               </label>
               <input
                 type="file"
@@ -335,7 +335,7 @@ async function handleSubmit(): Promise<void> {
                   class="flex flex-col items-center justify-center h-40 bg-white rounded-lg"
                 >
                   <svg
-                    class="w-12 h-12 text-gray-400"
+                    class="w-12 h-12 text-gray-400 dark:text-gray-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -347,7 +347,7 @@ async function handleSubmit(): Promise<void> {
                       d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                  <span class="mt-2 text-sm text-gray-500"
+                  <span class="mt-2 text-sm text-gray-500 dark:text-gray-400"
                     >Click to upload back label</span
                   >
                 </div>
@@ -366,10 +366,10 @@ async function handleSubmit(): Promise<void> {
             <div class="relative">
               <label
                 for="purchaseLocation"
-                class="block text-sm font-medium text-gray-700 mb-2"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Purchase Location
-                <span class="text-gray-400">(Optional)</span>
+                <span class="text-gray-400 dark:text-gray-500">(Optional)</span>
               </label>
               <input
                 type="text"
@@ -378,7 +378,7 @@ async function handleSubmit(): Promise<void> {
                 placeholder="Where did you buy this wine?"
                 @focus="handleLocationFocus"
                 @blur="handleLocationBlur"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               <!-- Autocomplete Dropdown -->
               <div
@@ -401,7 +401,7 @@ async function handleSubmit(): Promise<void> {
             <div>
               <label
                 for="numberOfBottles"
-                class="block text-sm font-medium text-gray-700 mb-2"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Number of Bottles
                 <span class="text-red-500">*</span>
@@ -411,7 +411,7 @@ async function handleSubmit(): Promise<void> {
                 id="numberOfBottles"
                 v-model.number="numberOfBottles"
                 min="1"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
@@ -434,7 +434,7 @@ async function handleSubmit(): Promise<void> {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full mt-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+            class="w-full mt-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 dark:from-purple-700 dark:to-purple-900 dark:hover:from-purple-800 dark:hover:to-purple-950 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
           >
             <svg
               v-if="isLoading"
