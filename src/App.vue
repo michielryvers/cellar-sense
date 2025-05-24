@@ -17,6 +17,7 @@ import type {
   WineQuestionEntry,
 } from "./shared/types";
 import WineDetail from "./components/WineDetail.vue";
+import FullScreenCamera from "./components/FullScreenCamera.vue";
 import {
   Cog6ToothIcon,
   PlusIcon,
@@ -38,6 +39,7 @@ import {
 const showSettings = ref(false);
 const showAddModal = ref(false);
 const showRecommendModal = ref(false);
+const showCamera = ref(false);
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
 const showRecommendationsResultModal = ref(false);
@@ -255,6 +257,27 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       </div>
       <div class="flex flex-wrap gap-2 md:gap-3">
         <button
+          @click="showCamera = true"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-black bg-opacity-80 hover:bg-opacity-90 text-white border border-gray-700 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="Open Camera"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 md:mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 7h2l.4-1.2A2 2 0 017.24 4h9.52a2 2 0 011.84 1.8L21 7h2a1 1 0 011 1v11a2 2 0 01-2 2H3a2 2 0 01-2-2V8a1 1 0 011-1zm3 0V6a1 1 0 011-1h10a1 1 0 011 1v1"
+            />
+          </svg>
+          <span class="hidden md:inline">Camera</span>
+        </button>
+        <button
           @click="showSettings = true"
           class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
           title="Settings"
@@ -339,6 +362,7 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       :question="questionText"
       @close="showQuestionResultModal = false"
     />
+    <FullScreenCamera :show="showCamera" @close="showCamera = false" />
     <!-- Dexie Cloud Login Modal -->
     <LoginDexieModal :ui="userInteraction" />
   </div>

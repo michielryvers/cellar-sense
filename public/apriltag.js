@@ -9,38 +9,25 @@ importScripts("https://unpkg.com/comlink/dist/umd/comlink.js");
  *
  */
 class Apriltag {
-  /**
-   * Contructor
-   * @param {function} onDetectorReadyCallback Callback when the detector is ready
-   */
-  constructor(onDetectorReadyCallback) {
-    //detectorOptions = detectorOptions || {};
-
-    this.onDetectorReadyCallback = onDetectorReadyCallback;
-
-    // detector options
+  constructor() {
     this._opt = {
-      // Decimate input image by this factor
       quad_decimate: 2.0,
-      // What Gaussian blur should be applied to the segmented image; standard deviation in pixels
       quad_sigma: 0.0,
-      // Use this many CPU threads (no effect)
       nthreads: 1,
-      // Spend more time trying to align edges of tags
       refine_edges: 1,
-      // Maximum detections to return (0=return all)
       max_detections: 0,
-      // Return pose (requires camera parameters)
       return_pose: 1,
-      // Return pose solutions details
       return_solutions: 1,
     };
-
-    let _this = this;
-    AprilTagWasm().then(function (Module) {
-      console.log("Apriltag WASM module loaded.");
-      _this.onWasmInit(Module);
+    this._ready = new Promise((resolve) => {
+      AprilTagWasm().then((Module) => {
+        this.onWasmInit(Module);
+        resolve();
+      });
     });
+  }
+  async waitReady() {
+    await this._ready;
   }
 
   /**
@@ -96,8 +83,6 @@ class Apriltag {
       this._opt.return_pose,
       this._opt.return_solutions
     );
-
-    this.onDetectorReadyCallback();
   }
 
   /**
@@ -107,7 +92,11 @@ class Apriltag {
    * @param {Number} imgHeight image height
    * @return {detection} detection object
    */
-  detect(grayscaleImg, imgWidth, imgHeight) {
+  async detect(grayscaleImg, imgWidth, imgHeight) {
+    // Ensure WASM is ready
+    if (!this._Module || !this._Module.HEAP8) {
+      throw new Error("WASM module not ready");
+    }
     // set_img_buffer allocates the buffer for image and returns it; just returns the previously allocated buffer if size has not changed
     let imgBuffer = this._set_img_buffer(imgWidth, imgHeight, imgWidth);
     if (imgWidth * imgHeight < grayscaleImg.length)
@@ -211,4 +200,21 @@ class Apriltag {
   }
 }
 
-Comlink.expose(Apriltag);
+// Expose an API for Comlink: must call init() before detect()
+let detector = null;
+let detectorReady = false;
+Comlink.expose({
+  async init(onReady) {
+    detector = new Apriltag();
+    await detector.waitReady();
+    detectorReady = true;
+    if (onReady) onReady();
+  },
+  async detect(...args) {
+    if (!detector || !detectorReady) {
+      throw new Error("Detector not initialized or not ready");
+    }
+    return detector.detect(...args);
+  },
+  // Optionally expose other methods as needed
+});

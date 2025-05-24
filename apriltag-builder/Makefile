@@ -71,7 +71,7 @@ apriltag_wasm.js: $(APRILTAG_SRCS) $(SRCS)
 	emcc -Os -s MODULARIZE=1 -s 'EXPORT_NAME="AprilTagWasm"' -s WASM=1 \
 	     -Iapriltag -s ALLOW_MEMORY_GROWTH=1 \
 	     -s EXPORTED_FUNCTIONS='["_free"]' \
-	     -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","HEAPU8"]' \
+	     -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","HEAPU8", "HEAP8"]' \
 	     -o $(WASMDIR)/$@ $^
 
 docs:

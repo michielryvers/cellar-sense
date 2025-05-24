@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.7",
     "@vueuse/rxjs": "^13.2.0",
     "browser-image-compression": "^2.0.2",
+    "comlink": "^4.4.2",
     "dexie": "^4.0.11",
     "dexie-cloud-addon": "^4.0.11",
     "dexie-export-import": "^4.1.4",

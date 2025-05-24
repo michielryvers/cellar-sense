@@ -335,8 +335,13 @@ describe("App.vue", () => {
     // Initial state check
     expect((wrapper.vm as any).showSettings).toBe(false);
 
-    // Click settings button
-    await wrapper.findAll("button")[0].trigger("click");
+    // Find the settings button by text
+    const buttons = wrapper.findAll("button");
+    const settingsButton = buttons.find((button) =>
+      button.text().includes("Settings")
+    );
+    expect(settingsButton).toBeDefined();
+    await settingsButton!.trigger("click");
 
     // Check if settings modal is shown
     expect((wrapper.vm as any).showSettings).toBe(true);
