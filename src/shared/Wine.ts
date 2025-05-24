@@ -30,6 +30,7 @@ export interface Wine {
   };
   consumptions?: WineConsumption[];
   sources?: string[];
+  location?: BottleLocation | null;
 }
 
 export interface GrapeEntry {
@@ -46,4 +47,11 @@ export interface WineConsumption {
   date: string;
   rating: number;
   notes: string;
+}
+
+export interface BottleLocation {
+  tagId: number; // apriltag id stuck on the rack
+  x: number; // normalised 0-1 position in cellar photo
+  y: number;
+  cellPhotoId: string; // FK to stored reference photo
 }

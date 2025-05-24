@@ -8,6 +8,7 @@ import {
   RecommendationOption,
   WineQuery,
   WineQuestionEntry,
+  CellarPhoto,
 } from "../shared/types";
 
 const DEXIE_CLOUD_URL = settingsService.dexieCloudUrl;
@@ -18,6 +19,7 @@ class WineventoryDB extends Dexie {
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
   recommendations!: Table<RecommendationHistoryEntry, number>;
+  cellarPhotos!: Table<CellarPhoto, string>;
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
@@ -27,6 +29,21 @@ class WineventoryDB extends Dexie {
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
         recommendations: "@id, createdAt",
+      });
+      this.version(6).stores({
+        wines: "@id, name, vintage, color",
+        winequeries: "@id, createdAt",
+        winequestions: "@id, createdAt",
+        recommendations: "@id, createdAt",
+        cellarPhotos: "@id, createdAt",
+      }).upgrade((tx) => {
+        // set `location = null` on existing wines
+        return tx
+          .table("wines")
+          .toCollection()
+          .modify((wine) => {
+            wine.location = null;
+          });
       });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
@@ -40,6 +57,21 @@ class WineventoryDB extends Dexie {
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
         recommendations: "++id, createdAt",
+      });
+      this.version(6).stores({
+        wines: "++id, name, vintage, color",
+        winequeries: "++id, createdAt",
+        winequestions: "++id, createdAt",
+        recommendations: "++id, createdAt",
+        cellarPhotos: "id, createdAt",
+      }).upgrade((tx) => {
+        // set `location = null` on existing wines
+        return tx
+          .table("wines")
+          .toCollection()
+          .modify((wine) => {
+            wine.location = null;
+          });
       });
     }
   }
