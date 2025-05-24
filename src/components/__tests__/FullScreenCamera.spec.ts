@@ -30,6 +30,9 @@ describe("FullScreenCamera.vue", () => {
     const wrapper = mount(FullScreenCamera, {
       props: { show: true },
     });
+    // Wait for the camera startup logic to run
+    await Promise.resolve();
+    await Promise.resolve();
     expect(wrapper.find("header").exists()).toBe(true);
     expect(wrapper.find("video").exists()).toBe(true);
     expect(getUserMedia).toHaveBeenCalled();
