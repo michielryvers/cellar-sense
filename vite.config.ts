@@ -46,7 +46,8 @@ export default defineConfig({
             type: "image/png",
           },
         ],
-      },      workbox: {
+      },
+      workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,json}"],
         runtimeCaching: [],
       },
