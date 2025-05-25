@@ -47,11 +47,11 @@
         ref="overlayCanvas"
         width="1024"
         height="768"
-        class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
+        class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40"
         style="width: 1024px; height: 768px"
       ></canvas>
       <!-- Instructions overlay -->
-      <div class="absolute inset-x-4 top-4 z-30">
+      <div class="absolute inset-x-4 top-4 z-50">
         <div class="bg-black bg-opacity-60 text-white p-4 rounded-lg">
           <div v-if="cameraError" class="mb-4">
             <div class="text-red-400 mb-2">
@@ -116,7 +116,7 @@
       <!-- Distance indicator -->
       <div
         v-if="tagFound && bottlePosition"
-        class="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 bg-black bg-opacity-60 text-white px-6 py-3 rounded-full text-lg font-bold"
+        class="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 bg-black bg-opacity-60 text-white px-6 py-3 rounded-full text-lg font-bold"
       >
         <div class="flex items-center justify-center">
           <template v-if="bottleDistance < 0.2">
@@ -133,7 +133,7 @@
 
       <!-- Camera controls -->
       <div
-        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-4"
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-4"
       >
         <!-- Flashlight button - only on supported devices -->
         <button
