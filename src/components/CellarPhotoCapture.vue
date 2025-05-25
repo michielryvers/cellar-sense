@@ -4,14 +4,21 @@
     class="fixed inset-0 z-50 flex flex-col h-full bg-black bg-opacity-95"
   >
     <!-- Header -->
-    <header class="flex items-center justify-between p-4 bg-black bg-opacity-80">
+    <header
+      class="flex items-center justify-between p-4 bg-black bg-opacity-80"
+    >
       <div class="flex items-center space-x-3">
-        <div class="w-2 h-2 rounded-full" :class="{ 
-          'bg-red-500': !cameraReady,
-          'bg-green-500': cameraReady && detectedTags.length > 0,
-          'bg-yellow-500': cameraReady && detectedTags.length === 0
-        }"></div>
-        <span class="text-white font-semibold text-lg">Cellar Photo Capture</span>
+        <div
+          class="w-2 h-2 rounded-full"
+          :class="{
+            'bg-red-500': !cameraReady,
+            'bg-green-500': cameraReady && detectedTags.length > 0,
+            'bg-yellow-500': cameraReady && detectedTags.length === 0,
+          }"
+        ></div>
+        <span class="text-white font-semibold text-lg"
+          >Cellar Photo Capture</span
+        >
       </div>
       <button
         @click="handleClose"
@@ -33,10 +40,10 @@
         class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black"
         style="width: 1024px; height: 768px"
       ></video>
-      
+
       <!-- Hidden canvas for grayscale extraction and capture -->
       <canvas ref="canvas" width="1024" height="768" class="hidden"></canvas>
-      
+
       <!-- Overlay canvas for AprilTag visualization -->
       <canvas
         ref="overlayCanvas"
@@ -50,34 +57,48 @@
       <div class="absolute inset-x-4 top-4 z-30">
         <div class="bg-black bg-opacity-60 text-white p-4 rounded-lg">
           <div class="flex items-center space-x-2 mb-2">
-            <div class="w-3 h-3 rounded-full" :class="{ 
-              'bg-red-500': detectedTags.length === 0,
-              'bg-green-500': detectedTags.length > 0
-            }"></div>
+            <div
+              class="w-3 h-3 rounded-full"
+              :class="{
+                'bg-red-500': detectedTags.length === 0,
+                'bg-green-500': detectedTags.length > 0,
+              }"
+            ></div>
             <span class="font-medium">
-              {{ detectedTags.length > 0 ? `${detectedTags.length} AprilTag(s) detected` : 'Looking for AprilTags...' }}
+              {{
+                detectedTags.length > 0
+                  ? `${detectedTags.length} AprilTag(s) detected`
+                  : "Looking for AprilTags..."
+              }}
             </span>
           </div>
           <p class="text-sm text-gray-300">
-            Position your wine rack so AprilTags are clearly visible. 
-            These tags will help locate bottles later.
+            Position your wine rack so AprilTags are clearly visible. These tags
+            will help locate bottles later.
           </p>
         </div>
       </div>
 
       <!-- Capture controls -->
-      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-4">
+      <div
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-4"
+      >
         <button
           @click="handleCapture"
           :disabled="!cameraReady || isCapturing"
           class="w-16 h-16 bg-white rounded-full border-4 border-gray-300 hover:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           :class="{ 'animate-pulse': isCapturing }"
         >
-          <div class="w-full h-full bg-purple-600 rounded-full scale-75 transition-transform hover:scale-90"></div>
+          <div
+            class="w-full h-full bg-purple-600 rounded-full scale-75 transition-transform hover:scale-90"
+          ></div>
         </button>
-        
-        <div v-if="detectedTags.length > 0" class="bg-black bg-opacity-60 text-white px-3 py-2 rounded-lg text-sm">
-          Tags: {{ detectedTags.map(tag => tag.id).join(', ') }}
+
+        <div
+          v-if="detectedTags.length > 0"
+          class="bg-black bg-opacity-60 text-white px-3 py-2 rounded-lg text-sm"
+        >
+          Tags: {{ detectedTags.map((tag) => tag.id).join(", ") }}
         </div>
       </div>
     </div>
@@ -88,7 +109,9 @@
       class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40"
     >
       <div class="text-white text-center">
-        <div class="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-2"></div>
+        <div
+          class="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-2"
+        ></div>
         <p>Saving cellar photo...</p>
       </div>
     </div>
@@ -162,7 +185,7 @@ function getGrayscaleFromVideo(
  */
 const startCamera = async () => {
   console.log("[CellarPhotoCapture] Starting camera...");
-  
+
   if (!video.value) {
     console.log("[CellarPhotoCapture] Video ref not ready");
     return;
@@ -183,7 +206,7 @@ const startCamera = async () => {
     });
 
     video.value.srcObject = stream;
-    
+
     try {
       await video.value.play();
       cameraReady.value = true;
@@ -199,7 +222,7 @@ const startCamera = async () => {
         await apriltag.init(new Comlink.proxy(() => {}));
         detectorReady = true;
       }
-      
+
       runApriltagDetection();
     } catch (err) {
       console.error("[CellarPhotoCapture] Video play failed:", err);
@@ -234,26 +257,31 @@ async function runApriltagDetection() {
   if (gray) {
     const width = video.value.videoWidth;
     const height = video.value.videoHeight;
-    
+
     try {
       const detections = await apriltag.detect(gray, width, height);
       detectedTags.value = detections || [];
-      
+
       // Draw detections on overlay canvas
       if (overlayCanvas.value) {
         const ctx = overlayCanvas.value.getContext("2d");
         overlayCanvas.value.width = width;
         overlayCanvas.value.height = height;
-        
+
         if (ctx) {
-          ctx.clearRect(0, 0, overlayCanvas.value.width, overlayCanvas.value.height);
-          
+          ctx.clearRect(
+            0,
+            0,
+            overlayCanvas.value.width,
+            overlayCanvas.value.height
+          );
+
           if (detections && detections.length > 0) {
             ctx.lineWidth = 3;
             ctx.strokeStyle = "lime";
             ctx.font = "16px Arial";
             ctx.fillStyle = "yellow";
-            
+
             detections.forEach((det: any) => {
               if (det.corners && det.corners.length === 4) {
                 // Draw outline
@@ -266,10 +294,21 @@ async function runApriltagDetection() {
                 ctx.stroke();
 
                 // Draw colored corners
-                const cornerColors = ["#ff3333", "#33ff33", "#3333ff", "#ffff33"];
+                const cornerColors = [
+                  "#ff3333",
+                  "#33ff33",
+                  "#3333ff",
+                  "#ffff33",
+                ];
                 for (let i = 0; i < 4; i++) {
                   ctx.beginPath();
-                  ctx.arc(det.corners[i].x, det.corners[i].y, 6, 0, 2 * Math.PI);
+                  ctx.arc(
+                    det.corners[i].x,
+                    det.corners[i].y,
+                    6,
+                    0,
+                    2 * Math.PI
+                  );
                   ctx.fillStyle = cornerColors[i];
                   ctx.fill();
                   ctx.strokeStyle = "#222";
@@ -313,38 +352,42 @@ const handleCapture = async () => {
     // Capture full resolution image
     const width = video.value.videoWidth;
     const height = video.value.videoHeight;
-    
+
     canvas.value.width = width;
     canvas.value.height = height;
     const ctx = canvas.value.getContext("2d");
-    
+
     if (!ctx) throw new Error("Failed to get canvas context");
-    
+
     ctx.drawImage(video.value, 0, 0, width, height);
-    
+
     // Convert to blob
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.value!.toBlob((result) => {
-        if (result) resolve(result);
-        else reject(new Error("Failed to capture image"));
-      }, "image/jpeg", 0.9);
+      canvas.value!.toBlob(
+        (result) => {
+          if (result) resolve(result);
+          else reject(new Error("Failed to capture image"));
+        },
+        "image/jpeg",
+        0.9
+      );
     });
 
     // Save to storage with detected tags
     const savedPhoto = await saveCellarPhoto(blob, detectedTags.value);
-    
+
     // Create URL for immediate display
     const photoUrl = URL.createObjectURL(savedPhoto.blob);
-    
+
     console.log("[CellarPhotoCapture] Photo saved:", savedPhoto.id);
-    
+
     // Emit success event
     emit("photo-captured", {
       id: savedPhoto.id,
       url: photoUrl,
       tags: detectedTags.value,
     });
-    
+
     // Close the capture modal
     handleClose();
   } catch (error) {
@@ -372,18 +415,18 @@ const stopCamera = () => {
     }
     stream = null;
   }
-  
+
   if (video.value) {
     video.value.srcObject = null;
   }
-  
+
   if (apriltagWorker) {
     apriltagWorker.terminate();
     apriltagWorker = null;
     apriltag = null;
     detectorReady = false;
   }
-  
+
   cameraReady.value = false;
   detectedTags.value = [];
 };
