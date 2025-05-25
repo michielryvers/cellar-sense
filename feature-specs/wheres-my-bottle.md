@@ -72,11 +72,11 @@ I want you to map out a path forward. I added a proof of context camera view to 
 
 6. Incremental delivery (one commit each)
 
-- [ ] Add `location` & `cellarPhotos` schema + migration
-- [ ] Implement `CellarPhotoCapture.vue` + storage service
-- [ ] Add “Set location” flow hooked from `EditWineForm`
-- [ ] Implement `BottleLocationPicker.vue` and save to wine record
-- [ ] Build projection math in `tagPoseService` + `projection.ts`
+- [x] Add `location` & `cellarPhotos` schema + migration
+- [x] Implement `CellarPhotoCapture.vue` + storage service
+- [x] Add “Set location” flow hooked from `EditWineForm`
+- [x] Implement `BottleLocationPicker.vue` and save to wine record
+- [x] Build projection math in `tagPoseService` + `projection.ts`
 - [ ] Create `BottleFinder.vue` with basic overlay (crosshair)
 - [ ] Polish UI, add flashlight toggle, error states, unit tests (Vitest + jsdom canvas stubs)
 

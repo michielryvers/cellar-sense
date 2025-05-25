@@ -1,8 +1,9 @@
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 z-[60] flex flex-col h-full bg-black bg-opacity-95"
+    class="fixed inset-0 z-[1000] flex flex-col h-full bg-black bg-opacity-95"
   >
+    >
     <!-- Header -->
     <header
       class="flex items-center justify-between p-4 bg-black bg-opacity-80"

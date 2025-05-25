@@ -14,6 +14,26 @@ import {
   logout,
 } from "../services/dexie-cloud-login";
 import type { SettingsModalProps } from "../shared/types";
+import {
+  deleteAllCellarPhotos,
+  deleteAllWineLocations,
+} from "../services/cellar-photo-storage";
+
+const deletingPhotos = ref(false);
+
+async function handleDeleteAllPhotos() {
+  if (
+    !confirm(
+      "Delete ALL cellar and bottle location photos? This cannot be undone."
+    )
+  )
+    return;
+  deletingPhotos.value = true;
+  await deleteAllCellarPhotos();
+  await deleteAllWineLocations();
+  deletingPhotos.value = false;
+  alert("All cellar and bottle location photos deleted.");
+}
 
 // Props and emits
 const props = defineProps<SettingsModalProps>();
@@ -191,6 +211,28 @@ async function handleCloudLogout(): Promise<void> {
               placeholder="sk-..."
               autocomplete="off"
             />
+          </div>
+          <div class="mt-8">
+            <h3
+              class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-2 px-1"
+            >
+              Danger Zone
+            </h3>
+            <button
+              @click="handleDeleteAllPhotos"
+              :disabled="deletingPhotos"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full transition-colors shadow-sm"
+            >
+              {{
+                deletingPhotos
+                  ? "Deleting…"
+                  : "Delete All Cellar & Location Photos"
+              }}
+            </button>
+            <p class="text-xs text-gray-500 mt-2">
+              This will remove all cellar photos and bottle location data. Label
+              images are NOT affected.
+            </p>
           </div>
           <div class="mb-6">
             <label

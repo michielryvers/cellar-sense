@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { XMarkIcon, PencilIcon } from "@heroicons/vue/24/outline";
+import { computed, ref } from "vue";
+import { XMarkIcon, PencilIcon, MapPinIcon } from "@heroicons/vue/24/outline";
 import { StarIcon } from "@heroicons/vue/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
 import { Wine } from "../shared/Wine";
 import type { WineDetailProps } from "../shared/types";
+import BottleFinder from "./BottleFinder.vue";
 
 const props = defineProps<WineDetailProps>();
 const emit = defineEmits<{
@@ -72,6 +73,9 @@ const averageRating = computed(() => {
   return Math.round((sum / props.wine.consumptions.length) * 10) / 10; // Round to 1 decimal place
 });
 
+// Bottle finder state
+const showBottleFinder = ref(false);
+
 // Event handlers
 function handleEdit(): void {
   emit("edit", props.wine);
@@ -86,6 +90,11 @@ function handleOutsideClick(e: MouseEvent): void {
   if (e.target === e.currentTarget) {
     closeModal();
   }
+}
+
+// Function to open bottle finder
+function openBottleFinder(): void {
+  showBottleFinder.value = true;
 }
 
 // Use escape key to close modal
@@ -120,11 +129,22 @@ useEscapeKey(closeModal);
           <div class="flex gap-2">
             <button
               @click="handleEdit"
-              class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 rounded-lg shadow-md transition-all transform hover:scale-105"
+              class="flex items-center px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
             >
-              <PencilIcon class="h-4 w-4 mr-2" />
+              <PencilIcon class="h-5 w-5 mr-1" />
               Edit
             </button>
+
+            <!-- Find Bottle button - only show if location data exists -->
+            <button
+              v-if="wine.location"
+              @click="openBottleFinder"
+              class="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors ml-2"
+            >
+              <MapPinIcon class="h-5 w-5 mr-1" />
+              Find Bottle
+            </button>
+
             <button
               @click="closeModal"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
@@ -528,9 +548,56 @@ useEscapeKey(closeModal);
               </div>
             </div>
           </div>
+
+          <!-- Bottle Location Section - only if location exists -->
+          <div
+            v-if="wine.location"
+            class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl"
+          >
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
+              Bottle Location
+            </h3>
+            <div class="flex items-center">
+              <div
+                class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-4"
+              >
+                <MapPinIcon
+                  class="h-7 w-7 text-purple-600 dark:text-purple-400"
+                />
+              </div>
+              <div>
+                <p class="text-gray-800 dark:text-gray-200 font-medium">
+                  This bottle's location has been marked
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  Use the "Find Bottle" button to locate it in your cellar
+                </p>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button
+                @click="openBottleFinder"
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors inline-flex items-center"
+              >
+                <MapPinIcon class="h-5 w-5 mr-2" />
+                Find This Bottle
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </Teleport>
+
+  <!-- Bottle Finder Modal -->
+  <Teleport to="body">
+    <BottleFinder
+      :show="showBottleFinder"
+      :wine="wine"
+      @close="showBottleFinder = false"
+    />
   </Teleport>
 </template>
 

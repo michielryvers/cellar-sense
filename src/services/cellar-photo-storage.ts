@@ -1,3 +1,4 @@
+import { getAllWines, updateWine } from "./dexie-db";
 import { db } from "./dexie-db";
 import { resizeImageToBlob } from "../utils/imageHelpers";
 import { CellarPhoto } from "../shared/types";
@@ -124,4 +125,27 @@ function getImageDimensions(
 
     img.src = url;
   });
+}
+
+/**
+ * Delete all cellar photos from storage.
+ */
+export async function deleteAllCellarPhotos(): Promise<void> {
+  const all = await db.cellarPhotos.toArray();
+  for (const photo of all) {
+    await db.cellarPhotos.delete(photo.id);
+  }
+}
+
+/**
+ * Remove all bottle location data and references to cellar photos from wines.
+ */
+export async function deleteAllWineLocations(): Promise<void> {
+  const wines = await getAllWines();
+  for (const wine of wines) {
+    if (wine.location) {
+      wine.location = null;
+      await updateWine(wine);
+    }
+  }
 }
