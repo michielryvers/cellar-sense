@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 z-50 flex flex-col h-full bg-black bg-opacity-95"
+    class="fixed inset-0 z-[60] flex flex-col h-full bg-black bg-opacity-95"
   >
     <!-- Header -->
     <header
@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, watch, onMounted, onUnmounted, nextTick, toRaw } from "vue";
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { saveCellarPhoto } from "../services/cellar-photo-storage";
 
@@ -378,14 +378,13 @@ const handleCapture = async () => {
 
     // Create URL for immediate display
     const photoUrl = URL.createObjectURL(savedPhoto.blob);
-
     console.log("[CellarPhotoCapture] Photo saved:", savedPhoto.id);
 
-    // Emit success event
+    // Emit success event with deeply converted raw values
     emit("photo-captured", {
       id: savedPhoto.id,
       url: photoUrl,
-      tags: detectedTags.value,
+      tags: detectedTags.value.map((tag) => toRaw(tag)),
     });
 
     // Close the capture modal

@@ -24,29 +24,13 @@ class WineventoryDB extends Dexie {
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
-      this.version(5).stores({
+      this.version(6).stores({
         wines: "@id, name, vintage, color",
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
         recommendations: "@id, createdAt",
+        cellarPhotos: "id, createdAt",
       });
-      this.version(6)
-        .stores({
-          wines: "@id, name, vintage, color",
-          winequeries: "@id, createdAt",
-          winequestions: "@id, createdAt",
-          recommendations: "@id, createdAt",
-          cellarPhotos: "@id, createdAt",
-        })
-        .upgrade((tx) => {
-          // set `location = null` on existing wines
-          return tx
-            .table("wines")
-            .toCollection()
-            .modify((wine) => {
-              wine.location = null;
-            });
-        });
       this.cloud.configure({
         databaseUrl: DEXIE_CLOUD_URL,
         requireAuth: true,
@@ -54,29 +38,13 @@ class WineventoryDB extends Dexie {
       });
     } else {
       super("cellar-sense-db");
-      this.version(5).stores({
+      this.version(6).stores({
         wines: "++id, name, vintage, color",
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
         recommendations: "++id, createdAt",
+        cellarPhotos: "id, createdAt",
       });
-      this.version(6)
-        .stores({
-          wines: "++id, name, vintage, color",
-          winequeries: "++id, createdAt",
-          winequestions: "++id, createdAt",
-          recommendations: "++id, createdAt",
-          cellarPhotos: "id, createdAt",
-        })
-        .upgrade((tx) => {
-          // set `location = null` on existing wines
-          return tx
-            .table("wines")
-            .toCollection()
-            .modify((wine) => {
-              wine.location = null;
-            });
-        });
     }
   }
 }

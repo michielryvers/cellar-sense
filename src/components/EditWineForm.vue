@@ -4,10 +4,13 @@ import {
   XMarkIcon,
   PlusIcon,
   MinusCircleIcon,
+  CameraIcon,
+  MapPinIcon,
 } from "@heroicons/vue/24/outline";
 import { updateWine } from "../services/dexie-db";
 import type { Wine } from "../shared/Wine";
 import type { EditWineFormProps } from "../shared/types";
+import CellarPhotoCapture from "./CellarPhotoCapture.vue";
 
 const props = defineProps<EditWineFormProps>();
 
@@ -63,10 +66,14 @@ const formData = ref<Wine>({
     back: props.wine.images.back,
   },
   sources: props.wine.sources || [],
+  location: props.wine.location || null,
 });
 
 const error = ref<string>("");
 const isLoading = ref<boolean>(false);
+
+// Cellar photo capture state
+const showCellarPhotoCapture = ref<boolean>(false);
 
 const wineColors: string[] = [
   "Red",
@@ -160,6 +167,7 @@ async function handleSubmit(): Promise<void> {
         back: cleanFormData.images.back,
       },
       sources: cleanFormData.sources?.filter((s) => s.trim() !== ""),
+      location: cleanFormData.location,
     };
 
     await updateWine(wineData);
@@ -175,6 +183,21 @@ async function handleSubmit(): Promise<void> {
 
 function closeModal(): void {
   emit("update:show", false);
+}
+
+// Cellar photo capture functions
+function openCellarPhotoCapture(): void {
+  showCellarPhotoCapture.value = true;
+}
+
+function handlePhotoCaptured(photo: {
+  id: string;
+  url: string;
+  tags: any[];
+}): void {
+  console.log("Photo captured with detected tags:", photo);
+  showCellarPhotoCapture.value = false;
+  // TODO: Navigate to BottleLocationPicker in Step 4
 }
 
 function handleOutsideClick(e: MouseEvent): void {
@@ -644,6 +667,47 @@ function handleOutsideClick(e: MouseEvent): void {
             </div>
           </div>
 
+          <!-- Location Section -->
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
+              Bottle Location
+            </h3>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <MapPinIcon
+                  class="h-5 w-5"
+                  :class="{
+                    'text-green-600': formData.location,
+                    'text-gray-400': !formData.location,
+                  }"
+                />
+                <div>
+                  <p
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    <span v-if="formData.location" class="text-green-600">
+                      Location set (Tag {{ formData.location.tagId }})
+                    </span>
+                    <span v-else class="text-gray-500"> No location set </span>
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Mark where this bottle is stored in your cellar
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="openCellarPhotoCapture"
+                class="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 shadow-sm"
+              >
+                <CameraIcon class="h-4 w-4" />
+                <span>Set Location</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Drinking Window Section -->
           <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
             <h3
@@ -818,6 +882,14 @@ function handleOutsideClick(e: MouseEvent): void {
         </form>
       </div>
     </div>
+  </Teleport>
+  <!-- Cellar Photo Capture Modal - Higher z-index to appear above EditWineForm -->
+  <Teleport to="body">
+    <CellarPhotoCapture
+      :show="showCellarPhotoCapture"
+      @close="showCellarPhotoCapture = false"
+      @photo-captured="handlePhotoCaptured"
+    />
   </Teleport>
 </template>
 
