@@ -1,3 +1,5 @@
+import { WineLocation } from "./types/vision";
+
 export interface Wine {
   id: string | undefined;
   name: string;
@@ -30,7 +32,7 @@ export interface Wine {
   };
   consumptions?: WineConsumption[];
   sources?: string[];
-  location?: Location;
+  location?: WineLocation;
 }
 
 export interface GrapeEntry {

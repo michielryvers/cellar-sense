@@ -1,7 +1,7 @@
 import Dexie, { liveQuery, type Table } from "dexie";
 import dexieCloud from "dexie-cloud-addon";
 import type { Wine } from "../shared/Wine";
-import type { Location, RackDefinition } from "../shared/types/vision";
+import type { RackDefinition, WineLocation } from "../shared/types/vision";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
 import {
@@ -390,10 +390,17 @@ export async function getRack(id: string): Promise<RackDefinition | undefined> {
 
 export async function saveWineLocation(
   wineId: string,
-  location: Location
+  location: WineLocation
 ): Promise<number> {
   try {
-    const result = await db.wines.update(wineId, { location });
+    // Using a function-based update to modify nested properties
+    const result = await db.wines.update(wineId, (wine) => {
+      wine.location = {
+        rackId: location.rackId,
+        x: location.x,
+        y: location.y,
+      };
+    });
     return result;
   } catch (error) {
     console.error(`Failed to save location for wine with id ${wineId}:`, error);

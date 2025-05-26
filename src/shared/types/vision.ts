@@ -1,4 +1,4 @@
-export interface Location {
+export interface WineLocation {
   rackId: string; // FK to cellar-vision-definition.id
   x: number; // normalised
   y: number; // normalised

@@ -67,7 +67,7 @@
 ### Wine model addition
 
 ```ts
-interface Location {
+interface WineLocation {
   rackId: string; // FK to cellar-vision-definition.id
   x: number; // normalised
   y: number; // normalised
@@ -75,7 +75,7 @@ interface Location {
 interface Wine {
   id: string;
   /* existing fields … */
-  location?: Location;
+  location?: WineLocation;
 }
 ```
 

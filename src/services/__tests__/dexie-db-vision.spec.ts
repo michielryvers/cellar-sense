@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { db, saveRack, getRack, saveWineLocation } from "../dexie-db";
-import type { RackDefinition, Location } from "../../shared/types/vision";
+import type { RackDefinition, WineLocation } from "../../shared/types/vision";
 import type { Wine } from "../../shared/Wine";
 import { deleteDB } from "idb";
 
@@ -64,7 +64,7 @@ describe("Dexie DB Vision Helpers", () => {
     };
     await db.wines.add(wine);
 
-    const location: Location = {
+    const location: WineLocation = {
       rackId: "rack1",
       x: 0.5,
       y: 0.5,
@@ -75,7 +75,7 @@ describe("Dexie DB Vision Helpers", () => {
   });
 
   it("should handle saving location for a non-existent wine gracefully", async () => {
-    const location: Location = {
+    const location: WineLocation = {
       rackId: "rack1",
       x: 0.5,
       y: 0.5,
