@@ -14,6 +14,7 @@ import {
   logout,
 } from "../services/dexie-cloud-login";
 import type { SettingsModalProps } from "../shared/types";
+import CalibrateRackModal from "./CalibrateRackModal.vue";
 
 // Props and emits
 const props = defineProps<SettingsModalProps>();
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 const importInput = ref<HTMLInputElement | null>(null);
 const isExporting = ref<boolean>(false);
 const isImporting = ref<boolean>(false);
+const showCalibrateModal = ref<boolean>(false);
 
 // Initialize settings from the service
 const settings = reactive<Settings>({
@@ -146,6 +148,21 @@ async function handleCloudLogout(): Promise<void> {
     console.error("Logout failed:", error);
     alert("Logout failed. Please try again.");
   }
+}
+
+/**
+ * Open calibrate rack modal
+ */
+function openCalibrateModal(): void {
+  showCalibrateModal.value = true;
+}
+
+/**
+ * Handle rack calibration completed
+ */
+function handleRackCalibrated(rackId: string): void {
+  showCalibrateModal.value = false;
+  alert(`Rack calibrated successfully!`);
 }
 </script>
 
@@ -389,9 +406,32 @@ async function handleCloudLogout(): Promise<void> {
                 <span>Import: Restore from backup</span>
               </div>
             </div>
+            <div class="mt-5">
+              <h3
+                class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-2 px-1"
+              >
+                Rack Calibration
+              </h3>
+              <button
+                @click="openCalibrateModal"
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-sm w-full mb-2"
+              >
+                Calibrate Rack
+              </button>
+              <p class="text-xs text-gray-400 dark:text-gray-500 px-1">
+                Set up ArUco markers to locate your wine bottles in AR
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </Teleport>
+  
+  <!-- Calibrate Rack Modal -->
+  <CalibrateRackModal 
+    :is-open="showCalibrateModal" 
+    @close="showCalibrateModal = false"
+    @calibrated="handleRackCalibrated"
+  />
 </template>

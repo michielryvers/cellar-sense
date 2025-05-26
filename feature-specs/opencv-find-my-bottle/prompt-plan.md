@@ -141,7 +141,7 @@ Build on previous commits.
 1. Create `CalibrationService`:
    - startCalibration(videoEl): returns live preview object with H matrix when four tags visible.
    - saveRack(name: string, snapshotCanvas)
-2. Add page `/calibrate`:
+2. Add modal Calibrate:
    - Button “Calibrate rack” -> opens camera, overlay rectangle + grid as per spec.
    - Confirm/Retake logic persists rack.
 3. Unit-test Homography math with synthetic tag sets.
