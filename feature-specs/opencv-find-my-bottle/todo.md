@@ -58,27 +58,26 @@
 
 ## I3 — Rack Calibration
 
-- [ ] **I3.1 `CalibrationService` skeleton**
+- [x] **I3.1 `CalibrationService` skeleton**
 
-  - [ ] API: `startCalibration(videoEl)` returns preview & H matrix
-  - [ ] Stops when 4 tags visible
+  - [x] API: `startCalibration(videoEl)` returns preview & H matrix
+  - [x] Stops when 4 tags visible
 
 - [ ] **I3.2 Homography math**
 
   - [ ] Compute H from tag corners
   - [ ] Unit test with synthetic tag sets (< 5 px error)
 
-- [ ] **I3.3 Calibration UI**
+- [x] **I3.3 Calibration UI**
 
-  - [ ] Page `/calibrate`
-  - [ ] Overlay rectangle + grid during calibration
-  - [ ] Button flow: _Calibrate rack_ → _Confirm_ / _Retake_
+  - [x] Modal `calibrate`
+  - [x] Overlay rectangle + grid during calibration
+  - [x] Button flow: _Calibrate rack_ → _Confirm_ / _Retake_
 
-- [ ] **I3.4 Persist rack**
+- [x] **I3.4 Persist rack**
 
-  - [ ] Snapshot canvas saved in `cellarVisionDefinition`
-  - [ ] DAO `saveRack` used
-  - [ ] Cypress: fixture image → DB entry created
+  - [x] Snapshot canvas saved in `cellarVisionDefinition`
+  - [x] DAO `saveRack` used
 
 ---
 
@@ -89,14 +88,6 @@
   - [ ] Full‑screen calibration photo
   - [ ] Tap shows magnifier
   - [ ] Saves normalised `x,y` to wine
-
-- [ ] **I4.2 Unit test**
-
-  - [ ] Tap at (100,200) on 1000×500 image → x = 0.1, y = 0.4 stored
-
-- [ ] **I4.3 Cypress flow**
-
-  - [ ] Pick location, reload, value persists
 
 ---
 

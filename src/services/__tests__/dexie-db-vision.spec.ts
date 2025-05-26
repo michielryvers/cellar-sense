@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { db, saveRack, getRack, saveWineLocation } from "../dexie-db";
+import {
+  db,
+  saveRack,
+  getRack,
+  getAllRacks,
+  saveWineLocation,
+} from "../dexie-db";
 import type { RackDefinition, WineLocation } from "../../shared/types/vision";
 import type { Wine } from "../../shared/Wine";
 import { deleteDB } from "idb";
@@ -37,6 +43,40 @@ describe("Dexie DB Vision Helpers", () => {
   it("should return undefined if rack definition does not exist", async () => {
     const retrievedRack = await getRack("nonexistent");
     expect(retrievedRack).toBeUndefined();
+  });
+
+  it("should get all rack definitions", async () => {
+    // Initially empty
+    const emptyRacks = await getAllRacks();
+    expect(emptyRacks).toEqual([]);
+
+    // Add multiple racks
+    const rack1: RackDefinition = {
+      id: "rack1",
+      rackName: "Main Rack",
+      markerIds: [1, 2, 3, 4],
+      markerPositions: [{ id: 1, x: 0, y: 0 }],
+      homography: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+      calibrationImageUrl: "test-url-1",
+      lastCalibration: new Date().toISOString(),
+    };
+
+    const rack2: RackDefinition = {
+      id: "rack2",
+      rackName: "Secondary Rack",
+      markerIds: [5, 6, 7, 8],
+      markerPositions: [{ id: 5, x: 100, y: 100 }],
+      homography: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+      calibrationImageUrl: "test-url-2",
+      lastCalibration: new Date().toISOString(),
+    };
+
+    await saveRack(rack1);
+    await saveRack(rack2);
+
+    const allRacks = await getAllRacks();
+    expect(allRacks).toHaveLength(2);
+    expect(allRacks).toEqual(expect.arrayContaining([rack1, rack2]));
   });
 
   it("should save wine location", async () => {

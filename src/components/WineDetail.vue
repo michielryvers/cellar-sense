@@ -1,17 +1,72 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { XMarkIcon, PencilIcon } from "@heroicons/vue/24/outline";
+import { computed, ref, onMounted } from "vue";
+import { XMarkIcon, PencilIcon, MapPinIcon } from "@heroicons/vue/24/outline";
 import { StarIcon } from "@heroicons/vue/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/vue/24/outline";
 import { useEscapeKey } from "../composables/useEscapeKey";
+import { saveWineLocation, getAllRacks } from "../services/dexie-db";
 import { Wine } from "../shared/Wine";
 import type { WineDetailProps } from "../shared/types";
+import type { WineLocation, RackDefinition } from "../shared/types/vision";
+import LocationPicker from "./LocationPicker.vue";
 
 const props = defineProps<WineDetailProps>();
 const emit = defineEmits<{
   (e: "update:show", value: boolean): void;
   (e: "edit", wine: Wine): void;
 }>();
+
+// LocationPicker state
+const showLocationPicker = ref(false);
+const availableRacks = ref<RackDefinition[]>([]);
+const defaultRackId = ref<string>("");
+
+// Load available racks on mount
+onMounted(async () => {
+  try {
+    const racks = await getAllRacks();
+    availableRacks.value = racks;
+
+    // If there's only one rack, use it as default
+    if (racks.length === 1) {
+      defaultRackId.value = racks[0].id;
+    }
+  } catch (error) {
+    console.error("Failed to load rack definitions:", error);
+  }
+});
+
+// Handle setting bottle location
+async function handleSetLocation(): Promise<void> {
+  // Only proceed if we have at least one rack available
+  if (availableRacks.value.length === 0) {
+    console.warn(
+      "No rack definitions available. Please calibrate a rack first."
+    );
+    return;
+  }
+
+  showLocationPicker.value = true;
+}
+
+async function handleLocationSaved(location: WineLocation): Promise<void> {
+  if (props.wine.id) {
+    try {
+      await saveWineLocation(props.wine.id, location);
+      // Update the wine object locally to reflect the change
+      if (props.wine) {
+        (props.wine as any).location = location;
+      }
+      showLocationPicker.value = false;
+    } catch (error) {
+      console.error("Failed to save wine location:", error);
+    }
+  }
+}
+
+function handleCloseLocationPicker(): void {
+  showLocationPicker.value = false;
+}
 
 // Image URLs computed properties
 const frontImageUrl = computed(() => {
@@ -118,6 +173,15 @@ useEscapeKey(closeModal);
             </p>
           </div>
           <div class="flex gap-2">
+            <!-- Set Location button (only show if no location is set) -->
+            <button
+              v-if="!wine.location"
+              @click="handleSetLocation"
+              class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 rounded-lg shadow-md transition-all transform hover:scale-105"
+            >
+              <MapPinIcon class="h-4 w-4 mr-2" />
+              Set Location
+            </button>
             <button
               @click="handleEdit"
               class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 rounded-lg shadow-md transition-all transform hover:scale-105"
@@ -528,9 +592,47 @@ useEscapeKey(closeModal);
               </div>
             </div>
           </div>
+
+          <!-- Location Section -->
+          <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+            <h3
+              class="font-semibold text-gray-800 dark:text-gray-200 text-lg mb-4"
+            >
+              Location
+            </h3>
+            <div class="flex flex-col md:flex-row gap-4">
+              <!-- Rack Location -->
+              <div class="flex-1">
+                <span
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                  >Rack Location</span
+                >
+                <div class="flex items-center gap-2 mt-1">
+                  <p class="text-gray-800 dark:text-gray-200">
+                    {{ wine.location?.rackId || "-" }}
+                  </p>
+                  <button
+                    @click="handleSetLocation"
+                    class="p-2 bg-purple-100 text-purple-800 rounded-full shadow-sm hover:bg-purple-200 transition-all"
+                    aria-label="Edit location"
+                  >
+                    <MapPinIcon class="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <!-- LocationPicker Component -->
+    <LocationPicker
+      :show="showLocationPicker"
+      :rack-id="wine.location?.rackId || defaultRackId"
+      :wine-id="wine.id || ''"
+      @location-saved="handleLocationSaved"
+      @close="handleCloseLocationPicker"
+    />
   </Teleport>
 </template>
 

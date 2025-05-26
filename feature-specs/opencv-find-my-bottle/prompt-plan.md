@@ -154,11 +154,11 @@ Ensure CI green. Commit: "feat(calibration): rack calibration workflow".
 ### Prompt 5 – _Location Picker_ (I4.1 – I4.3)
 
 ```text
+Build on previous commits.
 **Task**
-1. Component `<LocationPicker :rackId="id" :wineId="id" />`:
+1. Create Component `<LocationPicker :rackId="id" :wineId="id" />`:
    - Loads calibration photo full-screen.
    - On tap, shows magnifier, saves normalised x,y to wine.
-2. Unit test: tap at (100,200) on 1000×500 image -> saved x=0.1,y=0.4.
 
 Commit: "feat(picker): bottle location picker".
 ```

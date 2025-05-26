@@ -390,6 +390,16 @@ export async function getRack(id: string): Promise<RackDefinition | undefined> {
   }
 }
 
+export async function getAllRacks(): Promise<RackDefinition[]> {
+  try {
+    const racks = await db.cellarVisionDefinition.toArray();
+    return racks;
+  } catch (error) {
+    console.error("Failed to get all rack definitions:", error);
+    throw error;
+  }
+}
+
 export async function saveWineLocation(
   wineId: string,
   location: WineLocation
