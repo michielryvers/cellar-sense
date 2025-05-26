@@ -9,6 +9,7 @@ import { Wine } from "../shared/Wine";
 import type { WineDetailProps } from "../shared/types";
 import type { WineLocation, RackDefinition } from "../shared/types/vision";
 import LocationPicker from "./LocationPicker.vue";
+import FindBottleView from "./FindBottleView.vue";
 
 const props = defineProps<WineDetailProps>();
 const emit = defineEmits<{
@@ -18,6 +19,8 @@ const emit = defineEmits<{
 
 // LocationPicker state
 const showLocationPicker = ref(false);
+// Find Bottle modal
+const showFindModal = ref(false);
 const availableRacks = ref<RackDefinition[]>([]);
 const defaultRackId = ref<string>("");
 
@@ -35,6 +38,13 @@ onMounted(async () => {
     console.error("Failed to load rack definitions:", error);
   }
 });
+// Determine if wine's rack is available
+const rackExists = computed(() => {
+  return !!(
+    props.wine.location &&
+    availableRacks.value.some((r) => r.id === props.wine.location!.rackId)
+  );
+});
 
 // Handle setting bottle location
 async function handleSetLocation(): Promise<void> {
@@ -49,6 +59,21 @@ async function handleSetLocation(): Promise<void> {
   showLocationPicker.value = true;
 }
 
+// Handle finding bottle
+function handleFindBottle(): void {
+  if (!props.wine.location) {
+    alert("No saved position for this wine");
+    handleSetLocation();
+    return;
+  }
+  if (!rackExists.value) {
+    alert("Calibration data not found for this rack");
+    return;
+  }
+  // Close detail modal and open AR guidance
+  closeModal();
+  showFindModal.value = true;
+}
 async function handleLocationSaved(location: WineLocation): Promise<void> {
   if (props.wine.id) {
     try {
@@ -173,14 +198,23 @@ useEscapeKey(closeModal);
             </p>
           </div>
           <div class="flex gap-2">
-            <!-- Set Location button (only show if no location is set) -->
+            <!-- Set Location button (show if no location) -->
             <button
-              v-if="!wine.location"
+              v-if="!props.wine.location"
               @click="handleSetLocation"
               class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 rounded-lg shadow-md transition-all transform hover:scale-105"
             >
               <MapPinIcon class="h-4 w-4 mr-2" />
               Set Location
+            </button>
+            <!-- Find Bottle button (show if location exists and rack present) -->
+            <button
+              v-if="props.wine.location && rackExists"
+              @click="handleFindBottle"
+              class="inline-flex items-center px-4 py-2 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 rounded-lg shadow-md transition-all transform hover:scale-105"
+            >
+              <MapPinIcon class="h-4 w-4 mr-2" />
+              Find Bottle
             </button>
             <button
               @click="handleEdit"
@@ -634,6 +668,12 @@ useEscapeKey(closeModal);
       @close="handleCloseLocationPicker"
     />
   </Teleport>
+  <!-- Find Bottle AR view -->
+  <FindBottleView
+    v-if="showFindModal"
+    :wine-id="props.wine.id || ''"
+    @close="showFindModal = false"
+  />
 </template>
 
 <style scoped>
