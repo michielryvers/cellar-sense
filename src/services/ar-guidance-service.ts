@@ -7,6 +7,8 @@ import { loadOpenCV } from "../vision/opencv-loader";
  */
 export class ARGuidanceService {
   private cv: any = null;
+  private lastProjection: { x: number; y: number } | null = null;
+  private smoothingFactor = 0.3; // Higher = more responsive, lower = smoother
 
   /**
    * Project a normalized wine location into current camera frame pixel coordinates.
@@ -40,20 +42,65 @@ export class ARGuidanceService {
         this.cv = await loadOpenCV();
       }
 
+      let rawProjection: { x: number; y: number } | null = null;
+
       if (matchedTags.length >= 3) {
         // Full homography update
-        return this.projectWithHomography(location, matchedTags, rackDef);
+        rawProjection = this.projectWithHomography(
+          location,
+          matchedTags,
+          rackDef
+        );
       } else if (matchedTags.length === 2) {
         // Similarity transformation (scale + rotation)
-        return this.projectWithSimilarity(location, matchedTags, rackDef);
+        rawProjection = this.projectWithSimilarity(
+          location,
+          matchedTags,
+          rackDef
+        );
       } else {
         // Translation only (1 marker)
-        return this.projectWithTranslation(location, matchedTags[0], rackDef);
+        rawProjection = this.projectWithTranslation(
+          location,
+          matchedTags[0],
+          rackDef
+        );
+      }
+
+      // Apply smoothing
+      if (rawProjection) {
+        if (this.lastProjection) {
+          // Exponential moving average
+          const smoothedX =
+            this.smoothingFactor * rawProjection.x +
+            (1 - this.smoothingFactor) * this.lastProjection.x;
+          const smoothedY =
+            this.smoothingFactor * rawProjection.y +
+            (1 - this.smoothingFactor) * this.lastProjection.y;
+
+          this.lastProjection = { x: smoothedX, y: smoothedY };
+          return this.lastProjection;
+        } else {
+          // First frame, no smoothing
+          this.lastProjection = rawProjection;
+          return rawProjection;
+        }
+      } else {
+        // Reset smoothing on tracking loss
+        this.lastProjection = null;
+        return null;
       }
     } catch (error) {
       console.error("Projection failed:", error);
       return null;
     }
+  }
+
+  /**
+   * Reset the smoothing state (call when switching wines or racks)
+   */
+  reset(): void {
+    this.lastProjection = null;
   }
 
   private projectWithHomography(

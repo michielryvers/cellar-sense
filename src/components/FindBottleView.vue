@@ -129,6 +129,9 @@ async function startPreview() {
 }
 
 onMounted(async () => {
+  // Reset guidance smoothing state
+  guidance.reset();
+
   const wineRecord = await db.wines.get(props.wineId);
   if (!wineRecord || !wineRecord.location) {
     alert("No saved position for this wine");
@@ -146,19 +149,29 @@ onMounted(async () => {
   startPreview();
 });
 
-onUnmounted(() => {
+/**
+ * Stop camera and clean up resources
+ */
+function stopCamera(): void {
   cancelAnimationFrame(animationId);
   if (video.value?.srcObject) {
-    (video.value.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+    const stream = video.value.srcObject as MediaStream;
+    stream.getTracks().forEach((track) => track.stop());
+    video.value.srcObject = null;
   }
-});
+}
 
 /**
  * Close AR guidance view
  */
 function closeView(): void {
+  stopCamera();
   emit("close");
 }
+
+onUnmounted(() => {
+  stopCamera();
+});
 </script>
 
 <style scoped>
