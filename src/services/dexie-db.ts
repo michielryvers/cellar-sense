@@ -1,6 +1,7 @@
 import Dexie, { liveQuery, type Table } from "dexie";
 import dexieCloud from "dexie-cloud-addon";
 import type { Wine } from "../shared/Wine";
+import type { Location, RackDefinition } from "../shared/types/vision";
 import { settingsService } from "./settings";
 import { ref, Ref } from "vue";
 import {
@@ -18,12 +19,27 @@ class WineventoryDB extends Dexie {
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
   recommendations!: Table<RecommendationHistoryEntry, number>;
+  "cellar-vision-definition"!: Table<RackDefinition, string>;
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
       super("cellar-sense-db", { addons: [dexieCloud] });
       this.version(5).stores({
         wines: "@id, name, vintage, color",
+        winequeries: "@id, createdAt",
+        winequestions: "@id, createdAt",
+        recommendations: "@id, createdAt",
+      });
+      // Added version 6 to make migration to 7 idempotent
+      this.version(6).stores({
+        wines: "@id, name, vintage, color", // existing fields + location
+        winequeries: "@id, createdAt",
+        winequestions: "@id, createdAt",
+        recommendations: "@id, createdAt",
+      });
+      this.version(7).stores({
+        wines: "@id, name, vintage, color, location.rackId", // existing fields + location
+        "cellar-vision-definition": "&id, rackName", // new table
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
         recommendations: "@id, createdAt",
@@ -37,6 +53,20 @@ class WineventoryDB extends Dexie {
       super("cellar-sense-db");
       this.version(5).stores({
         wines: "++id, name, vintage, color",
+        winequeries: "++id, createdAt",
+        winequestions: "++id, createdAt",
+        recommendations: "++id, createdAt",
+      });
+      // Added version 6 to make migration to 7 idempotent
+      this.version(6).stores({
+        wines: "++id, name, vintage, color", // existing fields + location
+        winequeries: "++id, createdAt",
+        winequestions: "++id, createdAt",
+        recommendations: "++id, createdAt",
+      });
+      this.version(7).stores({
+        wines: "++id, name, vintage, color, location.rackId", // existing fields + location
+        "cellar-vision-definition": "&id, rackName", // new table
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
         recommendations: "++id, createdAt",
@@ -334,4 +364,39 @@ export async function getRecommendationById(
   id: number
 ): Promise<RecommendationHistoryEntry | undefined> {
   return db.recommendations.get(id);
+}
+
+// VISION METHODS
+
+export async function saveRack(def: RackDefinition): Promise<string> {
+  try {
+    const id = await db["cellar-vision-definition"].put(def);
+    return id;
+  } catch (error) {
+    console.error("Failed to save rack definition:", error);
+    throw error;
+  }
+}
+
+export async function getRack(id: string): Promise<RackDefinition | undefined> {
+  try {
+    const rack = await db["cellar-vision-definition"].get(id);
+    return rack;
+  } catch (error) {
+    console.error(`Failed to get rack definition with id ${id}:`, error);
+    throw error;
+  }
+}
+
+export async function saveWineLocation(
+  wineId: string,
+  location: Location
+): Promise<number> {
+  try {
+    const result = await db.wines.update(wineId, { location });
+    return result;
+  } catch (error) {
+    console.error(`Failed to save location for wine with id ${wineId}:`, error);
+    throw error;
+  }
 }

@@ -30,6 +30,7 @@ export interface Wine {
   };
   consumptions?: WineConsumption[];
   sources?: string[];
+  location?: Location;
 }
 
 export interface GrapeEntry {
