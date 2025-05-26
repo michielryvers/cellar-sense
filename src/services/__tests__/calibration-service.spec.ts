@@ -24,6 +24,24 @@ vi.mock('../services/dexie-db', () => ({
   }
 }))
 
+// Mock OpenCV.js
+const mockHomographyMat = {
+  data64F: new Float64Array([1, 0, 0, 0, 1, 0, 0, 0, 1]), // Identity matrix
+  delete: vi.fn()
+}
+
+const mockCV = {
+  CV_32FC2: 'CV_32FC2',
+  RANSAC: 'RANSAC',
+  matFromArray: vi.fn((rows, cols, type, data) => ({
+    delete: vi.fn()
+  })),
+  findHomography: vi.fn(() => mockHomographyMat)
+}
+
+// Add cv to window object
+;(global as any).window = { cv: mockCV }
+
 describe('CalibrationService', () => {
   let service: CalibrationService
   
@@ -43,7 +61,27 @@ describe('CalibrationService', () => {
       expect(result).toBeNull()
     })
 
-    it('should compute homography matrix from 4 markers', () => {
+    it('should return null if OpenCV is not loaded', () => {
+      // Temporarily remove cv from window
+      const originalCV = (global as any).window.cv
+      ;(global as any).window.cv = null
+
+      const mockMarkers = [
+        { id: 0, corners: [[0, 0], [10, 0], [10, 10], [0, 10]] },
+        { id: 1, corners: [[90, 0], [100, 0], [100, 10], [90, 10]] },
+        { id: 2, corners: [[0, 90], [10, 90], [10, 100], [0, 100]] },
+        { id: 3, corners: [[90, 90], [100, 90], [100, 100], [90, 100]] }
+      ]
+
+      // @ts-ignore - Private method access for testing
+      const result = service.computeHomography(mockMarkers)
+      expect(result).toBeNull()
+
+      // Restore cv
+      ;(global as any).window.cv = originalCV
+    })
+
+    it('should compute homography matrix from 4 markers using OpenCV', () => {
       // Create mock marker data
       const mockMarkers = [
         {
@@ -67,10 +105,36 @@ describe('CalibrationService', () => {
       // @ts-ignore - Private method access for testing
       const result = service.computeHomography(mockMarkers)
       
-      // Basic validation - just ensure we get a 9-element array (3x3 matrix)
+      // Verify OpenCV functions were called correctly
+      expect(mockCV.matFromArray).toHaveBeenCalledTimes(2)
+      expect(mockCV.findHomography).toHaveBeenCalledTimes(1)
+      
+      // Verify the result
       expect(result).not.toBeNull()
       expect(Array.isArray(result)).toBe(true)
       expect(result?.length).toBe(9)
+      expect(result).toEqual([1, 0, 0, 0, 1, 0, 0, 0, 1]) // Identity matrix
+      
+      // Verify cleanup was called
+      expect(mockHomographyMat.delete).toHaveBeenCalled()
+    })
+
+    it('should handle errors gracefully', () => {
+      // Make findHomography throw an error
+      mockCV.findHomography.mockImplementationOnce(() => {
+        throw new Error('OpenCV error')
+      })
+
+      const mockMarkers = [
+        { id: 0, corners: [[0, 0], [10, 0], [10, 10], [0, 10]] },
+        { id: 1, corners: [[90, 0], [100, 0], [100, 10], [90, 10]] },
+        { id: 2, corners: [[0, 90], [10, 90], [10, 100], [0, 100]] },
+        { id: 3, corners: [[90, 90], [100, 90], [100, 100], [90, 100]] }
+      ]
+
+      // @ts-ignore - Private method access for testing
+      const result = service.computeHomography(mockMarkers)
+      expect(result).toBeNull()
     })
   })
 
@@ -81,24 +145,24 @@ describe('CalibrationService', () => {
       expect(result).toBeNull()
     })
 
-    it('should calculate corners of the rack based on marker positions', () => {
+    it('should extract the outer corners of the rack from marker positions', () => {
       // Create mock marker data with 4 markers at the corners of a square
       const mockMarkers = [
         {
           id: 0,
-          corners: [[0, 0], [10, 0], [10, 10], [0, 10]] // top-left
+          corners: [[0, 0], [10, 0], [10, 10], [0, 10]] // top-left marker
         },
         {
           id: 1,
-          corners: [[90, 0], [100, 0], [100, 10], [90, 10]] // top-right
+          corners: [[90, 0], [100, 0], [100, 10], [90, 10]] // top-right marker
         },
         {
           id: 2,
-          corners: [[0, 90], [10, 90], [10, 100], [0, 100]] // bottom-left
+          corners: [[0, 90], [10, 90], [10, 100], [0, 100]] // bottom-left marker
         },
         {
           id: 3,
-          corners: [[90, 90], [100, 90], [100, 100], [90, 100]] // bottom-right
+          corners: [[90, 90], [100, 90], [100, 100], [90, 100]] // bottom-right marker
         }
       ]
 
@@ -109,11 +173,42 @@ describe('CalibrationService', () => {
       expect(result).not.toBeNull()
       expect(result?.length).toBe(4)
       
-      // Should have x,y properties for each corner
-      result?.forEach((corner: { x: number; y: number }) => {
-        expect(corner).toHaveProperty('x')
-        expect(corner).toHaveProperty('y')
-      })
+      // Check that we got the correct outer corners
+      expect(result?.[0]).toEqual({ x: 0, y: 0 }) // Top-left corner of marker 0
+      expect(result?.[1]).toEqual({ x: 100, y: 0 }) // Top-right corner of marker 1
+      expect(result?.[2]).toEqual({ x: 100, y: 100 }) // Bottom-right corner of marker 3
+      expect(result?.[3]).toEqual({ x: 0, y: 100 }) // Bottom-left corner of marker 2
+    })
+
+    it('should sort markers by ID before extracting corners', () => {
+      // Create mock markers in random order
+      const mockMarkers = [
+        {
+          id: 3,
+          corners: [[90, 90], [100, 90], [100, 100], [90, 100]]
+        },
+        {
+          id: 1,
+          corners: [[90, 0], [100, 0], [100, 10], [90, 10]]
+        },
+        {
+          id: 0,
+          corners: [[0, 0], [10, 0], [10, 10], [0, 10]]
+        },
+        {
+          id: 2,
+          corners: [[0, 90], [10, 90], [10, 100], [0, 100]]
+        }
+      ]
+
+      // @ts-ignore - Private method access for testing
+      const result = service.calculateRackCorners(mockMarkers)
+      
+      // Should still extract corners correctly after sorting
+      expect(result?.[0]).toEqual({ x: 0, y: 0 })
+      expect(result?.[1]).toEqual({ x: 100, y: 0 })
+      expect(result?.[2]).toEqual({ x: 100, y: 100 })
+      expect(result?.[3]).toEqual({ x: 0, y: 100 })
     })
   })
 

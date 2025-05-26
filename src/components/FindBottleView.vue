@@ -69,7 +69,13 @@ const permissionDenied = ref(false);
 async function startPreview() {
   let stream: MediaStream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" }, // Use rear-facing camera
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
+    });
   } catch (error: any) {
     console.error("Camera access denied:", error);
     permissionDenied.value = true;

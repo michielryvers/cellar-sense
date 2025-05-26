@@ -208,39 +208,84 @@ export class CalibrationService {
     if (markers.length < 4) return null;
 
     try {
-      // We'll use the top-left corners of the markers for simplicity
-      // In a real implementation, you'd use all corners and possibly RANSAC
-      const srcPoints = markers.map((marker) => marker.corners[0]);
+      // @ts-ignore - OpenCV is loaded globally
+      const cv = window.cv;
+      if (!cv) {
+        console.error("OpenCV.js not loaded");
+        return null;
+      }
 
       // Sort markers by ID to ensure consistent ordering
       const sortedMarkers = [...markers].sort((a, b) => a.id - b.id);
 
-      // Arrange markers in the normalized space (0-1)
-      // Assuming marker order is: top-left, top-right, bottom-left, bottom-right
+      // Extract all corners from markers (4 corners per marker)
+      const srcPoints: number[] = [];
+      sortedMarkers.forEach((marker) => {
+        marker.corners.forEach((corner: number[]) => {
+          srcPoints.push(corner[0], corner[1]);
+        });
+      });
+
+      // Define destination points in normalized space (0-1)
+      // Assuming markers are placed at corners of the rack
       const dstPoints = [
-        [0, 0], // top-left
-        [1, 0], // top-right
-        [0, 1], // bottom-left
-        [1, 1], // bottom-right
+        // Marker 0 corners (top-left of rack)
+        0,
+        0, // top-left corner of marker
+        0.1,
+        0, // top-right corner of marker
+        0.1,
+        0.1, // bottom-right corner of marker
+        0,
+        0.1, // bottom-left corner of marker
+        // Marker 1 corners (top-right of rack)
+        0.9,
+        0,
+        1,
+        0,
+        1,
+        0.1,
+        0.9,
+        0.1,
+        // Marker 2 corners (bottom-left of rack)
+        0,
+        0.9,
+        0.1,
+        0.9,
+        0.1,
+        1,
+        0,
+        1,
+        // Marker 3 corners (bottom-right of rack)
+        0.9,
+        0.9,
+        1,
+        0.9,
+        1,
+        1,
+        0.9,
+        1,
       ];
 
-      // Use OpenCV.js findHomography if available
-      // For this implementation, we'll use a simple direct calculation for the test
-      // In a real implementation, you would load OpenCV and use cv.findHomography
+      // Create OpenCV matrices
+      const srcMat = cv.matFromArray(16, 1, cv.CV_32FC2, srcPoints);
+      const dstMat = cv.matFromArray(16, 1, cv.CV_32FC2, dstPoints);
 
-      // This is a placeholder for the actual OpenCV homography calculation
-      // In reality, you'd do something like:
-      /*
-      const cv = await loadOpenCV();
-      const srcMat = cv.matFromArray(srcPoints.length, 1, cv.CV_32FC2, srcPoints.flat());
-      const dstMat = cv.matFromArray(dstPoints.length, 1, cv.CV_32FC2, dstPoints.flat());
-      const H = cv.findHomography(srcMat, dstMat);
-      return Array.from(H.data64F);
-      */
+      // Find homography using RANSAC for robustness
+      const homographyMat = cv.findHomography(srcMat, dstMat, cv.RANSAC, 5.0);
 
-      // For now, we'll return a placeholder identity matrix
-      // This should be replaced with the actual homography computation
-      return [1, 0, 0, 0, 1, 0, 0, 0, 1];
+      // Extract the homography matrix values
+      const homography: number[] = [];
+      for (let i = 0; i < 9; i++) {
+        homography.push(homographyMat.data64F[i]);
+      }
+
+      // Clean up
+      srcMat.delete();
+      dstMat.delete();
+      homographyMat.delete();
+
+      return homography;
     } catch (error) {
       console.error("Error computing homography:", error);
       return null;
@@ -260,13 +305,20 @@ export class CalibrationService {
     // Sort markers by ID
     const sortedMarkers = [...markers].sort((a, b) => a.id - b.id);
 
-    // Extract top-left corners
-    const cornerPoints = sortedMarkers.map((marker) => ({
-      x: marker.corners[0][0],
-      y: marker.corners[0][1],
-    }));
+    // For a rectangular rack, we want the outermost corners
+    // Assuming markers are placed at the corners of the rack
+    const corners = [
+      // Top-left: use top-left corner of first marker
+      { x: sortedMarkers[0].corners[0][0], y: sortedMarkers[0].corners[0][1] },
+      // Top-right: use top-right corner of second marker
+      { x: sortedMarkers[1].corners[1][0], y: sortedMarkers[1].corners[1][1] },
+      // Bottom-right: use bottom-right corner of fourth marker
+      { x: sortedMarkers[3].corners[2][0], y: sortedMarkers[3].corners[2][1] },
+      // Bottom-left: use bottom-left corner of third marker
+      { x: sortedMarkers[2].corners[3][0], y: sortedMarkers[2].corners[3][1] },
+    ];
 
-    return cornerPoints;
+    return corners;
   }
 }
 
