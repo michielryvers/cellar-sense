@@ -19,7 +19,7 @@ class WineventoryDB extends Dexie {
   winequeries!: Table<WineQuery, number>;
   winequestions!: Table<WineQuestionEntry, number>;
   recommendations!: Table<RecommendationHistoryEntry, number>;
-  "cellar-vision-definition"!: Table<RackDefinition, string>;
+  cellarVisionDefinition!: Table<RackDefinition, string>;
 
   constructor() {
     if (DEXIE_CLOUD_URL) {
@@ -39,7 +39,7 @@ class WineventoryDB extends Dexie {
       });
       this.version(7).stores({
         wines: "@id, name, vintage, color, location.rackId", // existing fields + location
-        "cellar-vision-definition": "&id, rackName", // new table
+        cellarVisionDefinition: "&id, rackName", // new table
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
         recommendations: "@id, createdAt",
@@ -66,7 +66,7 @@ class WineventoryDB extends Dexie {
       });
       this.version(7).stores({
         wines: "++id, name, vintage, color, location.rackId", // existing fields + location
-        "cellar-vision-definition": "&id, rackName", // new table
+        cellarVisionDefinition: "&id, rackName", // new table
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
         recommendations: "++id, createdAt",
@@ -370,7 +370,7 @@ export async function getRecommendationById(
 
 export async function saveRack(def: RackDefinition): Promise<string> {
   try {
-    const id = await db["cellar-vision-definition"].put(def);
+    const id = await db.cellarVisionDefinition.put(def);
     return id;
   } catch (error) {
     console.error("Failed to save rack definition:", error);
@@ -380,7 +380,7 @@ export async function saveRack(def: RackDefinition): Promise<string> {
 
 export async function getRack(id: string): Promise<RackDefinition | undefined> {
   try {
-    const rack = await db["cellar-vision-definition"].get(id);
+    const rack = await db.cellarVisionDefinition.get(id);
     return rack;
   } catch (error) {
     console.error(`Failed to get rack definition with id ${id}:`, error);

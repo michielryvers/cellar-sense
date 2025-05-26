@@ -4,14 +4,14 @@ Below is a complete **project-planning package** that takes the WineCellar “fi
 
 ## 1. Blueprint – end-to-end view
 
-| Layer                          | Responsibilities                                                                                   | Key artefacts                               | Acceptance criterion                                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Data (model + persistence)** | Add the _cellar-vision-definition_ table and extend _Wine_ with the optional _location_ sub-object | Dexie migration v7, typed model definitions | New tables survive page reload and sync to Dexie Cloud                                                                  |
-| **Vision core**                | Detect 4×4_50 ArUco tags, compute homography **H**, expose pose per frame                          | `CalibrationService`, `ARGuidanceService`   | Given a synthetic rack image with 4 known tags, `ARGuidanceService.project(x,y)` returns pixel coords with < 5 px error |
-| **State**                      | Live vision status & selected rack                                                                 | Pinia `VisionStore`                         | Store mutates predictably and is covered by tests                                                                       |
-| **UI flows**                   | _Calibrate Rack_, _Location Picker_, _Find Bottle_                                                 | Vue components                              | Each flow matches the spec and passes Cypress E2E                                                                       |
-| **Glue (WineDetail)**          | Buttons **Set location** / **Find bottle**                                                         | Added to existing component                 | Buttons rendered/hidden per spec rules                                                                                  |
-| **Tooling & QA**               | Unit, component, and E2E tests (Vitest + Vue Test Utils, Cypress)                                  | CI pipeline                                 | All tests green in CI                                                                                                   |
+| Layer                          | Responsibilities                                                                                 | Key artefacts                               | Acceptance criterion                                                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Data (model + persistence)** | Add the _cellarVisionDefinition_ table and extend _Wine_ with the optional _location_ sub-object | Dexie migration v7, typed model definitions | New tables survive page reload and sync to Dexie Cloud                                                                  |
+| **Vision core**                | Detect 4×4_50 ArUco tags, compute homography **H**, expose pose per frame                        | `CalibrationService`, `ARGuidanceService`   | Given a synthetic rack image with 4 known tags, `ARGuidanceService.project(x,y)` returns pixel coords with < 5 px error |
+| **State**                      | Live vision status & selected rack                                                               | Pinia `VisionStore`                         | Store mutates predictably and is covered by tests                                                                       |
+| **UI flows**                   | _Calibrate Rack_, _Location Picker_, _Find Bottle_                                               | Vue components                              | Each flow matches the spec and passes Cypress E2E                                                                       |
+| **Glue (WineDetail)**          | Buttons **Set location** / **Find bottle**                                                       | Added to existing component                 | Buttons rendered/hidden per spec rules                                                                                  |
+| **Tooling & QA**               | Unit, component, and E2E tests (Vitest + Vue Test Utils, Cypress)                                | CI pipeline                                 | All tests green in CI                                                                                                   |
 
 The above aligns 1-for-1 with the functional spec you provided.
 
@@ -80,7 +80,7 @@ You are working inside the WineCellar PWA mono-repo (Vue 3 + Vite + TypeScript).
 
 **Task**
 1. Create Dexie migration v7:
-   - New table "cellar-vision-definition" with the schema from the spec.
+   - New table "cellarVisionDefinition" with the schema from the spec.
    - Extend existing "wines" store: add optional `location` { rackId, x, y }.
 2. Add TypeScript interfaces `Location`, `RackDefinition`.
 3. Implement DAO helpers:

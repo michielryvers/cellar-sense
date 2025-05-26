@@ -1,5 +1,5 @@
 export interface WineLocation {
-  rackId: string; // FK to cellar-vision-definition.id
+  rackId: string; // FK to cellarVisionDefinition.id
   x: number; // normalised
   y: number; // normalised
 }

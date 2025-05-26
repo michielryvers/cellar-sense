@@ -7,20 +7,20 @@
 
 ## I1 — Storage Ready
 
-- [ ] **I1.1 Dexie schema migration v2**
+- [x] **I1.1 Dexie schema migration v2**
 
-  - [ ] Create new table `cellar-vision-definition`
-  - [ ] Extend `wines` store with optional `location { rackId, x, y }`
-  - [ ] Write migration code (idempotent)
-  - [ ] Update Dexie version constant
-  - [ ] Unit test: DB opens → schema contains new stores
+  - [x] Create new table `cellarVisionDefinition`
+  - [x] Extend `wines` store with optional `location { rackId, x, y }`
+  - [x] Write migration code (idempotent)
+  - [x] Update Dexie version constant
+  - [x] Unit test: DB opens → schema contains new stores
 
-- [ ] **I1.2 DAO helpers**
+- [x] **I1.2 DAO helpers**
 
-  - [ ] Implement `saveRack(def)`
-  - [ ] Implement `getRack(id)`
-  - [ ] Implement `saveWineLocation(wineId, loc)`
-  - [ ] Vitest: round‑trip persists objects correctly
+  - [x] Implement `saveRack(def)`
+  - [x] Implement `getRack(id)`
+  - [x] Implement `saveWineLocation(wineId, loc)`
+  - [x] Vitest: round‑trip persists objects correctly
 
 - [ ] **I1.3 Smoke E2E migration**
 
@@ -77,7 +77,7 @@
 
 - [ ] **I3.4 Persist rack**
 
-  - [ ] Snapshot canvas saved in `cellar-vision-definition`
+  - [ ] Snapshot canvas saved in `cellarVisionDefinition`
   - [ ] DAO `saveRack` used
   - [ ] Cypress: fixture image → DB entry created
 

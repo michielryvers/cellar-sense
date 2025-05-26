@@ -25,7 +25,7 @@
 | 3    | **Preview overlay** appears: green rectangle + faint 3 × 3 grid | User sees real-time marker outlines                             |
 | 4    | User taps **“Confirm”** or **“Retake”**                         | On Confirm, store calibration; on Retake, continue live preview |
 
-### Stored calibration payload (`cellar-vision-definition` table)
+### Stored calibration payload (`cellarVisionDefinition` table)
 
 | Field                 | Type                                                                    | Notes |
 | --------------------- | ----------------------------------------------------------------------- | ----- |
@@ -41,7 +41,7 @@
 >
 > ```ts
 > db.version(2).stores({
->   "cellar-vision-definition": "&id, rackName",
+>   cellarVisionDefinition: "&id, rackName",
 >   wines: "&id, name, location",
 > });
 > ```
@@ -68,7 +68,7 @@
 
 ```ts
 interface WineLocation {
-  rackId: string; // FK to cellar-vision-definition.id
+  rackId: string; // FK to cellarVisionDefinition.id
   x: number; // normalised
   y: number; // normalised
 }
@@ -123,7 +123,7 @@ interface Wine {
 | **ARGuidanceService**        | Per-frame pose recovery & overlay drawing (Canvas / WebGL layer) |
 | **LocationPicker** component | Displays calibration photo, captures XY tap                      |
 | **FindBottleView** component | Camera feed + overlay + banner                                   |
-| **Dexie schema v2**          | Adds `cellar-vision-definition`, extends `Wine`                  |
+| **Dexie schema v2**          | Adds `cellarVisionDefinition`, extends `Wine`                    |
 
 ---
 
