@@ -154,7 +154,12 @@ async function handleCloudLogout(): Promise<void> {
  * Open calibrate rack modal
  */
 function openCalibrateModal(): void {
-  showCalibrateModal.value = true;
+  // Close the settings modal first
+  closeModal();
+  // Then open the calibrate modal after a short delay to ensure proper transition
+  setTimeout(() => {
+    showCalibrateModal.value = true;
+  }, 100);
 }
 
 /**
@@ -423,12 +428,11 @@ function handleRackCalibrated(rackId: string): void {
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </div>      </div>
     </div>
   </Teleport>
   
-  <!-- Calibrate Rack Modal -->
+  <!-- Calibrate Rack Modal - This will render separately through its own Teleport -->
   <CalibrateRackModal 
     :is-open="showCalibrateModal" 
     @close="showCalibrateModal = false"

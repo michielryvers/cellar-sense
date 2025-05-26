@@ -1,9 +1,11 @@
 <template>
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
-  >
-    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden shadow-xl">
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4"
+      style="z-index: 60;"
+    >
+      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden shadow-xl">
       <!-- Header -->
       <div class="border-b border-gray-200 dark:border-gray-700 p-4">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
@@ -103,9 +105,9 @@
             Confirm
           </button>
         </div>
-      </div>
+      </div>      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
