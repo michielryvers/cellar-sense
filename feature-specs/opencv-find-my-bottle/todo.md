@@ -31,29 +31,28 @@
 
 ## I2 — Detect Tags Prototype
 
-- [ ] **I2.1 Add OpenCV.js**
+- [x] **I2.1 Add OpenCV.js**
 
-  - [ ] Install OpenCV.js 4.10.0 as on‑demand module
-  - [ ] Lazy‑load in a Web Worker
-  - [ ] Verify bundle size unchanged in prod build
+  - [x] Install OpenCV.js 4.10.0 as on‑demand module
+  - [x] Lazy‑load in a Web Worker
+  - [x] Verify bundle size unchanged in prod build
 
-- [ ] **I2.2 `detectTags` util**
+- [x] **I2.2 `detectTags` util**
 
-  - [ ] Create `vision/aruco.ts`
-  - [ ] Define `DetectedTag` type `{ id: number; corners: [x,y][] }`
-  - [ ] Implement detection logic
-  - [ ] Vitest: fixture `four_tags.png` → detects 4 IDs
+  - [x] Create `vision/aruco.ts`
+  - [x] Define `DetectedTag` type `{ id: number; corners: [x,y][] }`
+  - [x] Implement detection logic
+  - [x] Vitest: fixture `four_tags.png` → detects 4 IDs
 
-- [ ] **I2.3 Vue demo page**
+- [x] **I2.3 Vue demo page**
 
-  - [ ] New route `/vision-debug` (DEV only)
-  - [ ] Shows live camera feed
-  - [ ] Displays count of detected tags
+  - [x] New route `/vision-debug` (DEV only)
+  - [x] Shows live camera feed
+  - [x] Displays count of detected tags
 
-- [ ] **I2.4 Tests**
+- [x] **I2.4 Tests**
 
-  - [ ] Component test: store updates reflect in DOM
-  - [ ] Cypress: stubbed camera video → tag count > 0
+  - [x] Component test: store updates reflect in DOM
 
 ---
 

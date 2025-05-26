@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import type { Wine } from "./shared/Wine";
 import WineTable from "./components/WineTable.vue";
 import SettingsModal from "./components/SettingsModal.vue";
@@ -11,6 +11,7 @@ import RecommendationsResultModal from "./components/RecommendationsResultModal.
 import WineQuestionModal from "./components/WineQuestionModal.vue";
 import WineQuestionResultModal from "./components/WineQuestionResultModal.vue";
 import LoginDexieModal from "./components/LoginDexieModal.vue";
+import VisionDebugPage from "./components/VisionDebugPage.vue";
 import type {
   RecommendationHistoryEntry,
   RecommendationOption,
@@ -22,6 +23,7 @@ import {
   PlusIcon,
   StarIcon,
   QuestionMarkCircleIcon,
+  CameraIcon,
 } from "@heroicons/vue/24/outline";
 import { getAllWines } from "./services/dexie-db";
 import { getWineRecommendations } from "./services/openai-recommend";
@@ -43,6 +45,7 @@ const showEditModal = ref(false);
 const showRecommendationsResultModal = ref(false);
 const showQuestionModal = ref(false);
 const showQuestionResultModal = ref(false);
+const showVisionDebug = ref(false);
 
 // Recommendation state
 const recommendLoading = ref(false);
@@ -225,6 +228,11 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
   showQuestionModal.value = false;
   showQuestionResultModal.value = true;
 }
+
+// Development mode check - extracting it to make testing easier
+const isDevelopmentMode = computed(
+  () => import.meta.env.MODE === "development"
+);
 </script>
 
 <template>
@@ -277,6 +285,15 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
         >
           <QuestionMarkCircleIcon class="h-5 w-5 md:mr-2" />
           <span class="hidden md:inline">Ask AI</span>
+        </button>
+        <button
+          v-if="isDevelopmentMode"
+          @click="showVisionDebug = true"
+          class="inline-flex items-center px-2 py-1 md:px-4 md:py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-lg md:rounded-xl shadow-sm transition-all hover:shadow-md"
+          title="Vision Debug"
+        >
+          <CameraIcon class="h-5 w-5 md:mr-2" />
+          <span class="hidden md:inline">Vision</span>
         </button>
         <button
           @click="handleAddNew"
@@ -339,9 +356,10 @@ function handleShowPastQuestion(entry: WineQuestionEntry): void {
       :question="questionText"
       @close="showQuestionResultModal = false"
     />
-
     <!-- Dexie Cloud Login Modal -->
     <LoginDexieModal :ui="userInteraction" />
+    <!-- Vision Debug Modal -->
+    <VisionDebugPage v-model:show="showVisionDebug" />
   </div>
 </template>
 

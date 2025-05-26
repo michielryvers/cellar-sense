@@ -32,10 +32,10 @@ export const loadOpenCV = (): Promise<typeof window.cv> => {
     }
 
     // Create script element
-    const script = document.createElement('script');
-    script.src = '/opencv.js';
+    const script = document.createElement("script");
+    script.src = "opencv.js";
     script.async = true;
-    script.type = 'text/javascript';
+    script.type = "text/javascript";
 
     // Set up callbacks
     script.onload = () => {
@@ -48,13 +48,13 @@ export const loadOpenCV = (): Promise<typeof window.cv> => {
         window.Module = {
           onRuntimeInitialized: () => {
             resolve(window.cv);
-          }
+          },
         };
       }
     };
 
     script.onerror = () => {
-      reject(new Error('Failed to load OpenCV.js'));
+      reject(new Error("Failed to load OpenCV.js"));
     };
 
     // Add script to document

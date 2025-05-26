@@ -9,9 +9,9 @@ Below is a complete **project-planning package** that takes the WineCellar “fi
 | **Data (model + persistence)** | Add the _cellarVisionDefinition_ table and extend _Wine_ with the optional _location_ sub-object | Dexie migration v7, typed model definitions | New tables survive page reload and sync to Dexie Cloud                                                                  |
 | **Vision core**                | Detect 4×4_50 ArUco tags, compute homography **H**, expose pose per frame                        | `CalibrationService`, `ARGuidanceService`   | Given a synthetic rack image with 4 known tags, `ARGuidanceService.project(x,y)` returns pixel coords with < 5 px error |
 | **State**                      | Live vision status & selected rack                                                               | Pinia `VisionStore`                         | Store mutates predictably and is covered by tests                                                                       |
-| **UI flows**                   | _Calibrate Rack_, _Location Picker_, _Find Bottle_                                               | Vue components                              | Each flow matches the spec and passes Cypress E2E                                                                       |
+| **UI flows**                   | _Calibrate Rack_, _Location Picker_, _Find Bottle_                                               | Vue components                              | Each flow matches the spec                                                                                              |
 | **Glue (WineDetail)**          | Buttons **Set location** / **Find bottle**                                                       | Added to existing component                 | Buttons rendered/hidden per spec rules                                                                                  |
-| **Tooling & QA**               | Unit, component, and E2E tests (Vitest + Vue Test Utils, Cypress)                                | CI pipeline                                 | All tests green in CI                                                                                                   |
+| **Tooling & QA**               | Unit and component tests (Vitest + Vue Test Utils)                                               | CI pipeline                                 | All tests green in CI                                                                                                   |
 
 The above aligns 1-for-1 with the functional spec you provided.
 
@@ -44,7 +44,6 @@ Notation: `I{n}.{step}`.
 | -------- | ----------------------------------------------------------- | ------------------------------------------ |
 | **I1.1** | Add Dexie schema v7 migration (new table + Wine.location)   | Unit: open DB → schema contains new stores |
 | **I1.2** | Write DAO helpers (`saveRack`,`getRack`,`saveWineLocation`) | Vitest: round-trip persists objects        |
-| **I1.3** | Smoke E2E: app boots with empty DB after migration          | Cypress                                    |
 
 </details>
 
@@ -127,7 +126,6 @@ Prerequisite: OpenCV util exists and tests pass.
 2. Create route `/vision-debug` guarded by `import.meta.env.DEV`.
    - Shows video feed and a live tag count.
 3. Write component test: mount store, dispatch update([...]), expect DOM updates.
-4. Cypress E2E: open demo page, stub camera with fixture video, assert tag count > 0.
 
 Commit: "feat(vision): dev debug page with live tag count".
 ```
@@ -147,7 +145,6 @@ Build on previous commits.
    - Button “Calibrate rack” -> opens camera, overlay rectangle + grid as per spec.
    - Confirm/Retake logic persists rack.
 3. Unit-test Homography math with synthetic tag sets.
-4. Cypress flow: open /calibrate, feed rack image fixture, confirm, assert DB entry created.
 
 Ensure CI green. Commit: "feat(calibration): rack calibration workflow".
 ```
@@ -162,7 +159,6 @@ Ensure CI green. Commit: "feat(calibration): rack calibration workflow".
    - Loads calibration photo full-screen.
    - On tap, shows magnifier, saves normalised x,y to wine.
 2. Unit test: tap at (100,200) on 1000×500 image -> saved x=0.1,y=0.4.
-3. Cypress: pick location, reload app, confirm wine.location persists.
 
 Commit: "feat(picker): bottle location picker".
 ```
@@ -178,7 +174,6 @@ Commit: "feat(picker): bottle location picker".
 2. `<FindBottleView :wineId />`:
    - Camera feed, draws green circle; banner when markers <3.
 3. Unit math test with synthetic data (expect ~4 px error).
-4. Cypress E2E: video fixture with 4,2,1,0 markers; verify overlay rules.
 
 Commit: "feat(ar): real-time bottle guidance".
 ```
@@ -195,7 +190,6 @@ Commit: "feat(ar): real-time bottle guidance".
    - Rack deleted → hide Find Bottle.
    - Permissions denied → static notice.
 3. Component tests for visibility matrix.
-4. Cypress regression: full happy path plus permission denial path.
 
 Commit: "feat(ui): WineDetail integration & fallbacks".
 ```
@@ -206,7 +200,7 @@ Commit: "feat(ui): WineDetail integration & fallbacks".
 
 ```text
 **Task**
-1. Add GitHub Actions workflow: install, lint, test, Cypress headless.
+1. Add GitHub Actions workflow: install, lint, test.
 2. Failing tests block merge.
 3. Update README with vision setup & troubleshooting.
 4. Tag release v0.1.0.

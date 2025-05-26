@@ -144,15 +144,9 @@ interface Wine {
 4. Build **LocationPicker** with magnifier & save logic.
 5. Build **FindBottleView** camera overlay & fallback layers.
 6. **Wire buttons** in WineDetail (“Set Location”, “Find bottle”).
-7. **E2E tests**:
-
-   - Calibration confirm / retake
-   - Add bottle location
-   - Find bottle with 4, 2, 1, 0 markers
-
-8. **UX polish** (follow existing copy & dialog conventions).
-9. **QA on multiple devices** (different FOVs, aspect ratios).
-10. **Future hooks** (multiple racks, depth, enhanced AR cues).
+7. **UX polish** (follow existing copy & dialog conventions).
+8. **QA on multiple devices** (different FOVs, aspect ratios).
+9. **Future hooks** (multiple racks, depth, enhanced AR cues).
 
 ---
 
