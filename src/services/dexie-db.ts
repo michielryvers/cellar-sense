@@ -40,6 +40,7 @@ class WineventoryDB extends Dexie {
       this.version(7).stores({
         wines: "@id, name, vintage, color, location.rackId", // existing fields + location
         cellarVisionDefinition: "&id, rackName", // new table
+        cellarPhotos: "@id", // placeholder table for photo sync compatibility
         winequeries: "@id, createdAt",
         winequestions: "@id, createdAt",
         recommendations: "@id, createdAt",
@@ -67,6 +68,7 @@ class WineventoryDB extends Dexie {
       this.version(7).stores({
         wines: "++id, name, vintage, color, location.rackId", // existing fields + location
         cellarVisionDefinition: "&id, rackName", // new table
+        cellarPhotos: "++id", // placeholder table for photo sync compatibility
         winequeries: "++id, createdAt",
         winequestions: "++id, createdAt",
         recommendations: "++id, createdAt",

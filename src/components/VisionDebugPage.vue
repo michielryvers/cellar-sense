@@ -6,7 +6,7 @@
       @click="closeModal"
     >
       <div
-        class="vision-debug-modal bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full h-[90vh] overflow-y-auto m-2"
+        class="vision-debug-modal bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-5xl w-full h-[90vh] overflow-y-auto m-2"
         @click.stop
       >
         <header

@@ -3,132 +3,146 @@
     <div
       v-if="isOpen"
       class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4"
-      style="z-index: 60;"
+      style="z-index: 60"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden shadow-xl">
-      <!-- Header -->
-      <div class="border-b border-gray-200 dark:border-gray-700 p-4">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-          Calibrate Wine Rack
-        </h3>
-      </div>
-
-      <!-- Content -->
-      <div class="p-4">
-        <div v-if="!cameraActive">
-          <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
-            Calibrate your wine rack by capturing all 4 ArUco markers at once. 
-            Place markers at the corners of your rack and ensure all are visible.
-          </p>
-          <button
-            @click="startCamera"
-            class="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
-          >
-            Start Camera
-          </button>
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden shadow-xl"
+      >
+        <!-- Header -->
+        <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+            Calibrate Wine Rack
+          </h3>
         </div>
 
-        <div v-else>
-          <!-- Camera View with Overlay -->
-          <div class="relative w-full overflow-hidden rounded-md">
-            <video
-              ref="videoElement"
-              class="w-full aspect-video object-cover"
-              autoplay
-              playsinline
-              muted
-            ></video>
-            
-            <!-- Overlay canvas for markers and grid -->
-            <canvas
-              ref="overlayCanvas"
-              class="absolute top-0 left-0 w-full h-full pointer-events-none"
-            ></canvas>
-
-            <!-- Markers count indicator -->
-            <div class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm">
-              {{ previewState.markersVisible }} / 4 markers
-            </div>
+        <!-- Content -->
+        <div class="p-4">
+          <div v-if="!cameraActive">
+            <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              Calibrate your wine rack by capturing all 4 ArUco markers at once.
+              Place markers at the corners of your rack and ensure all are
+              visible.
+            </p>
+            <button
+              @click="startCamera"
+              class="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
+            >
+              Start Camera
+            </button>
           </div>
 
-          <!-- Calibration form (only shown when all markers detected) -->
-          <div v-if="previewState.homographyReady" class="mt-4">
-            <div class="mb-4">
-              <label for="rackName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Rack Name
-              </label>
-              <input
-                id="rackName"
-                v-model="rackName"
-                type="text"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
-                placeholder="Main Cellar"
-                required
-              />
+          <div v-else>
+            <!-- Camera View with Overlay -->
+            <div
+              class="relative w-full aspect-video overflow-hidden rounded-md"
+            >
+              <video
+                ref="videoElement"
+                class="w-full aspect-video object-cover"
+                autoplay
+                playsinline
+                muted
+              ></video>
+
+              <!-- Overlay canvas for markers and grid -->
+              <canvas
+                ref="overlayCanvas"
+                class="absolute top-0 left-0 w-full h-full pointer-events-none"
+              ></canvas>
+
+              <!-- Markers count indicator -->
+              <div
+                class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm"
+              >
+                {{ previewState.markersVisible }} / 4 markers
+              </div>
             </div>
-            
-            <div class="text-sm text-emerald-600 mb-4">
-              All markers detected! You can now save the rack calibration.
+
+            <!-- Calibration form (only shown when all markers detected) -->
+            <div v-if="previewState.homographyReady" class="mt-4">
+              <div class="mb-4">
+                <label
+                  for="rackName"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Rack Name
+                </label>
+                <input
+                  id="rackName"
+                  v-model="rackName"
+                  type="text"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  placeholder="Main Cellar"
+                  required
+                />
+              </div>
+
+              <div class="text-sm text-emerald-600 mb-4">
+                All markers detected! You can now save the rack calibration.
+              </div>
             </div>
-          </div>
-          
-          <!-- Instruction when not all markers are visible -->
-          <div v-else class="mt-4 text-sm text-amber-500">
-            Please position your camera to see all 4 markers at the corners of your rack.
+
+            <!-- Instruction when not all markers are visible -->
+            <div v-else class="mt-4 text-sm text-amber-500">
+              Please position your camera to see all 4 markers at the corners of
+              your rack.
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Footer -->
-      <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-between">
-        <button
-          @click="closeModal"
-          class="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        <!-- Footer -->
+        <div
+          class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-between"
         >
-          Cancel
-        </button>
-
-        <div v-if="cameraActive" class="flex space-x-2">
           <button
-            v-if="previewState.homographyReady"
-            @click="retake"
+            @click="closeModal"
             class="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            Retake
+            Cancel
           </button>
-          <button
-            v-if="previewState.homographyReady"
-            @click="confirmCalibration"
-            class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
-            :disabled="!rackName.trim()"
-          >
-            Confirm
-          </button>
+
+          <div v-if="cameraActive" class="flex space-x-2">
+            <button
+              v-if="previewState.homographyReady"
+              @click="retake"
+              class="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Retake
+            </button>
+            <button
+              v-if="previewState.homographyReady"
+              @click="confirmCalibration"
+              class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
+              :disabled="!rackName.trim()"
+            >
+              Confirm
+            </button>
+          </div>
         </div>
-      </div>      </div>
+      </div>
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { calibrationService } from '../services/calibration-service';
-import { GUIDANCE_COLOR } from '../services/calibration-service';
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { calibrationService } from "../services/calibration-service";
+import { GUIDANCE_COLOR } from "../services/calibration-service";
 
 const props = defineProps<{
   isOpen: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'calibrated', rackId: string): void;
+  (e: "close"): void;
+  (e: "calibrated", rackId: string): void;
 }>();
 
 // Refs
 const videoElement = ref<HTMLVideoElement | null>(null);
 const overlayCanvas = ref<HTMLCanvasElement | null>(null);
 const cameraActive = ref(false);
-const rackName = ref('');
+const rackName = ref("");
 interface PreviewState {
   markersVisible: number;
   homographyReady: boolean;
@@ -144,66 +158,92 @@ const previewState = ref<PreviewState>({
 });
 const stream = ref<MediaStream | null>(null);
 
+// smoothing buffer for rackCorners
+const cornerHistory: { x: number; y: number }[][] = [];
+const maxHistory = 5;
+
 // Start camera capture
 const startCamera = async () => {
   try {
-    // Request camera access
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: 'environment',
+        facingMode: "environment",
         width: { ideal: 1280 },
-        height: { ideal: 720 }
+        height: { ideal: 720 },
       },
-      audio: false
+      audio: false,
     });
-    
     stream.value = mediaStream;
-    
-    // Set video source and start playing
-    if (videoElement.value) {
-      videoElement.value.srcObject = mediaStream;
-      videoElement.value.play();
-      cameraActive.value = true;
-      
-      // Start calibration process once video is ready
-      videoElement.value.onloadedmetadata = () => {
-        if (videoElement.value) {
-          // Start the calibration service
-          const preview = calibrationService.startCalibration(videoElement.value);
-          
-          // Watch for changes in the preview state
-          watch(preview, (newVal) => {
-            previewState.value = newVal;
+
+    cameraActive.value = true;
+    await nextTick();
+
+    if (!videoElement.value) throw new Error("Video element not found");
+
+    // set video source and bind canplay _before_ play()
+    videoElement.value.srcObject = mediaStream;
+
+    videoElement.value.oncanplay = () => {
+      console.log("[Calibrate] metadata loaded – starting calibration");
+      const preview = calibrationService.startCalibration(videoElement.value!);
+
+      watch(
+        preview,
+        (newVal) => {
+          if (newVal.homographyReady && newVal.rackCorners) {
+            // add to history + clamp size
+            cornerHistory.push(newVal.rackCorners);
+            if (cornerHistory.length > maxHistory) cornerHistory.shift();
+
+            // compute mean corners
+            const smoothed = newVal.rackCorners.map((_, idx) => {
+              const sum = cornerHistory.reduce(
+                (acc, corners) => {
+                  acc.x += corners[idx].x;
+                  acc.y += corners[idx].y;
+                  return acc;
+                },
+                { x: 0, y: 0 }
+              );
+              const n = cornerHistory.length;
+              return { x: sum.x / n, y: sum.y / n };
+            });
+
+            previewState.value = { ...newVal, rackCorners: smoothed };
             drawOverlay();
-          }, { deep: true });
-        }
-      };
-    }
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-    alert('Could not access camera. Please check permissions and try again.');
+          }
+          // else skip drawing (retain last overlay)
+        },
+        { deep: true }
+      );
+    };
+
+    await videoElement.value.play();
+  } catch (err) {
+    console.error("Error accessing camera:", err);
+    alert("Could not access camera. Please check permissions.");
   }
 };
 
 // Draw the overlay grid and markers
 const drawOverlay = () => {
   if (!overlayCanvas.value || !videoElement.value) return;
-  
+
   const canvas = overlayCanvas.value;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  
+
   // Match canvas size to video dimensions
   canvas.width = videoElement.value.videoWidth;
   canvas.height = videoElement.value.videoHeight;
-  
+
   // Clear previous drawing
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
   // If we have rack corners, draw the rack outline and grid
   if (previewState.value.homographyReady && previewState.value.rackCorners) {
     const corners = previewState.value.rackCorners;
-    
+
     // Draw the rack outline (green rectangle)
     ctx.strokeStyle = GUIDANCE_COLOR;
     ctx.lineWidth = 3;
@@ -214,37 +254,37 @@ const drawOverlay = () => {
     ctx.lineTo(corners[2].x, corners[2].y); // bottom-left
     ctx.closePath();
     ctx.stroke();
-    
+
     // Draw 3x3 grid
     ctx.strokeStyle = `${GUIDANCE_COLOR}80`; // 50% opacity
     ctx.lineWidth = 1;
-    
+
     // Draw horizontal grid lines (2 lines making 3 rows)
     for (let i = 1; i < 3; i++) {
       const t = i / 3;
-      
+
       // Interpolate between top and bottom edges
       const startX = corners[0].x + (corners[2].x - corners[0].x) * t;
       const startY = corners[0].y + (corners[2].y - corners[0].y) * t;
       const endX = corners[1].x + (corners[3].x - corners[1].x) * t;
       const endY = corners[1].y + (corners[3].y - corners[1].y) * t;
-      
+
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
       ctx.stroke();
     }
-    
+
     // Draw vertical grid lines (2 lines making 3 columns)
     for (let i = 1; i < 3; i++) {
       const t = i / 3;
-      
+
       // Interpolate between left and right edges
       const startX = corners[0].x + (corners[1].x - corners[0].x) * t;
       const startY = corners[0].y + (corners[1].y - corners[0].y) * t;
       const endX = corners[2].x + (corners[3].x - corners[2].x) * t;
       const endY = corners[2].y + (corners[3].y - corners[2].y) * t;
-      
+
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
@@ -255,43 +295,48 @@ const drawOverlay = () => {
 
 // Confirm calibration and save the rack
 const confirmCalibration = async () => {
-  if (!videoElement.value || !rackName.value.trim() || !previewState.value.homographyReady) {
+  if (
+    !videoElement.value ||
+    !rackName.value.trim() ||
+    !previewState.value.homographyReady
+  ) {
     return;
   }
-  
+
   try {
     // Create a snapshot canvas
-    const snapshotCanvas = document.createElement('canvas');
+    const snapshotCanvas = document.createElement("canvas");
     snapshotCanvas.width = videoElement.value.videoWidth;
     snapshotCanvas.height = videoElement.value.videoHeight;
-    const ctx = snapshotCanvas.getContext('2d');
-    
-    if (!ctx) {
-      throw new Error('Could not get canvas context');
-    }
-    
+    const ctx = snapshotCanvas.getContext("2d");
+    if (!ctx) throw new Error("Could not get canvas context");
+
     // Draw the current video frame to the canvas
     ctx.drawImage(videoElement.value, 0, 0);
-    
+
+    // Pass the canvas element directly to the saveRack method
+    // The calibration service will handle the image conversion internally
+
     // Save the rack calibration
-    const rackDefinition = await calibrationService.saveRack(rackName.value, snapshotCanvas);
-    
-    // Emit the calibrated event with the new rack ID
-    emit('calibrated', rackDefinition.id);
-    
-    // Close the modal
+    const rackDefinition = await calibrationService.saveRack(
+      rackName.value,
+      snapshotCanvas
+    );
+
+    // Emit and close
+    emit("calibrated", rackDefinition.id);
     closeModal();
   } catch (error) {
-    console.error('Error saving rack calibration:', error);
-    alert('Failed to save rack calibration. Please try again.');
+    console.error("Error saving rack calibration:", error);
+    alert("Failed to save rack calibration. Please try again.");
   }
 };
 
 // Retake the calibration photo
 const retake = () => {
   // Reset the calibration state
-  rackName.value = '';
-  
+  rackName.value = "";
+
   // Continue using the same camera stream
   // The calibration service will continue detecting markers
 };
@@ -300,27 +345,27 @@ const retake = () => {
 const closeModal = () => {
   // Stop calibration service
   calibrationService.stopCalibration();
-  
+
   // Stop the camera stream
   if (stream.value) {
-    stream.value.getTracks().forEach(track => track.stop());
+    stream.value.getTracks().forEach((track) => track.stop());
     stream.value = null;
   }
-  
+
   // Reset state
   cameraActive.value = false;
-  rackName.value = '';
-  
+  rackName.value = "";
+
   // Emit close event
-  emit('close');
+  emit("close");
 };
 
 // Clean up on unmount
 onUnmounted(() => {
   calibrationService.stopCalibration();
-  
+
   if (stream.value) {
-    stream.value.getTracks().forEach(track => track.stop());
+    stream.value.getTracks().forEach((track) => track.stop());
   }
 });
 </script>
