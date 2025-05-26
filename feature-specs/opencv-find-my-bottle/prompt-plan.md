@@ -105,7 +105,7 @@ When finished, commit with message: "feat(db): vision storage schema + DAO helpe
 Prerequisite: codebase contains Dexie v7 schema and tests are green.
 
 **Task**
-1. Add OpenCV.js 4.10.0 as an on-demand ES module. Lazy-load to avoid bundle bloat.
+1. Add OpenCV.js as an on-demand ES module. Lazy-load to avoid bundle bloat. The `opencv.js` file is in the public folder of the repo.
 2. Create `vision/aruco.ts` exporting async function `detectTags(imageData: ImageData): DetectedTag[]` where DetectedTag = { id: number, corners: [x,y][] }.
 3. Write Vitest that loads a fixture image `four_tags.png` and asserts four IDs (any order) are detected.
 4. Mock the WASM parts in Vitest to keep runtime < 3 s.
