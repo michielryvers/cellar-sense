@@ -15,6 +15,8 @@ import {
 } from "../services/dexie-cloud-login";
 import type { SettingsModalProps } from "../shared/types";
 import CalibrateRackModal from "./CalibrateRackModal.vue";
+import { deleteRackAndWineLocations } from "../services/dexie-db";
+import { db } from "../services/dexie-db";
 
 // Props and emits
 const props = defineProps<SettingsModalProps>();
@@ -168,6 +170,24 @@ function openCalibrateModal(): void {
 function handleRackCalibrated(rackId: string): void {
   showCalibrateModal.value = false;
   alert(`Rack calibrated successfully!`);
+}
+
+/**
+ * Handle rack deletion
+ */
+async function handleRackDeletion(): Promise<void> {
+  try {
+    const racks = await db.cellarVisionDefinition.toArray();
+    if (racks.length === 1) {
+      await deleteRackAndWineLocations(racks[0].id);
+      alert("Rack and wine locations deleted successfully!");
+    } else {
+      alert("Multiple racks detected. Please delete manually.");
+    }
+  } catch (error) {
+    console.error("Rack deletion failed:", error);
+    alert("Rack deletion failed. Please try again.");
+  }
 }
 </script>
 
@@ -427,14 +447,31 @@ function handleRackCalibrated(rackId: string): void {
                 Set up ArUco markers to locate your wine bottles in AR
               </p>
             </div>
+            <div class="mt-5">
+              <h3
+                class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-2 px-1"
+              >
+                Rack Management
+              </h3>
+              <button
+                @click="handleRackDeletion"
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-sm w-full mb-2"
+              >
+                Delete Rack & Wine Locations
+              </button>
+              <p class="text-xs text-gray-400 dark:text-gray-500 px-1">
+                Deletes the rack calibration and all associated wine locations.
+              </p>
+            </div>
           </div>
-        </div>      </div>
+        </div>
+      </div>
     </div>
   </Teleport>
-  
+
   <!-- Calibrate Rack Modal - This will render separately through its own Teleport -->
-  <CalibrateRackModal 
-    :is-open="showCalibrateModal" 
+  <CalibrateRackModal
+    :is-open="showCalibrateModal"
     @close="showCalibrateModal = false"
     @calibrated="handleRackCalibrated"
   />

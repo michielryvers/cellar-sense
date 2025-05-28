@@ -6,7 +6,7 @@
       style="z-index: 60"
     >
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden shadow-xl"
+        class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full overflow-hidden shadow-xl"
       >
         <!-- Header -->
         <div class="border-b border-gray-200 dark:border-gray-700 p-4">
@@ -58,8 +58,8 @@
               </div>
             </div>
 
-            <!-- Calibration form (only shown when all markers detected) -->
-            <div v-if="previewState.homographyReady" class="mt-4">
+            <!-- Rack name input (always visible when camera is active) -->
+            <div class="mt-4">
               <div class="mb-4">
                 <label
                   for="rackName"
@@ -77,15 +77,17 @@
                 />
               </div>
 
-              <div class="text-sm text-emerald-600 mb-4">
+              <!-- Status messages -->
+              <div
+                v-if="previewState.homographyReady"
+                class="text-sm text-emerald-600 mb-4"
+              >
                 All markers detected! You can now save the rack calibration.
               </div>
-            </div>
-
-            <!-- Instruction when not all markers are visible -->
-            <div v-else class="mt-4 text-sm text-amber-500">
-              Please position your camera to see all 4 markers at the corners of
-              your rack.
+              <div v-else class="text-sm text-amber-500 mb-4">
+                Please position your camera to see all 4 markers at the corners
+                of your rack.
+              </div>
             </div>
           </div>
         </div>
@@ -100,7 +102,6 @@
           >
             Cancel
           </button>
-
           <div v-if="cameraActive" class="flex space-x-2">
             <button
               v-if="previewState.homographyReady"
@@ -110,10 +111,9 @@
               Retake
             </button>
             <button
-              v-if="previewState.homographyReady"
               @click="confirmCalibration"
-              class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md"
-              :disabled="!rackName.trim()"
+              class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+              :disabled="!previewState.homographyReady || !rackName.trim()"
             >
               Confirm
             </button>
@@ -186,7 +186,6 @@ const startCamera = async () => {
     videoElement.value.oncanplay = () => {
       console.log("[Calibrate] metadata loaded – starting calibration");
       const preview = calibrationService.startCalibration(videoElement.value!);
-
       watch(
         preview,
         (newVal) => {
@@ -210,9 +209,14 @@ const startCamera = async () => {
             });
 
             previewState.value = { ...newVal, rackCorners: smoothed };
-            drawOverlay();
+          } else {
+            // Clear the corner history when homography is not ready
+            cornerHistory.length = 0;
+            previewState.value = { ...newVal };
           }
-          // else skip drawing (retain last overlay)
+
+          // Always redraw overlay to clear it when state changes
+          drawOverlay();
         },
         { deep: true }
       );

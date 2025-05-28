@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ref } from "vue";
 import { useVisionStore } from "../stores/vision";
 import { detectTags } from "../vision/aruco";
+import { loadOpenCV } from "../vision/opencv-loader";
 import type { RackDefinition, MarkerPosition } from "../shared/types/vision";
 import { db } from "./dexie-db";
 
@@ -155,13 +156,11 @@ export class CalibrationService {
       const imageData = ctx.getImageData(0, 0, videoWidth, videoHeight);
 
       // Detect ArUco markers
-      const tags = await detectTags(imageData);
-
-      // Update the vision store with the detected markers
+      const tags = await detectTags(imageData); // Update the vision store with the detected markers
       this.visionStore.update(tags);
 
       // Update our preview state
-      this.updatePreviewState();
+      await this.updatePreviewState();
 
       // Continue processing frames
       this.animationFrameId = requestAnimationFrame(processFrame);
@@ -170,19 +169,20 @@ export class CalibrationService {
     // Start the processing loop
     this.animationFrameId = requestAnimationFrame(processFrame);
   }
-
   /**
    * Update the preview state based on detected markers
-   */
-  private updatePreviewState() {
+   */ private async updatePreviewState() {
     const markers = this.visionStore.markersInView;
 
     this.preview.value.markersVisible = markers.length;
 
+    // Debug logging
+    console.log(`Calibration: ${markers.length} markers detected`);
+
     // We need exactly 4 markers for full homography
     if (markers.length === 4) {
       // Compute homography
-      const homography = this.computeHomography(markers);
+      const homography = await this.computeHomography(markers);
       if (homography) {
         this.preview.value.homographyReady = true;
         this.preview.value.homography = homography;
@@ -190,26 +190,34 @@ export class CalibrationService {
         // Calculate the corners of the rack using the homography
         const rackCorners = this.calculateRackCorners(markers);
         this.preview.value.rackCorners = rackCorners;
+        console.log("Calibration: Homography computed successfully");
+      } else {
+        // Failed to compute homography even with 4 markers
+        this.preview.value.homographyReady = false;
+        this.preview.value.homography = null;
+        this.preview.value.rackCorners = null;
+        console.log("Calibration: Failed to compute homography with 4 markers");
       }
     } else {
+      // Not enough markers or too many markers
       this.preview.value.homographyReady = false;
       this.preview.value.homography = null;
       this.preview.value.rackCorners = null;
+      console.log("Calibration: Clearing homography - not exactly 4 markers");
     }
   }
-
   /**
    * Compute the homography matrix from detected markers
    * Uses OpenCV.js findHomography function
    * @param markers Array of detected ArUco markers
    * @returns Homography matrix as a flat array (row-major) or null if computation fails
    */
-  private computeHomography(markers: any[]): number[] | null {
+  private async computeHomography(markers: any[]): Promise<number[] | null> {
     if (markers.length < 4) return null;
 
     try {
-      // @ts-ignore - OpenCV is loaded globally
-      const cv = window.cv;
+      // Load OpenCV.js on demand
+      const cv = await loadOpenCV();
       if (!cv) {
         console.error("OpenCV.js not loaded");
         return null;
@@ -265,11 +273,20 @@ export class CalibrationService {
         1,
         0.9,
         1,
-      ];
+      ]; // Create OpenCV matrices
+      // For point data, we need to create Float32 matrices with 2 channels (x,y pairs)
+      const srcMat = new cv.Mat(srcPoints.length / 2, 1, cv.CV_32FC2);
+      const dstMat = new cv.Mat(dstPoints.length / 2, 1, cv.CV_32FC2);
 
-      // Create OpenCV matrices
-      const srcMat = cv.matFromArray(16, 1, cv.CV_32FC2, srcPoints);
-      const dstMat = cv.matFromArray(16, 1, cv.CV_32FC2, dstPoints);
+      // Fill the source matrix data
+      for (let i = 0; i < srcPoints.length; i++) {
+        srcMat.data32F[i] = srcPoints[i];
+      }
+
+      // Fill the destination matrix data
+      for (let i = 0; i < dstPoints.length; i++) {
+        dstMat.data32F[i] = dstPoints[i];
+      }
 
       // Find homography using RANSAC for robustness
       const homographyMat = cv.findHomography(srcMat, dstMat, cv.RANSAC, 5.0);

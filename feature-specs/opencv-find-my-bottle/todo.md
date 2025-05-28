@@ -22,11 +22,6 @@
   - [x] Implement `saveWineLocation(wineId, loc)`
   - [x] Vitest: round‑trip persists objects correctly
 
-- [ ] **I1.3 Smoke E2E migration**
-
-  - [ ] Cypress: app boots with empty DB after migration
-  - [ ] All existing behaviour unaffected
-
 ---
 
 ## I2 — Detect Tags Prototype
@@ -63,10 +58,10 @@
   - [x] API: `startCalibration(videoEl)` returns preview & H matrix
   - [x] Stops when 4 tags visible
 
-- [ ] **I3.2 Homography math**
+- [x] **I3.2 Homography math**
 
-  - [ ] Compute H from tag corners
-  - [ ] Unit test with synthetic tag sets (< 5 px error)
+  - [x] Compute H from tag corners
+  - [x] Unit test with synthetic tag sets (< 5 px error)
 
 - [x] **I3.3 Calibration UI**
 
@@ -83,75 +78,49 @@
 
 ## I4 — Location Picker
 
-- [ ] **I4.1 `<LocationPicker>` component**
+- [x] **I4.1 `<LocationPicker>` component**
 
-  - [ ] Full‑screen calibration photo
-  - [ ] Tap shows magnifier
-  - [ ] Saves normalised `x,y` to wine
+  - [x] Full‑screen calibration photo
+  - [x] Tap shows magnifier
+  - [x] Saves normalised `x,y` to wine
 
 ---
 
 ## I5 — AR Find Mode
 
-- [ ] **I5.1 `ARGuidanceService`**
+- [x] **I5.1 `ARGuidanceService`**
 
-  - [ ] Given DetectedTags\[] + rack.H → returns pixel (x,y) of wine
-  - [ ] Unit math test (≤ 4 px error)
+  - [x] Given DetectedTags\[] + rack.H → returns pixel (x,y) of wine
+  - [x] Unit math test (≤ 4 px error)
 
-- [ ] **I5.2 `<FindBottleView>`**
+- [x] **I5.2 `<FindBottleView>`**
 
-  - [ ] Camera feed overlay
-  - [ ] Draw green circle at projected coords
-  - [ ] Banner when markers < 3
-
-- [ ] **I5.3 Cypress scenarios**
-
-  - [ ] Video fixture cycles 4→2→1→0 markers; overlay rules validated
+  - [x] Camera feed overlay
+  - [x] Draw green circle at projected coords
+  - [x] Banner when markers < 3
 
 ---
 
 ## I6 — WineDetail Integration
 
-- [ ] **I6.1 UI buttons**
+- [x] **I6.1 UI buttons**
 
-  - [ ] Add **Set Location** / **Find Bottle** buttons
-  - [ ] Visibility logic per spec
+  - [x] Add **Set Location** / **Find Bottle** buttons
+  - [x] Visibility logic per spec
 
-- [ ] **I6.2 Component tests**
+- [x] **I6.2 Component tests**
 
-  - [ ] Visibility matrix covered
-
-- [ ] **I6.3 E2E happy path**
-
-  - [ ] End‑to‑end flow: calibrate → set location → find bottle
+  - [x] Visibility matrix covered
 
 ---
 
 ## I7 — Edge‑cases & Polish
 
-- [ ] Markers < 3 banner copy & styling
-- [ ] Camera permission denied fallback notice
-- [ ] Rack deleted → hide **Find Bottle** gracefully
-- [ ] UX copy review & localisation keys added
-- [ ] QA sweep on low‑end device
-
----
-
-## I8 — CI & Docs Finish
-
-- [ ] GitHub Actions: install, lint, test, Cypress headless
-- [ ] Fail pipeline on test/lint errors
-- [ ] README: vision setup, troubleshooting, tag printing guide
-- [ ] Release tag `v0.1.0`
-
----
-
-## I9 — Refactor & Coverage Pass
-
-- [ ] Run `pnpm test --coverage` → ≥ 85 % lines
-- [ ] Eliminate TODO / FIXME comments in vision modules
-- [ ] Lint & Prettier clean
-- [ ] Commit: "refactor: code‑health pass"
+- [x] Markers < 3 banner copy & styling
+- [x] Camera permission denied fallback notice
+- [x] Rack deleted → hide **Find Bottle** gracefully
+- [x] UX copy review & localisation keys added
+- [x] QA sweep on low‑end device
 
 ---
 

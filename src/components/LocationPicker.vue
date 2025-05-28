@@ -57,7 +57,7 @@
           <img
             :src="calibrationImageUrl"
             ref="imageElement"
-            class="max-w-full max-h-[70vh] mx-auto cursor-crosshair"
+            class="max-w-full max-h-[70vh] mx-auto cursor-crosshair object-contain"
             @load="onImageLoad"
             @click="handleImageClick"
             @mousemove="handleMouseMove"
@@ -72,7 +72,6 @@
             :style="{
               left: `${markerPosition.x}px`,
               top: `${markerPosition.y}px`,
-              transform: 'translate(-50%, -50%)',
             }"
           >
             <div
@@ -102,7 +101,7 @@
               magnifierPosition.x !== null &&
               magnifierPosition.y !== null
             "
-            class="absolute pointer-events-none w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden"
+            class="absolute pointer-events-none w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden z-50"
             :style="{
               left: `${magnifierPosition.x}px`,
               top: `${magnifierPosition.y}px`,
@@ -220,16 +219,15 @@ const normalizedPosition = computed(() => {
   if (
     markerPosition.value.x === null ||
     markerPosition.value.y === null ||
-    !imageRect.value
+    !imageElement.value
   ) {
     return { x: 0, y: 0 };
   }
 
-  // Calculate normalized coordinates (0-1) relative to the image
-  const x =
-    (markerPosition.value.x - imageRect.value.left) / imageRect.value.width;
-  const y =
-    (markerPosition.value.y - imageRect.value.top) / imageRect.value.height;
+  // Calculate normalized coordinates (0-1) relative to the image's actual pixel content
+  const img = imageElement.value;
+  const x = markerPosition.value.x / img.naturalWidth;
+  const y = markerPosition.value.y / img.naturalHeight;
 
   return { x, y };
 });
@@ -286,12 +284,14 @@ async function loadRackDefinition() {
 function handleImageClick(event: MouseEvent) {
   if (imageElement.value) {
     imageRect.value = imageElement.value.getBoundingClientRect();
+    // Use offsetX/Y for coordinates relative to the image content
     markerPosition.value = {
-      x: event.clientX,
-      y: event.clientY,
+      x: event.offsetX,
+      y: event.offsetY,
     };
 
-    // Position magnifier
+    // Position magnifier directly over the click point
+    // For the overlay, we need viewport coordinates
     updateMagnifierPosition(event);
     showMagnifier.value = true;
 
@@ -315,6 +315,8 @@ function hideMagnifier() {
 
 // Update magnifier position
 function updateMagnifierPosition(event: MouseEvent) {
+  // Position the magnifier directly at the cursor position
+  // Using clientX/Y for viewport coordinates
   magnifierPosition.value = {
     x: event.clientX,
     y: event.clientY,

@@ -41,11 +41,11 @@ import { detectTags } from "../vision/aruco";
 const props = defineProps({
   width: {
     type: Number,
-    default: 640,
+    default: 1200,
   },
   height: {
     type: Number,
-    default: 480,
+    default: 800,
   },
 });
 
