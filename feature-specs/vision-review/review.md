@@ -97,7 +97,7 @@ OpenCV's `findHomography` does no distortion correction. On wide-angle phone cam
 - **Physical marker size & rack aspect ratio** ✅
   You assume the markers occupy exactly 10% of the rack dimension. In practice, physical markers may be larger or smaller relative to rack width, skewing the grid. Better to calibrate by the _centers_ of the outermost markers and ignore marker extents.
 
-- **Lens distortion**
+- **Lens distortion** ✅
   OpenCV’s `findHomography` does no distortion correction. On wide-angle phone cameras, barrel distortion could cause non‐planar effects at the rack edges. You may get better results by first calibrating the camera lens (or at least using `undistortPoints`) before your homography.
 
 ---

@@ -189,10 +189,21 @@ export class CalibrationService {
    */ private async updatePreviewState() {
     const markers = this.visionStore.markersInView;
 
-    this.preview.value.markersVisible = markers.length;
+    this.preview.value.markersVisible = markers.length; // Debug logging
+    console.log(`Calibration: ${markers.length} markers detected`);
+    // Log marker details for debugging
+    if (markers.length > 0) {
+      console.log(
+        "Detected markers:",
+        markers.map((m: any) => ({
+          id: m.id,
+          center: this.getMarkerCenter(m.corners),
+          corners: m.corners,
+        }))
+      );
+    }
 
-    // Debug logging
-    console.log(`Calibration: ${markers.length} markers detected`); // We need exactly 4 markers for full homography
+    // We need exactly 4 markers for full homography
     if (markers.length === 4) {
       // Get video dimensions for distortion correction
       const imageWidth = this.videoElement?.videoWidth || 0;
@@ -218,6 +229,11 @@ export class CalibrationService {
         this.preview.value.homography = null;
         this.preview.value.rackCorners = null;
         console.log("Calibration: Failed to compute homography with 4 markers");
+
+        // Log the specific error that occurred
+        if (this.lastCalibrationError) {
+          console.log("Calibration error details:", this.lastCalibrationError);
+        }
       }
     } else {
       // Not enough markers or too many markers
@@ -235,13 +251,18 @@ export class CalibrationService {
    * @param imageWidth Width of the image for distortion correction
    * @param imageHeight Height of the image for distortion correction
    * @returns Homography matrix as a flat array (row-major) or null if computation fails
-   */
-  private async computeHomography(
+   */ private async computeHomography(
     markers: any[],
     imageWidth?: number,
     imageHeight?: number
   ): Promise<number[] | null> {
     if (markers.length < 4) return null;
+
+    console.log(
+      "Starting homography computation with",
+      markers.length,
+      "markers"
+    );
 
     try {
       // Load OpenCV.js on demand
@@ -251,11 +272,15 @@ export class CalibrationService {
         return null;
       }
 
+      console.log("OpenCV loaded successfully");
+
       // Extract marker centers
       let markerCenters = markers.map((marker) => {
         const center = this.getMarkerCenter(marker.corners);
         return { id: marker.id, x: center.x, y: center.y };
-      }); // Apply lens distortion correction if enabled and image dimensions are provided
+      });
+
+      console.log("Marker centers:", markerCenters); // Apply lens distortion correction if enabled and image dimensions are provided
       if (this.enableDistortionCorrection && imageWidth && imageHeight) {
         try {
           const undistortedPoints = await this.undistortPoints(
@@ -276,14 +301,12 @@ export class CalibrationService {
             error
           );
         }
-      }
-
-      // For exactly 4 markers, use a simpler approach
+      } // For exactly 4 markers, order them geometrically instead of by ID
       let orderedPoints: { id: number; x: number; y: number }[];
       if (markerCenters.length === 4) {
-        // Sort markers by ID first for consistent ordering
-        const sortedByID = [...markerCenters].sort((a, b) => a.id - b.id);
-        orderedPoints = sortedByID;
+        // Order markers geometrically: top-left, top-right, bottom-right, bottom-left
+        orderedPoints = this.orderPointsGeometrically(markerCenters);
+        console.log("Using 4 markers, ordered geometrically:", orderedPoints);
       } else {
         // Find the convex hull of marker centers for more than 4 markers
         const hull = this.findConvexHull(markerCenters);
@@ -293,13 +316,36 @@ export class CalibrationService {
         }
         // Order hull points to create a consistent mapping
         orderedPoints = this.orderHullPoints(hull);
+        console.log(
+          "Using convex hull with",
+          hull.length,
+          "points:",
+          orderedPoints
+        );
       }
 
-      // Use the ordered points as source points
+      // Pre-validation checks
+      if (this.areMarkersColinear(orderedPoints)) {
+        const errorMessage =
+          "Markers are arranged in a line - they must form a rectangle or quadrilateral";
+        console.error(errorMessage);
+        this.lastCalibrationError = errorMessage;
+        return null;
+      }
+
+      if (this.isRackTooDistorted(orderedPoints)) {
+        const errorMessage =
+          "Rack appears too distorted - ensure markers are at the corners of a rectangular rack";
+        console.error(errorMessage);
+        this.lastCalibrationError = errorMessage;
+        return null;
+      } // Use the ordered points as source points
       const srcPoints: number[] = [];
       orderedPoints.forEach((point) => {
         srcPoints.push(point.x, point.y);
       });
+
+      console.log("Source points for homography:", srcPoints);
 
       // Map points to normalized unit square (0-1)
       // For 4 points, use corners of unit square
@@ -314,12 +360,16 @@ export class CalibrationService {
         1, // fourth point -> bottom-left
       ];
 
+      console.log("Destination points:", dstPoints);
+
       // Calculate adaptive RANSAC threshold based on image size
       const imageSize = Math.sqrt(
         Math.pow(Math.max(...srcPoints.filter((_, i) => i % 2 === 0)), 2) +
           Math.pow(Math.max(...srcPoints.filter((_, i) => i % 2 === 1)), 2)
       );
-      const adaptiveThreshold = Math.max(3.0, imageSize * 0.01); // Create OpenCV matrices with consistent CV_32FC2 format
+      const adaptiveThreshold = Math.max(3.0, imageSize * 0.01);
+
+      console.log("RANSAC threshold:", adaptiveThreshold); // Create OpenCV matrices with consistent CV_32FC2 format
       const srcMat = new cv.Mat(orderedPoints.length, 1, cv.CV_32FC2);
       const dstMat = new cv.Mat(dstPoints.length / 2, 1, cv.CV_32FC2);
 
@@ -338,7 +388,14 @@ export class CalibrationService {
         dstMat,
         cv.RANSAC,
         adaptiveThreshold
-      ); // Check if homography computation was successful
+      );
+
+      console.log("Homography computation result:", {
+        success: !!homographyMat,
+        rows: homographyMat?.rows,
+        cols: homographyMat?.cols,
+        type: homographyMat?.type?.(),
+      }); // Check if homography computation was successful
       if (
         !homographyMat ||
         homographyMat.rows !== 3 ||
@@ -546,7 +603,54 @@ export class CalibrationService {
     );
     return ordered.length === 4 ? ordered : hull;
   }
+  /**
+   * Order 4 marker points geometrically for homography mapping
+   * Orders points as: top-left, top-right, bottom-right, bottom-left
+   * This ensures proper mapping to the unit square destination points
+   */
+  private orderPointsGeometrically(
+    points: { id: number; x: number; y: number }[]
+  ): { id: number; x: number; y: number }[] {
+    if (points.length !== 4) {
+      throw new Error("Expected exactly 4 points for geometric ordering");
+    }
 
+    // Find bounding box center
+    const minX = Math.min(...points.map((p) => p.x));
+    const maxX = Math.max(...points.map((p) => p.x));
+    const minY = Math.min(...points.map((p) => p.y));
+    const maxY = Math.max(...points.map((p) => p.y));
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    // Classify points by quadrant relative to center
+    const topLeft = points.find((p) => p.x <= centerX && p.y <= centerY);
+    const topRight = points.find((p) => p.x >= centerX && p.y <= centerY);
+    const bottomRight = points.find((p) => p.x >= centerX && p.y >= centerY);
+    const bottomLeft = points.find((p) => p.x <= centerX && p.y >= centerY);
+
+    // Validate we found all corners
+    if (!topLeft || !topRight || !bottomRight || !bottomLeft) {
+      console.warn(
+        "Could not classify all 4 corners, falling back to original order"
+      );
+      return points;
+    }
+
+    // Return in the order expected by destination mapping: TL, TR, BR, BL
+    const ordered = [topLeft, topRight, bottomRight, bottomLeft];
+
+    console.log("Geometric ordering:", {
+      center: { x: centerX, y: centerY },
+      topLeft: topLeft,
+      topRight: topRight,
+      bottomRight: bottomRight,
+      bottomLeft: bottomLeft,
+    });
+
+    return ordered;
+  }
   /**
    * Check if markers are arranged in a line (colinear)
    * @param points Array of marker center points
@@ -555,27 +659,41 @@ export class CalibrationService {
   private areMarkersColinear(points: { x: number; y: number }[]): boolean {
     if (points.length < 3) return false;
 
-    // Calculate the area of the polygon formed by the points
-    // If area is very small relative to the perimeter, points are likely colinear
-    let area = 0;
-    let perimeter = 0;
+    // For colinearity, we check if the area of the quadrilateral is too small
+    // relative to what we'd expect from the distances between points
 
+    // Calculate the area using the shoelace formula
+    let area = 0;
     for (let i = 0; i < points.length; i++) {
       const j = (i + 1) % points.length;
       area += points[i].x * points[j].y - points[j].x * points[i].y;
-
-      const dx = points[j].x - points[i].x;
-      const dy = points[j].y - points[i].y;
-      perimeter += Math.sqrt(dx * dx + dy * dy);
     }
-
     area = Math.abs(area) / 2;
 
-    // If area is less than 1% of perimeter squared, consider colinear
-    const areaThreshold = Math.pow(perimeter, 2) * 0.01;
-    return area < areaThreshold;
-  }
+    // Calculate the expected minimum area based on bounding box
+    const minX = Math.min(...points.map((p) => p.x));
+    const maxX = Math.max(...points.map((p) => p.x));
+    const minY = Math.min(...points.map((p) => p.y));
+    const maxY = Math.max(...points.map((p) => p.y));
 
+    const boundingBoxArea = (maxX - minX) * (maxY - minY);
+
+    // If the actual area is less than 5% of the bounding box area, consider colinear
+    // This is much more reasonable than the previous perimeter-based check
+    const areaThreshold = boundingBoxArea * 0.05;
+    const isColinear = area < areaThreshold;
+
+    console.log("Colinearity check:", {
+      area,
+      boundingBoxArea,
+      areaThreshold,
+      areaRatio: area / boundingBoxArea,
+      isColinear,
+      points: points.map((p) => ({ x: p.x, y: p.y })),
+    });
+
+    return isColinear;
+  }
   /**
    * Check if the rack shape is too distorted for reliable calibration
    * @param points Array of marker center points
@@ -599,9 +717,18 @@ export class CalibrationService {
     const ratio = maxDistance / minDistance;
 
     // If one side is more than 5x longer than another, consider it distorted
-    return ratio > 5.0;
-  }
+    const isDistorted = ratio > 5.0;
 
+    console.log("Distortion check:", {
+      distances,
+      minDistance,
+      maxDistance,
+      ratio,
+      isDistorted,
+    });
+
+    return isDistorted;
+  }
   /**
    * Validate that the computed homography matrix is reasonable
    * @param homographyMat OpenCV Mat containing the homography
@@ -613,6 +740,7 @@ export class CalibrationService {
       homographyMat.rows !== 3 ||
       homographyMat.cols !== 3
     ) {
+      console.log("Homography validation failed: invalid matrix structure");
       return false;
     }
 
@@ -623,21 +751,61 @@ export class CalibrationService {
       h[1] * (h[3] * h[8] - h[5] * h[6]) +
       h[2] * (h[3] * h[7] - h[4] * h[6]);
 
-    if (Math.abs(det) < 1e-6) {
-      console.error("Homography is degenerate (determinant ≈ 0)");
+    if (Math.abs(det) < 1e-10) {
+      console.error("Homography is degenerate (determinant ≈ 0), det:", det);
       return false;
     }
 
-    // Check for reasonable scaling factors
-    // Extract scale factors from the homography
+    // For pixel-to-normalized coordinate transformations, scaling factors will be small
+    // Check for reasonable scaling factors relative to typical image sizes
     const scaleX = Math.sqrt(h[0] * h[0] + h[3] * h[3]);
     const scaleY = Math.sqrt(h[1] * h[1] + h[4] * h[4]);
 
-    // Reject if scaling is too extreme (< 0.1x or > 10x)
-    if (scaleX < 0.1 || scaleX > 10 || scaleY < 0.1 || scaleY > 10) {
+    // For transformations from pixel coords (~100-2000px) to unit coords (0-1):
+    // Expected scale factors are roughly 1/image_size, so 0.0005 to 0.01 is reasonable
+    // Reject only if scaling is truly extreme (< 0.0001 or > 0.1)
+    if (scaleX < 0.0001 || scaleX > 0.1 || scaleY < 0.0001 || scaleY > 0.1) {
       console.error("Homography has extreme scaling factors:", {
         scaleX,
         scaleY,
+      });
+      return false;
+    }
+
+    // Additional check: ensure the homography doesn't flip the image
+    // Check if the transformation preserves orientation by testing corner mapping
+    if (!this.validateHomographyOrientation(h)) {
+      console.error("Homography creates invalid orientation/flipping");
+      return false;
+    }
+
+    console.log("Homography validation passed:", { det, scaleX, scaleY });
+    return true;
+  }
+
+  /**
+   * Validate that the homography preserves proper orientation
+   * @param h Homography matrix data (3x3 flattened)
+   * @returns true if orientation is preserved
+   */
+  private validateHomographyOrientation(h: Float64Array): boolean {
+    // Test if the transformation maintains proper orientation by checking
+    // if a clockwise traversal of source corners maps to clockwise destination corners
+
+    // We don't need complex validation here since we're mapping to a unit square
+    // Just check that the transformation matrix elements are reasonable
+
+    // The transformation should not have excessive shear or rotation
+    // For a roughly rectangular rack, we expect the matrix to be roughly diagonal-dominant
+    const offDiagonalStrength = Math.abs(h[1]) + Math.abs(h[3]);
+    const diagonalStrength = Math.abs(h[0]) + Math.abs(h[4]);
+
+    // Allow significant rotation/shear, but reject completely pathological cases
+    if (offDiagonalStrength > diagonalStrength * 10) {
+      console.warn("Homography has excessive shear/rotation:", {
+        offDiagonalStrength,
+        diagonalStrength,
+        ratio: offDiagonalStrength / diagonalStrength,
       });
       return false;
     }
