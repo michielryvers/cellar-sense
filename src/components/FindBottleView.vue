@@ -64,8 +64,21 @@ const wine = ref<Wine | null>(null);
 const rackDef = ref<RackDefinition | null>(null);
 let animationId = 0;
 let frameCount = 0;
+let lastProcessTime = 0;
+let targetProcessInterval = 100; // Start with 10 FPS processing
+const minProcessInterval = 33; // Don't go faster than 30 FPS
+const maxProcessInterval = 200; // Don't go slower than 5 FPS
+
+// Reusable canvas and context to avoid per-frame allocations
+let tempCanvas: HTMLCanvasElement | null = null;
+let tempCtx: CanvasRenderingContext2D | null = null;
 
 const permissionDenied = ref(false);
+
+// Watch for wine/rack changes to reset smoothing state
+let lastWineId: string | null = null;
+let lastRackId: string | null = null;
+
 async function startPreview() {
   let stream: MediaStream;
   try {
@@ -88,10 +101,12 @@ async function startPreview() {
 
   const width = video.value!.videoWidth;
   const height = video.value!.videoHeight;
-  const tempCanvas = document.createElement("canvas");
+  
+  // Create reusable canvas once
+  tempCanvas = document.createElement("canvas");
   tempCanvas.width = width;
   tempCanvas.height = height;
-  const tempCtx = tempCanvas.getContext("2d")!;
+  tempCtx = tempCanvas.getContext("2d")!;
 
   const ov = overlay.value!;
   ov.width = width;
@@ -100,25 +115,39 @@ async function startPreview() {
 
   const loop = async () => {
     frameCount++;
+    const now = performance.now();
 
-    // Only process every 3rd frame
-    if (frameCount % 3 === 0) {
-      tempCtx.drawImage(video.value!, 0, 0, width, height);
-      const imageData = tempCtx.getImageData(0, 0, width, height);
+    // Adaptive frame skipping based on processing latency
+    const shouldProcess = now - lastProcessTime >= targetProcessInterval;
+
+    if (shouldProcess) {
+      const processStart = performance.now();
+      
+      // Check for wine/rack changes and reset smoothing if needed
+      const currentWineId = wine.value?.id || null;
+      const currentRackId = wine.value?.location?.rackId || null;
+      
+      if (currentWineId !== lastWineId || currentRackId !== lastRackId) {
+        guidance.reset();
+        lastWineId = currentWineId;
+        lastRackId = currentRackId;
+      }
+
+      tempCtx!.drawImage(video.value!, 0, 0, width, height);
+      const imageData = tempCtx!.getImageData(0, 0, width, height);
       const tags = await detectTags(imageData);
       visionStore.update(tags);
-      octx.clearRect(0, 0, width, height);
-
-      if (wine.value?.location && rackDef.value && tags.length > 0) {
+      octx.clearRect(0, 0, width, height);      if (wine.value?.location && rackDef.value && tags.length > 0) {
         const p = await guidance.project(
           wine.value.location,
           tags,
-          rackDef.value
+          rackDef.value,
+          { width, height }
         );
 
         if (p) {
           const r = width * 0.04;
-          octx.fillStyle = "#00C85366"; // Fixed typo: was missing a '3'
+          octx.fillStyle = "#00C85366";
           octx.strokeStyle = "#00C853";
           octx.lineWidth = 3;
           octx.beginPath();
@@ -127,6 +156,26 @@ async function startPreview() {
           octx.stroke();
         }
       }
+
+      const processEnd = performance.now();
+      const processingTime = processEnd - processStart;
+      
+      // Adaptive interval adjustment based on processing time
+      if (processingTime > targetProcessInterval * 0.8) {
+        // Processing is taking too long, slow down
+        targetProcessInterval = Math.min(
+          maxProcessInterval,
+          targetProcessInterval * 1.2
+        );
+      } else if (processingTime < targetProcessInterval * 0.3) {
+        // Processing is fast, speed up
+        targetProcessInterval = Math.max(
+          minProcessInterval,
+          targetProcessInterval * 0.9
+        );
+      }
+      
+      lastProcessTime = now;
     }
 
     animationId = requestAnimationFrame(loop);
@@ -165,6 +214,10 @@ function stopCamera(): void {
     stream.getTracks().forEach((track) => track.stop());
     video.value.srcObject = null;
   }
+  
+  // Clean up reusable canvas
+  tempCanvas = null;
+  tempCtx = null;
 }
 
 /**

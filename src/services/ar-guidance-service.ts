@@ -9,19 +9,20 @@ export class ARGuidanceService {
   private cv: any = null;
   private lastProjection: { x: number; y: number } | null = null;
   private smoothingFactor = 0.3; // Higher = more responsive, lower = smoother
-
   /**
    * Project a normalized wine location into current camera frame pixel coordinates.
    * Uses a simple bounding-box approximation based on detected tag corners.
    * @param location Normalized wine location (0-1)
    * @param detectedTags Currently detected ArUco tags
    * @param rackDef Calibration definition of the rack
+   * @param imageSize Optional image dimensions for adaptive RANSAC threshold
    * @returns Pixel coordinates for overlay, or null if projection not possible
    */
   async project(
     location: WineLocation,
     detectedTags: DetectedTag[],
-    rackDef: RackDefinition
+    rackDef: RackDefinition,
+    imageSize?: { width: number; height: number }
   ): Promise<{ x: number; y: number } | null> {
     if (detectedTags.length === 0) {
       return null;
@@ -44,27 +45,33 @@ export class ARGuidanceService {
 
       let rawProjection: { x: number; y: number } | null = null;
 
-      if (matchedTags.length >= 3) {
+      if (matchedTags.length >= 4) {
         // Full homography update
         rawProjection = this.projectWithHomography(
+          location,
+          matchedTags,
+          rackDef,
+          imageSize
+        );
+      } else if (matchedTags.length === 3) {
+        // Affine transformation (allows rotation + scale + translation)
+        rawProjection = this.projectWithAffine(
           location,
           matchedTags,
           rackDef
         );
       } else if (matchedTags.length === 2) {
-        // Similarity transformation (scale + rotation)
+        // Similarity transformation (scale + rotation + translation)
         rawProjection = this.projectWithSimilarity(
           location,
           matchedTags,
           rackDef
         );
       } else {
-        // Translation only (1 marker)
-        rawProjection = this.projectWithTranslation(
-          location,
-          matchedTags[0],
-          rackDef
-        );
+        // Single marker - refuse to project to avoid inaccurate results
+        // Translation-only is too unreliable when camera rotates/tilts
+        console.warn("Need at least 2 markers for reliable projection");
+        return null;
       }
 
       // Apply smoothing
@@ -102,11 +109,11 @@ export class ARGuidanceService {
   reset(): void {
     this.lastProjection = null;
   }
-
   private projectWithHomography(
     location: WineLocation,
     matchedTags: DetectedTag[],
-    rackDef: RackDefinition
+    rackDef: RackDefinition,
+    imageSize?: { width: number; height: number }
   ): { x: number; y: number } | null {
     console.log(
       "projectWithHomography called with",
@@ -162,7 +169,8 @@ export class ARGuidanceService {
       if (dstPoints.some((p) => !isFinite(p))) {
         console.error("Invalid destination points:", dstPoints);
         return null;
-      }      console.log("Creating matrices for", numPoints, "points");
+      }
+      console.log("Creating matrices for", numPoints, "points");
 
       // Create matrices with consistent CV_32FC2 format to match calibration
       // Points should be in shape (N, 1) with 2 channels for CV_32FC2
@@ -192,11 +200,17 @@ export class ARGuidanceService {
         dstMat.cols,
         "type:",
         dstMat.type()
-      );
-
-      console.log("Computing homography...");
+      );      console.log("Computing homography...");
+      
+      // Adaptive RANSAC threshold based on image size
+      let ransacThreshold = 5.0; // Default threshold
+      if (imageSize) {
+        const imageDiagonal = Math.sqrt(imageSize.width * imageSize.width + imageSize.height * imageSize.height);
+        ransacThreshold = Math.max(3.0, Math.min(10.0, imageDiagonal / 400)); // Scale threshold
+      }
+      
       // Compute homography with RANSAC
-      homography = this.cv.findHomography(srcMat, dstMat, this.cv.RANSAC, 5.0);
+      homography = this.cv.findHomography(srcMat, dstMat, this.cv.RANSAC, ransacThreshold);
 
       // Validate homography matrix
       if (!homography || homography.empty()) {
@@ -282,6 +296,96 @@ export class ARGuidanceService {
     }
   }
 
+  private projectWithAffine(
+    location: WineLocation,
+    matchedTags: DetectedTag[],
+    rackDef: RackDefinition
+  ): { x: number; y: number } | null {
+    // Use 3 markers to compute affine transformation (rotation + scale + translation)
+    if (matchedTags.length < 3) return null;
+
+    const tags = matchedTags.slice(0, 3); // Use first 3 markers
+    const srcPoints: number[] = [];
+    const dstPoints: number[] = [];
+
+    for (const tag of tags) {
+      const calibrationMarker = rackDef.markerPositions.find(
+        (m) => m.id === tag.id
+      );
+      if (!calibrationMarker) {
+        console.warn(`No calibration marker found for tag ID ${tag.id}`);
+        continue;
+      }
+
+      const currentCenter = this.getMarkerCenter(tag.corners);
+      srcPoints.push(calibrationMarker.x, calibrationMarker.y);
+      dstPoints.push(currentCenter.x, currentCenter.y);
+    }
+
+    if (srcPoints.length < 6) return null; // Need 3 points (6 values)
+
+    let srcMat, dstMat, affineMatrix;
+
+    try {
+      // Create matrices for affine transformation
+      srcMat = new this.cv.Mat(3, 1, this.cv.CV_32FC2);
+      dstMat = new this.cv.Mat(3, 1, this.cv.CV_32FC2);
+
+      // Fill matrices
+      for (let i = 0; i < 3; i++) {
+        srcMat.data32F[i * 2] = srcPoints[i * 2];
+        srcMat.data32F[i * 2 + 1] = srcPoints[i * 2 + 1];
+        dstMat.data32F[i * 2] = dstPoints[i * 2];
+        dstMat.data32F[i * 2 + 1] = dstPoints[i * 2 + 1];
+      }
+
+      // Compute affine transformation
+      affineMatrix = this.cv.getAffineTransform(srcMat, dstMat);
+
+      if (!affineMatrix || affineMatrix.empty()) {
+        console.error("getAffineTransform returned empty matrix");
+        return null;
+      }
+
+      // Get rack bounds and convert location
+      const rackBounds = this.getRackBounds(rackDef.markerPositions);
+      const calibX =
+        rackBounds.minX + location.x * (rackBounds.maxX - rackBounds.minX);
+      const calibY =
+        rackBounds.minY + location.y * (rackBounds.maxY - rackBounds.minY);
+
+      // Apply affine transformation: [x', y'] = M * [x, y, 1]
+      const a = affineMatrix.data64F[0];
+      const b = affineMatrix.data64F[1];
+      const c = affineMatrix.data64F[2];
+      const d = affineMatrix.data64F[3];
+      const e = affineMatrix.data64F[4];
+      const f = affineMatrix.data64F[5];
+
+      const x = a * calibX + b * calibY + c;
+      const y = d * calibX + e * calibY + f;
+
+      if (!isFinite(x) || !isFinite(y)) {
+        console.error("Invalid affine projected coordinates:", x, y);
+        return null;
+      }
+
+      return { x, y };
+    } catch (error) {
+      console.error("Affine projection failed:", error);
+      return null;
+    } finally {
+      // Clean up
+      try {
+        srcMat?.delete();
+        dstMat?.delete();
+        affineMatrix?.delete();
+      } catch (cleanupError) {
+        console.warn("Affine cleanup error:", cleanupError);
+      }
+    }
+  }
+
   private projectWithSimilarity(
     location: WineLocation,
     matchedTags: DetectedTag[],
@@ -339,33 +443,6 @@ export class ARGuidanceService {
       y: current1.y + transformedY,
     };
   }
-
-  private projectWithTranslation(
-    location: WineLocation,
-    tag: DetectedTag,
-    rackDef: RackDefinition
-  ): { x: number; y: number } | null {
-    const calibMarker = rackDef.markerPositions.find((m) => m.id === tag.id);
-    if (!calibMarker) return null;
-
-    const currentCenter = this.getMarkerCenter(tag.corners);
-
-    // Simple translation - assume same scale and orientation
-    const rackBounds = this.getRackBounds(rackDef.markerPositions);
-    const calibX =
-      rackBounds.minX + location.x * (rackBounds.maxX - rackBounds.minX);
-    const calibY =
-      rackBounds.minY + location.y * (rackBounds.maxY - rackBounds.minY);
-
-    const offsetX = currentCenter.x - calibMarker.x;
-    const offsetY = currentCenter.y - calibMarker.y;
-
-    return {
-      x: calibX + offsetX,
-      y: calibY + offsetY,
-    };
-  }
-
   private getMarkerCenter(corners: [number, number][]): {
     x: number;
     y: number;
