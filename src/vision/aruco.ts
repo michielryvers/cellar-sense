@@ -42,7 +42,7 @@ export const detectTags = async (
 
     // Convert to grayscale for better detection
     gray = new cv.Mat();
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);    // Create ArUco detector with 4x4_50 dictionary (cache it)
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY); // Create ArUco detector with 4x4_50 dictionary (cache it)
     if (!cachedDetector) {
       cachedDictionary = cv.getPredefinedDictionary(cv.DICT_4X4_50);
       cachedParameters = new cv.aruco_DetectorParameters();
@@ -81,11 +81,12 @@ export const detectTags = async (
           corners: tagCorners,
         });
       }
-    }    return result;
+    }
+    return result;
   } catch (error) {
     console.error("ArUco detection failed:", error);
     // Re-throw critical errors but return empty array for recoverable ones
-    if (error instanceof Error && error.message.includes('WebAssembly')) {
+    if (error instanceof Error && error.message.includes("WebAssembly")) {
       throw new Error(`OpenCV WebAssembly error: ${error.message}`);
     }
     return [];
@@ -94,7 +95,7 @@ export const detectTags = async (
     try {
       src?.delete();
       gray?.delete();
-      
+
       // Properly clean up MatVector - delete each Mat inside before deleting the vector
       if (corners) {
         for (let i = 0; i < corners.size(); i++) {
@@ -103,7 +104,7 @@ export const detectTags = async (
         }
         corners.delete();
       }
-      
+
       ids?.delete();
     } catch (cleanupError) {
       console.warn("Cleanup error in ArUco detection:", cleanupError);

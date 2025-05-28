@@ -2,7 +2,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 
 ---
 
-## 1. ArUco Detection (`src/vision/aruco.ts`)
+## 1. ArUco Detection (`src/vision/aruco.ts`) ✅
 
 - **Corner‐by‐corner cleanup & memory leaks**
   You allocate a `MatVector` for `corners`, then call `corners.delete()` in your `finally` block. In OpenCV.js, deleting a `MatVector` does _not_ automatically delete each `Mat` inside it – you need to iterate `corners.get(i).delete()` before deleting the vector itself. Otherwise every frame you leak four small Mats. The same goes for `ids` if it wraps internal buffers.&#x20;
