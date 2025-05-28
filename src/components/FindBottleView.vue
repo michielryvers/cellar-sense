@@ -101,7 +101,7 @@ async function startPreview() {
 
   const width = video.value!.videoWidth;
   const height = video.value!.videoHeight;
-  
+
   // Create reusable canvas once
   tempCanvas = document.createElement("canvas");
   tempCanvas.width = width;
@@ -122,11 +122,11 @@ async function startPreview() {
 
     if (shouldProcess) {
       const processStart = performance.now();
-      
+
       // Check for wine/rack changes and reset smoothing if needed
       const currentWineId = wine.value?.id || null;
       const currentRackId = wine.value?.location?.rackId || null;
-      
+
       if (currentWineId !== lastWineId || currentRackId !== lastRackId) {
         guidance.reset();
         lastWineId = currentWineId;
@@ -137,7 +137,8 @@ async function startPreview() {
       const imageData = tempCtx!.getImageData(0, 0, width, height);
       const tags = await detectTags(imageData);
       visionStore.update(tags);
-      octx.clearRect(0, 0, width, height);      if (wine.value?.location && rackDef.value && tags.length > 0) {
+      octx.clearRect(0, 0, width, height);
+      if (wine.value?.location && rackDef.value && tags.length > 0) {
         const p = await guidance.project(
           wine.value.location,
           tags,
@@ -159,7 +160,7 @@ async function startPreview() {
 
       const processEnd = performance.now();
       const processingTime = processEnd - processStart;
-      
+
       // Adaptive interval adjustment based on processing time
       if (processingTime > targetProcessInterval * 0.8) {
         // Processing is taking too long, slow down
@@ -174,7 +175,7 @@ async function startPreview() {
           targetProcessInterval * 0.9
         );
       }
-      
+
       lastProcessTime = now;
     }
 
@@ -214,7 +215,7 @@ function stopCamera(): void {
     stream.getTracks().forEach((track) => track.stop());
     video.value.srcObject = null;
   }
-  
+
   // Clean up reusable canvas
   tempCanvas = null;
   tempCtx = null;

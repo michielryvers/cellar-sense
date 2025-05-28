@@ -31,6 +31,9 @@ export class CalibrationService {
   private animationFrameId: number | null = null;
   private visionStore: any = null;
 
+  // Track last calibration error for user feedback
+  public lastCalibrationError: string | null = null;
+
   // Reactive state for the preview
   public preview = ref<CalibrationPreview>({
     markersVisible: 0,
@@ -290,22 +293,45 @@ export class CalibrationService {
         dstMat,
         cv.RANSAC,
         adaptiveThreshold
-      );
-
-      // Check if homography computation was successful
+      );      // Check if homography computation was successful
       if (
         !homographyMat ||
         homographyMat.rows !== 3 ||
         homographyMat.cols !== 3
       ) {
-        console.error("Failed to compute homography - markers may be colinear");
+        let errorMessage = "Failed to compute homography";
+        
+        // Provide specific diagnostic information
+        if (orderedPoints.length < 4) {
+          errorMessage = "Need at least 4 markers for calibration";
+        } else if (this.areMarkersColinear(orderedPoints)) {
+          errorMessage = "Markers are arranged in a line - they must form a rectangle or quadrilateral";
+        } else if (this.isRackTooDistorted(orderedPoints)) {
+          errorMessage = "Rack appears too distorted - ensure markers are at the corners of a rectangular rack";
+        } else if (!homographyMat) {
+          errorMessage = "Homography computation failed - markers may be too close together";
+        }
+        
+        console.error(errorMessage);
         srcMat.delete();
         dstMat.delete();
         if (homographyMat) homographyMat.delete();
+        
+        // Store the error message for UI display
+        this.lastCalibrationError = errorMessage;
         return null;
       }
 
-      // Extract the homography matrix values
+      // Validate the homography result
+      if (!this.isValidHomography(homographyMat)) {
+        const errorMessage = "Computed homography is invalid - ensure all 4 markers are visible and at rack corners";
+        console.error(errorMessage);
+        srcMat.delete();
+        dstMat.delete();
+        homographyMat.delete();
+        this.lastCalibrationError = errorMessage;
+        return null;
+      }      // Extract the homography matrix values
       const homography: number[] = [];
       for (let i = 0; i < 9; i++) {
         homography.push(homographyMat.data64F[i]);
@@ -315,6 +341,9 @@ export class CalibrationService {
       srcMat.delete();
       dstMat.delete();
       homographyMat.delete();
+
+      // Clear any previous error on successful computation
+      this.lastCalibrationError = null;
 
       return homography;
     } catch (error) {
@@ -467,6 +496,111 @@ export class CalibrationService {
       (p): p is { id: number; x: number; y: number } => p !== undefined
     );
     return ordered.length === 4 ? ordered : hull;
+  }
+
+  /**
+   * Check if markers are arranged in a line (colinear)
+   * @param points Array of marker center points
+   * @returns true if markers are approximately colinear
+   */
+  private areMarkersColinear(points: { x: number; y: number }[]): boolean {
+    if (points.length < 3) return false;
+
+    // Calculate the area of the polygon formed by the points
+    // If area is very small relative to the perimeter, points are likely colinear
+    let area = 0;
+    let perimeter = 0;
+
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      area += points[i].x * points[j].y - points[j].x * points[i].y;
+      
+      const dx = points[j].x - points[i].x;
+      const dy = points[j].y - points[i].y;
+      perimeter += Math.sqrt(dx * dx + dy * dy);
+    }
+
+    area = Math.abs(area) / 2;
+    
+    // If area is less than 1% of perimeter squared, consider colinear
+    const areaThreshold = Math.pow(perimeter, 2) * 0.01;
+    return area < areaThreshold;
+  }
+
+  /**
+   * Check if the rack shape is too distorted for reliable calibration
+   * @param points Array of marker center points
+   * @returns true if rack appears too distorted
+   */
+  private isRackTooDistorted(points: { x: number; y: number }[]): boolean {
+    if (points.length !== 4) return false;
+
+    // Calculate the distances between adjacent corners
+    const distances: number[] = [];
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      const dx = points[j].x - points[i].x;
+      const dy = points[j].y - points[i].y;
+      distances.push(Math.sqrt(dx * dx + dy * dy));
+    }
+
+    // Check if the ratio between longest and shortest sides is too large
+    const minDistance = Math.min(...distances);
+    const maxDistance = Math.max(...distances);
+    const ratio = maxDistance / minDistance;
+
+    // If one side is more than 5x longer than another, consider it distorted
+    return ratio > 5.0;
+  }
+
+  /**
+   * Validate that the computed homography matrix is reasonable
+   * @param homographyMat OpenCV Mat containing the homography
+   * @returns true if homography appears valid
+   */
+  private isValidHomography(homographyMat: any): boolean {
+    if (!homographyMat || homographyMat.rows !== 3 || homographyMat.cols !== 3) {
+      return false;
+    }
+
+    // Check that the matrix is not degenerate (determinant close to zero)
+    const h = homographyMat.data64F;
+    const det = h[0] * (h[4] * h[8] - h[5] * h[7]) - 
+                h[1] * (h[3] * h[8] - h[5] * h[6]) + 
+                h[2] * (h[3] * h[7] - h[4] * h[6]);
+
+    if (Math.abs(det) < 1e-6) {
+      console.error("Homography is degenerate (determinant ≈ 0)");
+      return false;
+    }
+
+    // Check for reasonable scaling factors
+    // Extract scale factors from the homography
+    const scaleX = Math.sqrt(h[0] * h[0] + h[3] * h[3]);
+    const scaleY = Math.sqrt(h[1] * h[1] + h[4] * h[4]);
+
+    // Reject if scaling is too extreme (< 0.1x or > 10x)
+    if (scaleX < 0.1 || scaleX > 10 || scaleY < 0.1 || scaleY > 10) {
+      console.error("Homography has extreme scaling factors:", { scaleX, scaleY });
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get the last calibration error message for user feedback
+   * @returns Error message or null if no error
+   */
+  public getLastCalibrationError(): string | null {
+    return this.lastCalibrationError;
+  }
+
+  /**
+   * Clear the last calibration error
+   */
+  public clearCalibrationError(): void {
+    this.lastCalibrationError = null;
   }
 }
 

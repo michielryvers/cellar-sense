@@ -75,11 +75,26 @@
                   placeholder="Main Cellar"
                   required
                 />
-              </div>
-
-              <!-- Status messages -->
+              </div>              <!-- Status messages -->
               <div
-                v-if="previewState.homographyReady"
+                v-if="calibrationError"
+                class="text-sm text-red-500 mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md"
+              >
+                <div class="flex items-start">
+                  <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div class="font-medium">Calibration Issue</div>
+                    <div class="mt-1">{{ calibrationError }}</div>
+                    <div class="mt-2 text-xs text-red-600 dark:text-red-400">
+                      • Ensure markers are at the corners of your rack in a rectangular pattern<br>
+                      • Make sure all 4 markers are clearly visible<br>
+                      • Avoid placing markers in a straight line
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                v-else-if="previewState.homographyReady"
                 class="text-sm text-emerald-600 mb-4"
               >
                 All markers detected! You can now save the rack calibration.
@@ -126,6 +141,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ExclamationTriangleIcon } from "@heroicons/vue/24/outline";
 import { calibrationService } from "../services/calibration-service";
 import { GUIDANCE_COLOR } from "../services/calibration-service";
 
@@ -143,6 +159,7 @@ const videoElement = ref<HTMLVideoElement | null>(null);
 const overlayCanvas = ref<HTMLCanvasElement | null>(null);
 const cameraActive = ref(false);
 const rackName = ref("");
+const calibrationError = ref<string | null>(null);
 interface PreviewState {
   markersVisible: number;
   homographyReady: boolean;
@@ -165,6 +182,9 @@ const maxHistory = 5;
 // Start camera capture
 const startCamera = async () => {
   try {
+    // Clear any previous calibration errors
+    calibrationError.value = null;
+    
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "environment",
@@ -181,9 +201,7 @@ const startCamera = async () => {
     if (!videoElement.value) throw new Error("Video element not found");
 
     // set video source and bind canplay _before_ play()
-    videoElement.value.srcObject = mediaStream;
-
-    videoElement.value.oncanplay = () => {
+    videoElement.value.srcObject = mediaStream;    videoElement.value.oncanplay = () => {
       console.log("[Calibrate] metadata loaded – starting calibration");
       const preview = calibrationService.startCalibration(videoElement.value!);
       watch(
@@ -209,10 +227,18 @@ const startCamera = async () => {
             });
 
             previewState.value = { ...newVal, rackCorners: smoothed };
+            // Clear any previous calibration errors when successful
+            calibrationError.value = null;
           } else {
             // Clear the corner history when homography is not ready
             cornerHistory.length = 0;
             previewState.value = { ...newVal };
+            
+            // Check for calibration errors from the service
+            const lastError = calibrationService.getLastCalibrationError();
+            if (lastError) {
+              calibrationError.value = lastError;
+            }
           }
 
           // Always redraw overlay to clear it when state changes
@@ -340,6 +366,7 @@ const confirmCalibration = async () => {
 const retake = () => {
   // Reset the calibration state
   rackName.value = "";
+  calibrationError.value = null;
 
   // Continue using the same camera stream
   // The calibration service will continue detecting markers
@@ -359,6 +386,7 @@ const closeModal = () => {
   // Reset state
   cameraActive.value = false;
   rackName.value = "";
+  calibrationError.value = null;
 
   // Emit close event
   emit("close");

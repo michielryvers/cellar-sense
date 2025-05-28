@@ -63,13 +63,24 @@
             @mousemove="handleMouseMove"
             @mouseleave="hideMagnifier"
             alt="Rack calibration image"
-          />          <!-- Marker for selected location -->
+          />
+          <!-- Marker for selected location -->
           <div
-            v-if="markerPosition.x !== null && markerPosition.y !== null && imageElement && imageRect"
+            v-if="
+              markerPosition.x !== null &&
+              markerPosition.y !== null &&
+              imageElement &&
+              imageRect
+            "
             class="absolute pointer-events-none"
             :style="{
-              left: `${(markerPosition.x / imageElement.naturalWidth) * imageRect.width}px`,
-              top: `${(markerPosition.y / imageElement.naturalHeight) * imageRect.height}px`,
+              left: `${
+                (markerPosition.x / imageElement.naturalWidth) * imageRect.width
+              }px`,
+              top: `${
+                (markerPosition.y / imageElement.naturalHeight) *
+                imageRect.height
+              }px`,
             }"
           >
             <div
@@ -242,9 +253,9 @@ onMounted(async () => {
   if (props.show && props.rackId) {
     await loadRackDefinition();
   }
-  
+
   // Add window resize listener to update image rect
-  window.addEventListener('resize', updateImageRect);
+  window.addEventListener("resize", updateImageRect);
 });
 
 // Watch for show prop and rackId changes
@@ -286,17 +297,17 @@ function handleImageClick(event: MouseEvent) {
   if (imageElement.value) {
     // Ensure imageRect is updated
     imageRect.value = imageElement.value.getBoundingClientRect();
-    
+
     // Convert click coordinates from displayed size to natural image coordinates
     const img = imageElement.value;
     const rect = imageRect.value;
-    
+
     if (!rect) return; // Safety check
-    
+
     // Calculate scale factors between displayed and natural image size
     const scaleX = img.naturalWidth / rect.width;
     const scaleY = img.naturalHeight / rect.height;
-    
+
     // Scale the click coordinates to natural image coordinates
     markerPosition.value = {
       x: event.offsetX * scaleX,
@@ -388,6 +399,6 @@ function handleClose() {
 
 // Cleanup on unmount
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateImageRect);
+  window.removeEventListener("resize", updateImageRect);
 });
 </script>

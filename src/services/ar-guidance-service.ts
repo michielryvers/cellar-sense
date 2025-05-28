@@ -55,11 +55,7 @@ export class ARGuidanceService {
         );
       } else if (matchedTags.length === 3) {
         // Affine transformation (allows rotation + scale + translation)
-        rawProjection = this.projectWithAffine(
-          location,
-          matchedTags,
-          rackDef
-        );
+        rawProjection = this.projectWithAffine(location, matchedTags, rackDef);
       } else if (matchedTags.length === 2) {
         // Similarity transformation (scale + rotation + translation)
         rawProjection = this.projectWithSimilarity(
@@ -200,17 +196,26 @@ export class ARGuidanceService {
         dstMat.cols,
         "type:",
         dstMat.type()
-      );      console.log("Computing homography...");
-      
+      );
+      console.log("Computing homography...");
+
       // Adaptive RANSAC threshold based on image size
       let ransacThreshold = 5.0; // Default threshold
       if (imageSize) {
-        const imageDiagonal = Math.sqrt(imageSize.width * imageSize.width + imageSize.height * imageSize.height);
+        const imageDiagonal = Math.sqrt(
+          imageSize.width * imageSize.width +
+            imageSize.height * imageSize.height
+        );
         ransacThreshold = Math.max(3.0, Math.min(10.0, imageDiagonal / 400)); // Scale threshold
       }
-      
+
       // Compute homography with RANSAC
-      homography = this.cv.findHomography(srcMat, dstMat, this.cv.RANSAC, ransacThreshold);
+      homography = this.cv.findHomography(
+        srcMat,
+        dstMat,
+        this.cv.RANSAC,
+        ransacThreshold
+      );
 
       // Validate homography matrix
       if (!homography || homography.empty()) {
