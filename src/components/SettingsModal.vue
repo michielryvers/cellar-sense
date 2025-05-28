@@ -17,6 +17,7 @@ import type { SettingsModalProps } from "../shared/types";
 import CalibrateRackModal from "./CalibrateRackModal.vue";
 import { deleteRackAndWineLocations } from "../services/dexie-db";
 import { db } from "../services/dexie-db";
+import { calibrationService } from "../services/calibration-service";
 
 // Props and emits
 const props = defineProps<SettingsModalProps>();
@@ -37,6 +38,11 @@ const settings = reactive<Settings>({
   OPENAI_SDK_KEY: settingsService.openAiKey,
   OPENAI_MODEL: settingsService.openAiModel,
   THEME_PREFERENCE: settingsService.themePreference,
+});
+
+// Vision settings
+const visionSettings = reactive({
+  lensDistortionCorrection: calibrationService.isDistortionCorrectionEnabled(),
 });
 
 /**
@@ -115,6 +121,9 @@ function saveSettings(): void {
     OPENAI_MODEL: settings.OPENAI_MODEL,
     THEME_PREFERENCE: settings.THEME_PREFERENCE,
   });
+
+  // Save vision settings
+  calibrationService.setDistortionCorrection(visionSettings.lensDistortionCorrection);
 
   // Apply theme right away
   settingsService.applyTheme();
@@ -334,7 +343,39 @@ async function handleRackDeletion(): Promise<void> {
               <option value="system">System Default</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
-            </select>
+            </select>          </div>
+          <div class="mb-6">
+            <h3
+              class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-3"
+            >
+              Vision Settings
+            </h3>
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  for="lensDistortionToggle"
+                >
+                  Lens Distortion Correction
+                </label>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  Corrects barrel distortion from wide-angle phone cameras for better marker detection
+                </p>
+              </div>
+              <div class="ml-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    id="lensDistortionToggle"
+                    v-model="visionSettings.lensDistortionCorrection"
+                    type="checkbox"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"
+                  ></div>
+                </label>
+              </div>
+            </div>
           </div>
           <div class="flex flex-col gap-4">
             <div class="flex gap-2">
