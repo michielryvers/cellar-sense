@@ -1,4 +1,13 @@
-Below is a focused review of your vision/OpenCV flows, organized by stage. I’ve called out places where assumptions or resource‐management issues may lead to brittle behavior, incorrect mappings, or memory leaks. This isn’t about style or formatting, but about whether the algorithms will actually work robustly in real use.
+Below is a focused review of your vision/OpenCV flows, organized by stage. I’ve called out- **Lens distortion** ✅
+OpenCV's `findHomography` does no distortion correction. On wide-angle phone cameras, barrel distortion could cause non‐planar effects at the rack edges. You may get better results by first calibrating the camera lens (or at least using `undistortPoints`) before your homography.
+
+**STATUS: IMPLEMENTED** - Added lens distortion correction capability to CalibrationService with:
+
+- Camera parameter estimation for phone cameras (focal length ~80% of diagonal)
+- `undistortPoints()` method using OpenCV distortion correction
+- Configuration system with localStorage persistence
+- Optional distortion correction in `computeHomography()` (disabled by default)
+- UI toggle in SettingsModal for enabling/disabling the featurelaces where assumptions or resource‐management issues may lead to brittle behavior, incorrect mappings, or memory leaks. This isn’t about style or formatting, but about whether the algorithms will actually work robustly in real use.
 
 ---
 
@@ -85,7 +94,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 - **User feedback on failure** ✅
   If homography fails (e.g. colinear tags, too noisy), the UI simply disables “Confirm” or shows “Please capture all 4 markers.” It might help to display a warning like “Markers must not lie on a single line,” or show which markers are missing.
 
-- **Physical marker size & rack aspect ratio**
+- **Physical marker size & rack aspect ratio** ✅
   You assume the markers occupy exactly 10% of the rack dimension. In practice, physical markers may be larger or smaller relative to rack width, skewing the grid. Better to calibrate by the _centers_ of the outermost markers and ignore marker extents.
 
 - **Lens distortion**

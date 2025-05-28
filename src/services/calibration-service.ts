@@ -32,15 +32,15 @@ export class CalibrationService {
   private visionStore: any = null;
 
   // Track last calibration error for user feedback
-  public lastCalibrationError: string | null = null;  // Camera distortion parameters (optional enhancement)
+  public lastCalibrationError: string | null = null; // Camera distortion parameters (optional enhancement)
   private cameraMatrix: number[] | null = null;
   private distortionCoeffs: number[] | null = null;
   private enableDistortionCorrection: boolean;
 
   constructor() {
     // Load distortion correction setting from localStorage
-    this.enableDistortionCorrection = 
-      localStorage.getItem('vision_distortion_correction') === 'true';
+    this.enableDistortionCorrection =
+      localStorage.getItem("vision_distortion_correction") === "true";
   }
 
   // Reactive state for the preview
@@ -192,15 +192,15 @@ export class CalibrationService {
     this.preview.value.markersVisible = markers.length;
 
     // Debug logging
-    console.log(`Calibration: ${markers.length} markers detected`);    // We need exactly 4 markers for full homography
+    console.log(`Calibration: ${markers.length} markers detected`); // We need exactly 4 markers for full homography
     if (markers.length === 4) {
       // Get video dimensions for distortion correction
       const imageWidth = this.videoElement?.videoWidth || 0;
       const imageHeight = this.videoElement?.videoHeight || 0;
-      
+
       // Compute homography with optional distortion correction
       const homography = await this.computeHomography(
-        markers, 
+        markers,
         imageWidth > 0 ? imageWidth : undefined,
         imageHeight > 0 ? imageHeight : undefined
       );
@@ -226,7 +226,8 @@ export class CalibrationService {
       this.preview.value.rackCorners = null;
       console.log("Calibration: Clearing homography - not exactly 4 markers");
     }
-  }  /**
+  }
+  /**
    * Compute the homography matrix from detected markers
    * Uses marker centers and infers rack's convex hull instead of hard-coded corner mapping
    * Includes optional lens distortion correction for better accuracy on wide-angle cameras
@@ -236,8 +237,8 @@ export class CalibrationService {
    * @returns Homography matrix as a flat array (row-major) or null if computation fails
    */
   private async computeHomography(
-    markers: any[], 
-    imageWidth?: number, 
+    markers: any[],
+    imageWidth?: number,
     imageHeight?: number
   ): Promise<number[] | null> {
     if (markers.length < 4) return null;
@@ -254,11 +255,11 @@ export class CalibrationService {
       let markerCenters = markers.map((marker) => {
         const center = this.getMarkerCenter(marker.corners);
         return { id: marker.id, x: center.x, y: center.y };
-      });      // Apply lens distortion correction if enabled and image dimensions are provided
+      }); // Apply lens distortion correction if enabled and image dimensions are provided
       if (this.enableDistortionCorrection && imageWidth && imageHeight) {
         try {
           const undistortedPoints = await this.undistortPoints(
-            markerCenters.map(mc => ({ x: mc.x, y: mc.y })),
+            markerCenters.map((mc) => ({ x: mc.x, y: mc.y })),
             imageWidth,
             imageHeight
           );
@@ -266,11 +267,14 @@ export class CalibrationService {
           markerCenters = markerCenters.map((mc, i) => ({
             id: mc.id,
             x: undistortedPoints[i].x,
-            y: undistortedPoints[i].y
+            y: undistortedPoints[i].y,
           }));
           console.log("Applied lens distortion correction to marker points");
         } catch (error) {
-          console.warn("Distortion correction failed, using original points:", error);
+          console.warn(
+            "Distortion correction failed, using original points:",
+            error
+          );
         }
       }
 
@@ -662,10 +666,10 @@ export class CalibrationService {
    */
   public setDistortionCorrection(enabled: boolean): void {
     this.enableDistortionCorrection = enabled;
-    
+
     // Persist setting to localStorage
-    localStorage.setItem('vision_distortion_correction', enabled.toString());
-    
+    localStorage.setItem("vision_distortion_correction", enabled.toString());
+
     // Reset camera parameters when toggling to force re-estimation
     if (!enabled) {
       this.cameraMatrix = null;
@@ -699,17 +703,7 @@ export class CalibrationService {
     const cy = imageHeight / 2;
 
     // Camera matrix [fx, 0, cx; 0, fy, cy; 0, 0, 1]
-    this.cameraMatrix = [
-      focalLength,
-      0,
-      cx,
-      0,
-      focalLength,
-      cy,
-      0,
-      0,
-      1,
-    ];
+    this.cameraMatrix = [focalLength, 0, cx, 0, focalLength, cy, 0, 0, 1];
 
     // Simple barrel distortion model (k1, k2, p1, p2, k3)
     // Conservative values for typical phone cameras
@@ -730,7 +724,8 @@ export class CalibrationService {
     // Skip if no points to process
     if (points.length === 0) {
       return points;
-    }    try {
+    }
+    try {
       // Load OpenCV.js
       const cv = await loadOpenCV();
 
@@ -750,7 +745,12 @@ export class CalibrationService {
       const cameraMat = cv.matFromArray(3, 3, cv.CV_32F, this.cameraMatrix!);
 
       // Create distortion coefficients
-      const distCoeffs = cv.matFromArray(1, 5, cv.CV_32F, this.distortionCoeffs!);
+      const distCoeffs = cv.matFromArray(
+        1,
+        5,
+        cv.CV_32F,
+        this.distortionCoeffs!
+      );
 
       // Output points
       const outputPoints = new cv.Mat();
@@ -784,7 +784,10 @@ export class CalibrationService {
 
       return undistorted;
     } catch (error) {
-      console.warn("Lens distortion correction failed, using original points:", error);
+      console.warn(
+        "Lens distortion correction failed, using original points:",
+        error
+      );
       return points;
     }
   }

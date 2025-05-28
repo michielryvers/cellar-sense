@@ -123,7 +123,9 @@ function saveSettings(): void {
   });
 
   // Save vision settings
-  calibrationService.setDistortionCorrection(visionSettings.lensDistortionCorrection);
+  calibrationService.setDistortionCorrection(
+    visionSettings.lensDistortionCorrection
+  );
 
   // Apply theme right away
   settingsService.applyTheme();
@@ -343,7 +345,8 @@ async function handleRackDeletion(): Promise<void> {
               <option value="system">System Default</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
-            </select>          </div>
+            </select>
+          </div>
           <div class="mb-6">
             <h3
               class="text-xs font-semibold text-gray-600 dark:text-gray-300 tracking-wide uppercase mb-3"
@@ -359,7 +362,8 @@ async function handleRackDeletion(): Promise<void> {
                   Lens Distortion Correction
                 </label>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  Corrects barrel distortion from wide-angle phone cameras for better marker detection
+                  Corrects barrel distortion from wide-angle phone cameras for
+                  better marker detection
                 </p>
               </div>
               <div class="ml-4">
