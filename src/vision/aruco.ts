@@ -17,6 +17,8 @@ export interface DetectedTag {
 // Cache the detector to avoid recreating it every frame
 let cachedDetector: any = null;
 let cachedDictionary: any = null;
+let cachedParameters: any = null;
+let cachedRefineParameters: any = null;
 
 /**
  * Detects ArUco markers in an image
@@ -40,21 +42,17 @@ export const detectTags = async (
 
     // Convert to grayscale for better detection
     gray = new cv.Mat();
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-
-    // Create ArUco detector with 4x4_50 dictionary (cache it)
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);    // Create ArUco detector with 4x4_50 dictionary (cache it)
     if (!cachedDetector) {
       cachedDictionary = cv.getPredefinedDictionary(cv.DICT_4X4_50);
-      const parameters = new cv.aruco_DetectorParameters();
-      const refineParameters = new cv.aruco_RefineParameters(10, 3, true);
+      cachedParameters = new cv.aruco_DetectorParameters();
+      cachedRefineParameters = new cv.aruco_RefineParameters(10, 3, true);
       cachedDetector = new cv.aruco_ArucoDetector(
         cachedDictionary,
-        parameters,
-        refineParameters
+        cachedParameters,
+        cachedRefineParameters
       );
-      // Clean up parameters after creating detector
-      parameters.delete();
-      refineParameters.delete();
+      // Keep parameters alive for the detector's lifetime
     }
 
     // Detect markers
@@ -83,21 +81,52 @@ export const detectTags = async (
           corners: tagCorners,
         });
       }
-    }
-
-    return result;
+    }    return result;
   } catch (error) {
     console.error("ArUco detection failed:", error);
+    // Re-throw critical errors but return empty array for recoverable ones
+    if (error instanceof Error && error.message.includes('WebAssembly')) {
+      throw new Error(`OpenCV WebAssembly error: ${error.message}`);
+    }
     return [];
   } finally {
-    // Clean up OpenCV resources
+    // Clean up OpenCV resources properly
     try {
       src?.delete();
       gray?.delete();
-      corners?.delete();
+      
+      // Properly clean up MatVector - delete each Mat inside before deleting the vector
+      if (corners) {
+        for (let i = 0; i < corners.size(); i++) {
+          const cornerMat = corners.get(i);
+          cornerMat?.delete();
+        }
+        corners.delete();
+      }
+      
       ids?.delete();
     } catch (cleanupError) {
       console.warn("Cleanup error in ArUco detection:", cleanupError);
     }
+  }
+};
+
+/**
+ * Cleans up cached ArUco detector resources
+ * Should be called when the detector is no longer needed
+ */
+export const cleanupDetector = (): void => {
+  try {
+    cachedDetector?.delete();
+    cachedDictionary?.delete();
+    cachedParameters?.delete();
+    cachedRefineParameters?.delete();
+  } catch (error) {
+    console.warn("Error cleaning up ArUco detector:", error);
+  } finally {
+    cachedDetector = null;
+    cachedDictionary = null;
+    cachedParameters = null;
+    cachedRefineParameters = null;
   }
 };
