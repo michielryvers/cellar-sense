@@ -82,7 +82,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 
 ## 5. Overall Error Handling & Edge Cases
 
-- **User feedback on failure**
+- **User feedback on failure** ✅
   If homography fails (e.g. colinear tags, too noisy), the UI simply disables “Confirm” or shows “Please capture all 4 markers.” It might help to display a warning like “Markers must not lie on a single line,” or show which markers are missing.
 
 - **Physical marker size & rack aspect ratio**

@@ -293,30 +293,33 @@ export class CalibrationService {
         dstMat,
         cv.RANSAC,
         adaptiveThreshold
-      );      // Check if homography computation was successful
+      ); // Check if homography computation was successful
       if (
         !homographyMat ||
         homographyMat.rows !== 3 ||
         homographyMat.cols !== 3
       ) {
         let errorMessage = "Failed to compute homography";
-        
+
         // Provide specific diagnostic information
         if (orderedPoints.length < 4) {
           errorMessage = "Need at least 4 markers for calibration";
         } else if (this.areMarkersColinear(orderedPoints)) {
-          errorMessage = "Markers are arranged in a line - they must form a rectangle or quadrilateral";
+          errorMessage =
+            "Markers are arranged in a line - they must form a rectangle or quadrilateral";
         } else if (this.isRackTooDistorted(orderedPoints)) {
-          errorMessage = "Rack appears too distorted - ensure markers are at the corners of a rectangular rack";
+          errorMessage =
+            "Rack appears too distorted - ensure markers are at the corners of a rectangular rack";
         } else if (!homographyMat) {
-          errorMessage = "Homography computation failed - markers may be too close together";
+          errorMessage =
+            "Homography computation failed - markers may be too close together";
         }
-        
+
         console.error(errorMessage);
         srcMat.delete();
         dstMat.delete();
         if (homographyMat) homographyMat.delete();
-        
+
         // Store the error message for UI display
         this.lastCalibrationError = errorMessage;
         return null;
@@ -324,14 +327,15 @@ export class CalibrationService {
 
       // Validate the homography result
       if (!this.isValidHomography(homographyMat)) {
-        const errorMessage = "Computed homography is invalid - ensure all 4 markers are visible and at rack corners";
+        const errorMessage =
+          "Computed homography is invalid - ensure all 4 markers are visible and at rack corners";
         console.error(errorMessage);
         srcMat.delete();
         dstMat.delete();
         homographyMat.delete();
         this.lastCalibrationError = errorMessage;
         return null;
-      }      // Extract the homography matrix values
+      } // Extract the homography matrix values
       const homography: number[] = [];
       for (let i = 0; i < 9; i++) {
         homography.push(homographyMat.data64F[i]);
@@ -514,14 +518,14 @@ export class CalibrationService {
     for (let i = 0; i < points.length; i++) {
       const j = (i + 1) % points.length;
       area += points[i].x * points[j].y - points[j].x * points[i].y;
-      
+
       const dx = points[j].x - points[i].x;
       const dy = points[j].y - points[i].y;
       perimeter += Math.sqrt(dx * dx + dy * dy);
     }
 
     area = Math.abs(area) / 2;
-    
+
     // If area is less than 1% of perimeter squared, consider colinear
     const areaThreshold = Math.pow(perimeter, 2) * 0.01;
     return area < areaThreshold;
@@ -559,15 +563,20 @@ export class CalibrationService {
    * @returns true if homography appears valid
    */
   private isValidHomography(homographyMat: any): boolean {
-    if (!homographyMat || homographyMat.rows !== 3 || homographyMat.cols !== 3) {
+    if (
+      !homographyMat ||
+      homographyMat.rows !== 3 ||
+      homographyMat.cols !== 3
+    ) {
       return false;
     }
 
     // Check that the matrix is not degenerate (determinant close to zero)
     const h = homographyMat.data64F;
-    const det = h[0] * (h[4] * h[8] - h[5] * h[7]) - 
-                h[1] * (h[3] * h[8] - h[5] * h[6]) + 
-                h[2] * (h[3] * h[7] - h[4] * h[6]);
+    const det =
+      h[0] * (h[4] * h[8] - h[5] * h[7]) -
+      h[1] * (h[3] * h[8] - h[5] * h[6]) +
+      h[2] * (h[3] * h[7] - h[4] * h[6]);
 
     if (Math.abs(det) < 1e-6) {
       console.error("Homography is degenerate (determinant ≈ 0)");
@@ -581,7 +590,10 @@ export class CalibrationService {
 
     // Reject if scaling is too extreme (< 0.1x or > 10x)
     if (scaleX < 0.1 || scaleX > 10 || scaleY < 0.1 || scaleY > 10) {
-      console.error("Homography has extreme scaling factors:", { scaleX, scaleY });
+      console.error("Homography has extreme scaling factors:", {
+        scaleX,
+        scaleY,
+      });
       return false;
     }
 

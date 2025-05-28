@@ -75,19 +75,23 @@
                   placeholder="Main Cellar"
                   required
                 />
-              </div>              <!-- Status messages -->
+              </div>
+              <!-- Status messages -->
               <div
                 v-if="calibrationError"
                 class="text-sm text-red-500 mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md"
               >
                 <div class="flex items-start">
-                  <ExclamationTriangleIcon class="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <ExclamationTriangleIcon
+                    class="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0"
+                  />
                   <div>
                     <div class="font-medium">Calibration Issue</div>
                     <div class="mt-1">{{ calibrationError }}</div>
                     <div class="mt-2 text-xs text-red-600 dark:text-red-400">
-                      • Ensure markers are at the corners of your rack in a rectangular pattern<br>
-                      • Make sure all 4 markers are clearly visible<br>
+                      • Ensure markers are at the corners of your rack in a
+                      rectangular pattern<br />
+                      • Make sure all 4 markers are clearly visible<br />
                       • Avoid placing markers in a straight line
                     </div>
                   </div>
@@ -184,7 +188,7 @@ const startCamera = async () => {
   try {
     // Clear any previous calibration errors
     calibrationError.value = null;
-    
+
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "environment",
@@ -201,7 +205,8 @@ const startCamera = async () => {
     if (!videoElement.value) throw new Error("Video element not found");
 
     // set video source and bind canplay _before_ play()
-    videoElement.value.srcObject = mediaStream;    videoElement.value.oncanplay = () => {
+    videoElement.value.srcObject = mediaStream;
+    videoElement.value.oncanplay = () => {
       console.log("[Calibrate] metadata loaded – starting calibration");
       const preview = calibrationService.startCalibration(videoElement.value!);
       watch(
@@ -233,7 +238,7 @@ const startCamera = async () => {
             // Clear the corner history when homography is not ready
             cornerHistory.length = 0;
             previewState.value = { ...newVal };
-            
+
             // Check for calibration errors from the service
             const lastError = calibrationService.getLastCalibrationError();
             if (lastError) {
