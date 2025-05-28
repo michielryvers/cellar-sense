@@ -149,7 +149,6 @@ describe("LocationPicker.vue", () => {
 
     expect(wrapper.emitted("close")).toBeTruthy();
   });
-
   it("should show marker when image is clicked", async () => {
     const wrapper = mount(LocationPicker, {
       props: {
@@ -167,23 +166,39 @@ describe("LocationPicker.vue", () => {
       top: 100,
       width: 600,
       height: 400,
-    } as DOMRect;
-
-    const image = wrapper.find("img");
+    } as DOMRect;    const image = wrapper.find("img");
     const imageElement = image.element as HTMLImageElement;
     vi.spyOn(imageElement, "getBoundingClientRect").mockReturnValue(mockRect);
+    
+    // Mock naturalWidth and naturalHeight for the coordinate scaling
+    Object.defineProperty(imageElement, 'naturalWidth', {
+      value: 1200, // Natural image width
+      writable: false
+    });
+    Object.defineProperty(imageElement, 'naturalHeight', {
+      value: 800, // Natural image height  
+      writable: false
+    });    // Trigger the image load event to ensure the component knows about the image
+    await image.trigger('load');
 
     // Simulate click on image
-    await image.trigger("click", {
-      clientX: 250, // 150px from left edge of image
-      clientY: 200, // 100px from top edge of image
+    // Vue Test Utils doesn't properly pass offsetX/offsetY, so we'll create a custom event
+    const clickEvent = new MouseEvent('click', {
+      bubbles: true,
     });
+    
+    // Manually set the offset properties
+    Object.defineProperty(clickEvent, 'offsetX', { value: 150, writable: false });
+    Object.defineProperty(clickEvent, 'offsetY', { value: 100, writable: false });
+    
+    // Dispatch the event directly on the image element
+    imageElement.dispatchEvent(clickEvent);
+    await wrapper.vm.$nextTick();
 
     // Check if marker is visible
     const marker = wrapper.find(".absolute.pointer-events-none");
     expect(marker.exists()).toBe(true);
   });
-
   it("should save location when Save button is clicked after setting marker", async () => {
     const wrapper = mount(LocationPicker, {
       props: {
@@ -201,17 +216,38 @@ describe("LocationPicker.vue", () => {
       top: 100,
       width: 600,
       height: 400,
-    } as DOMRect;
-
-    const image = wrapper.find("img");
+    } as DOMRect;    const image = wrapper.find("img");
     const imageElement = image.element as HTMLImageElement;
     vi.spyOn(imageElement, "getBoundingClientRect").mockReturnValue(mockRect);
-
-    // Simulate click on image
-    await image.trigger("click", {
-      clientX: 250, // 150px from left edge of image
-      clientY: 200, // 100px from top edge of image
+    
+    // Mock naturalWidth and naturalHeight for the coordinate scaling
+    Object.defineProperty(imageElement, 'naturalWidth', {
+      value: 1200, // Natural image width
+      writable: false
     });
+    Object.defineProperty(imageElement, 'naturalHeight', {
+      value: 800, // Natural image height  
+      writable: false
+    });    // Trigger the image load event to ensure the component knows about the image
+    await image.trigger('load');
+
+    // Simulate click on image at position (150, 100) relative to the displayed image
+    // With scaling: scaleX = 1200/600 = 2, scaleY = 800/400 = 2
+    // Natural coordinates: x = 150 * 2 = 300, y = 100 * 2 = 200
+    // Normalized: x = 300/1200 = 0.25, y = 200/800 = 0.25
+    
+    // Vue Test Utils doesn't properly pass offsetX/offsetY, so we'll create a custom event
+    const clickEvent = new MouseEvent('click', {
+      bubbles: true,
+    });
+    
+    // Manually set the offset properties
+    Object.defineProperty(clickEvent, 'offsetX', { value: 150, writable: false });
+    Object.defineProperty(clickEvent, 'offsetY', { value: 100, writable: false });
+    
+    // Dispatch the event directly on the image element
+    imageElement.dispatchEvent(clickEvent);
+    await wrapper.vm.$nextTick();
 
     // Click save button
     const saveButton = wrapper
@@ -222,8 +258,8 @@ describe("LocationPicker.vue", () => {
 
     expect(saveWineLocation).toHaveBeenCalledWith("wine-1", {
       rackId: "rack-1",
-      x: 0.25, // (250 - 100) / 600 = 0.25
-      y: 0.25, // (200 - 100) / 400 = 0.25
+      x: 0.25, // (150 * 2) / 1200 = 0.25
+      y: 0.25, // (100 * 2) / 800 = 0.25
     });
 
     expect(wrapper.emitted("location-saved")).toBeTruthy();
