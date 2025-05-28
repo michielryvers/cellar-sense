@@ -38,6 +38,8 @@ const mockMat = {
 
 const mockHomographyMat = {
   data64F: new Float64Array([1, 0, 0, 0, 1, 0, 0, 0, 1]), // Identity matrix
+  rows: 3,
+  cols: 3,
   delete: vi.fn(),
 };
 

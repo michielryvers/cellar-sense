@@ -93,12 +93,15 @@ export class CalibrationService {
     const markers = this.visionStore.markersInView;
     if (markers.length < 4) {
       throw new Error(`Need 4 markers, but only ${markers.length} detected.`);
-    } // Create marker positions array
-    const markerPositions: MarkerPosition[] = markers.map((marker: any) => ({
-      id: marker.id,
-      x: marker.corners[0][0], // Use the top-left corner X
-      y: marker.corners[0][1], // Use the top-left corner Y
-    }));
+    }    // Create marker positions array using marker centers
+    const markerPositions: MarkerPosition[] = markers.map((marker: any) => {
+      const center = this.getMarkerCenter(marker.corners);
+      return {
+        id: marker.id,
+        x: center.x,
+        y: center.y,
+      };
+    });
 
     // Get image from canvas
     const imageDataUrl = snapshotCanvas.toDataURL("image/jpeg", 0.8);
@@ -205,10 +208,9 @@ export class CalibrationService {
       this.preview.value.rackCorners = null;
       console.log("Calibration: Clearing homography - not exactly 4 markers");
     }
-  }
-  /**
+  }  /**
    * Compute the homography matrix from detected markers
-   * Uses OpenCV.js findHomography function
+   * Uses marker centers and infers rack's convex hull instead of hard-coded corner mapping
    * @param markers Array of detected ArUco markers
    * @returns Homography matrix as a flat array (row-major) or null if computation fails
    */
@@ -221,75 +223,73 @@ export class CalibrationService {
       if (!cv) {
         console.error("OpenCV.js not loaded");
         return null;
-      }
-
-      // Sort markers by ID to ensure consistent ordering
-      const sortedMarkers = [...markers].sort((a, b) => a.id - b.id);
-
-      // Extract all corners from markers (4 corners per marker)
-      const srcPoints: number[] = [];
-      sortedMarkers.forEach((marker) => {
-        marker.corners.forEach((corner: number[]) => {
-          srcPoints.push(corner[0], corner[1]);
-        });
+      }      // Extract marker centers
+      const markerCenters = markers.map(marker => {
+        const center = this.getMarkerCenter(marker.corners);
+        return { id: marker.id, x: center.x, y: center.y };
       });
 
-      // Define destination points in normalized space (0-1)
-      // Assuming markers are placed at corners of the rack
+      // For exactly 4 markers, use a simpler approach
+      let orderedPoints: { id: number; x: number; y: number }[];
+      if (markerCenters.length === 4) {
+        // Sort markers by ID first for consistent ordering
+        const sortedByID = [...markerCenters].sort((a, b) => a.id - b.id);
+        orderedPoints = sortedByID;
+      } else {
+        // Find the convex hull of marker centers for more than 4 markers
+        const hull = this.findConvexHull(markerCenters);
+        if (hull.length < 4) {
+          console.error("Need at least 4 points for convex hull");
+          return null;
+        }
+        // Order hull points to create a consistent mapping
+        orderedPoints = this.orderHullPoints(hull);
+      }
+
+      // Use the ordered points as source points
+      const srcPoints: number[] = [];
+      orderedPoints.forEach(point => {
+        srcPoints.push(point.x, point.y);
+      });
+
+      // Map points to normalized unit square (0-1)
+      // For 4 points, use corners of unit square
       const dstPoints = [
-        // Marker 0 corners (top-left of rack)
-        0,
-        0, // top-left corner of marker
-        0.1,
-        0, // top-right corner of marker
-        0.1,
-        0.1, // bottom-right corner of marker
-        0,
-        0.1, // bottom-left corner of marker
-        // Marker 1 corners (top-right of rack)
-        0.9,
-        0,
-        1,
-        0,
-        1,
-        0.1,
-        0.9,
-        0.1,
-        // Marker 2 corners (bottom-left of rack)
-        0,
-        0.9,
-        0.1,
-        0.9,
-        0.1,
-        1,
-        0,
-        1,
-        // Marker 3 corners (bottom-right of rack)
-        0.9,
-        0.9,
-        1,
-        0.9,
-        1,
-        1,
-        0.9,
-        1,
-      ]; // Create OpenCV matrices
-      // For point data, we need to create Float32 matrices with 2 channels (x,y pairs)
-      const srcMat = new cv.Mat(srcPoints.length / 2, 1, cv.CV_32FC2);
+        0, 0,    // first point -> top-left
+        1, 0,    // second point -> top-right  
+        1, 1,    // third point -> bottom-right
+        0, 1     // fourth point -> bottom-left
+      ];
+
+      // Calculate adaptive RANSAC threshold based on image size
+      const imageSize = Math.sqrt(
+        Math.pow(Math.max(...srcPoints.filter((_, i) => i % 2 === 0)), 2) +
+        Math.pow(Math.max(...srcPoints.filter((_, i) => i % 2 === 1)), 2)
+      );
+      const adaptiveThreshold = Math.max(3.0, imageSize * 0.01);      // Create OpenCV matrices with consistent CV_32FC2 format
+      const srcMat = new cv.Mat(orderedPoints.length, 1, cv.CV_32FC2);
       const dstMat = new cv.Mat(dstPoints.length / 2, 1, cv.CV_32FC2);
 
       // Fill the source matrix data
-      for (let i = 0; i < srcPoints.length; i++) {
-        srcMat.data32F[i] = srcPoints[i];
+      for (let i = 0; i < orderedPoints.length; i++) {
+        srcMat.data32F[i * 2] = orderedPoints[i].x;
+        srcMat.data32F[i * 2 + 1] = orderedPoints[i].y;
       }
 
-      // Fill the destination matrix data
+      // Fill the destination matrix data  
       for (let i = 0; i < dstPoints.length; i++) {
         dstMat.data32F[i] = dstPoints[i];
-      }
+      }      // Find homography using RANSAC with adaptive threshold
+      const homographyMat = cv.findHomography(srcMat, dstMat, cv.RANSAC, adaptiveThreshold);
 
-      // Find homography using RANSAC for robustness
-      const homographyMat = cv.findHomography(srcMat, dstMat, cv.RANSAC, 5.0);
+      // Check if homography computation was successful
+      if (!homographyMat || homographyMat.rows !== 3 || homographyMat.cols !== 3) {
+        console.error("Failed to compute homography - markers may be colinear");
+        srcMat.delete();
+        dstMat.delete();
+        if (homographyMat) homographyMat.delete();
+        return null;
+      }
 
       // Extract the homography matrix values
       const homography: number[] = [];
@@ -336,6 +336,95 @@ export class CalibrationService {
     ];
 
     return corners;
+  }
+
+  /**
+   * Calculate the center point of a marker from its corners
+   * @param corners Array of [x, y] corner points
+   * @returns Center point {x, y}
+   */
+  private getMarkerCenter(corners: [number, number][]): { x: number; y: number } {
+    const centerX = corners.reduce((sum, corner) => sum + corner[0], 0) / corners.length;
+    const centerY = corners.reduce((sum, corner) => sum + corner[1], 0) / corners.length;
+    return { x: centerX, y: centerY };
+  }
+
+  /**
+   * Find the convex hull of marker center points
+   * Uses Graham scan algorithm for convex hull computation
+   * @param points Array of points with x, y coordinates
+   * @returns Convex hull points in counter-clockwise order
+   */
+  private findConvexHull(points: { id: number; x: number; y: number }[]): { id: number; x: number; y: number }[] {
+    if (points.length < 3) return points;
+
+    // Find the bottom-most point (or left-most in case of tie)
+    let start = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i].y < points[start].y || 
+          (points[i].y === points[start].y && points[i].x < points[start].x)) {
+        start = i;
+      }
+    }
+
+    // Sort points by polar angle with respect to start point
+    const startPoint = points[start];
+    const sortedPoints = points.filter((_, i) => i !== start)
+      .sort((a, b) => {
+        const angleA = Math.atan2(a.y - startPoint.y, a.x - startPoint.x);
+        const angleB = Math.atan2(b.y - startPoint.y, b.x - startPoint.x);
+        return angleA - angleB;
+      });
+
+    // Build convex hull using Graham scan
+    const hull = [startPoint];
+    
+    for (const point of sortedPoints) {
+      // Remove points that create right turn
+      while (hull.length > 1 && 
+             this.crossProduct(hull[hull.length-2], hull[hull.length-1], point) <= 0) {
+        hull.pop();
+      }
+      hull.push(point);
+    }
+
+    return hull;
+  }
+
+  /**
+   * Calculate cross product of vectors (p1->p2) and (p1->p3)
+   * Used to determine turn direction in convex hull algorithm
+   */
+  private crossProduct(p1: { x: number; y: number }, p2: { x: number; y: number }, p3: { x: number; y: number }): number {
+    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+  }
+
+  /**
+   * Order hull points to create consistent mapping to unit square
+   * Orders points as: top-left, top-right, bottom-right, bottom-left
+   */
+  private orderHullPoints(hull: { id: number; x: number; y: number }[]): { id: number; x: number; y: number }[] {
+    if (hull.length !== 4) {
+      console.warn("Expected 4 hull points, got", hull.length, "- using original order");
+      return hull;
+    }
+
+    // Find bounding box
+    const minX = Math.min(...hull.map(p => p.x));
+    const maxX = Math.max(...hull.map(p => p.x));
+    const minY = Math.min(...hull.map(p => p.y));
+    const maxY = Math.max(...hull.map(p => p.y));
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    // Classify points by quadrant
+    const topLeft = hull.find(p => p.x <= centerX && p.y <= centerY);
+    const topRight = hull.find(p => p.x >= centerX && p.y <= centerY);
+    const bottomRight = hull.find(p => p.x >= centerX && p.y >= centerY);
+    const bottomLeft = hull.find(p => p.x <= centerX && p.y >= centerY);    // Return ordered points, falling back to original order if classification fails
+    const ordered = [topLeft, topRight, bottomRight, bottomLeft].filter((p): p is { id: number; x: number; y: number } => p !== undefined);
+    return ordered.length === 4 ? ordered : hull;
   }
 }
 

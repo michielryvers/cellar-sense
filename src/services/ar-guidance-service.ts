@@ -162,16 +162,14 @@ export class ARGuidanceService {
       if (dstPoints.some((p) => !isFinite(p))) {
         console.error("Invalid destination points:", dstPoints);
         return null;
-      }
+      }      console.log("Creating matrices for", numPoints, "points");
 
-      console.log("Creating matrices for", numPoints, "points");
+      // Create matrices with consistent CV_32FC2 format to match calibration
+      // Points should be in shape (N, 1) with 2 channels for CV_32FC2
+      srcMat = new this.cv.Mat(numPoints, 1, this.cv.CV_32FC2);
+      dstMat = new this.cv.Mat(numPoints, 1, this.cv.CV_32FC2);
 
-      // Create matrices in the format findHomography expects
-      // Points should be in shape (N, 1, 2) for findHomography
-      srcMat = new this.cv.Mat(numPoints, 2, this.cv.CV_32F);
-      dstMat = new this.cv.Mat(numPoints, 2, this.cv.CV_32F);
-
-      // Fill matrices
+      // Fill matrices with 2-channel data
       for (let i = 0; i < numPoints; i++) {
         srcMat.data32F[i * 2] = srcPoints[i * 2];
         srcMat.data32F[i * 2 + 1] = srcPoints[i * 2 + 1];
