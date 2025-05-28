@@ -15,7 +15,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 
 ---
 
-## 2. Calibration Flow (`CalibrationService`)
+## 2. Calibration Flow (`CalibrationService`) ✅
 
 ### 2.1 Marker Placement Assumptions
 
@@ -38,7 +38,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 
 ---
 
-## 3. Bottle Location Picker (`LocationPicker.vue`)
+## 3. Bottle Location Picker (`LocationPicker.vue`) ✅
 
 - **Normalization vs. Display scaling**
   You compute `normalizedPosition.x = offsetX / naturalWidth`. But `event.offsetX` is relative to the _displayed_ image size (subject to CSS `object-contain`, container resizing, etc.), while `naturalWidth` is the intrinsic pixel width. If the image is scaled down in the UI, you’ll under- or overestimate coordinates. Instead:
@@ -53,7 +53,7 @@ Below is a focused review of your vision/OpenCV flows, organized by stage. I’v
 
 ---
 
-## 4. AR Overlay & Projection (`ARGuidanceService` & `FindBottleView.vue`)
+## 4. AR Overlay & Projection (`ARGuidanceService` & `FindBottleView.vue`) ✅
 
 ### 4.1 Projection Logic
 
