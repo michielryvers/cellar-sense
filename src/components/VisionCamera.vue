@@ -57,6 +57,10 @@ const isProcessing = ref(false);
 const animationFrameId = ref<number | null>(null);
 const visionStore = useVisionStore();
 
+// Offscreen canvas for processing frames
+let processingCanvas: HTMLCanvasElement | null = document.createElement("canvas");
+let processingCtx: CanvasRenderingContext2D | null = processingCanvas.getContext("2d");
+
 // Computed properties
 const markerCount = computed(() => visionStore.markerCount);
 const markerIds = computed(() => visionStore.markerIds);
@@ -116,25 +120,36 @@ const processVideoFrame = async () => {
 
     // Only process if video is playing
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      // Create a canvas to capture the video frame
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        // Draw the current video frame to the canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Get image data for processing
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        // Detect ArUco markers
-        const tags = await detectTags(imageData);
-
-        // Update store with detected tags
-        visionStore.update(tags);
+      if (!processingCanvas || !processingCtx) {
+        animationFrameId.value = requestAnimationFrame(processVideoFrame);
+        return;
       }
+
+      processingCanvas.width = video.videoWidth;
+      processingCanvas.height = video.videoHeight;
+
+      // Draw the current video frame to the canvas
+      processingCtx.drawImage(
+        video,
+        0,
+        0,
+        processingCanvas.width,
+        processingCanvas.height
+      );
+
+      // Get image data for processing
+      const imageData = processingCtx.getImageData(
+        0,
+        0,
+        processingCanvas.width,
+        processingCanvas.height
+      );
+
+      // Detect ArUco markers
+      const tags = await detectTags(imageData);
+
+      // Update store with detected tags
+      visionStore.update(tags);
     }
   } catch (error) {
     console.error("Error processing video frame:", error);
@@ -165,6 +180,8 @@ onUnmounted(() => {
     cancelAnimationFrame(animationFrameId.value);
   }
   stopCamera();
+  processingCtx = null;
+  processingCanvas = null;
 });
 </script>
 

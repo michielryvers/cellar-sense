@@ -30,6 +30,8 @@ export class CalibrationService {
   private videoElement: HTMLVideoElement | null = null;
   private animationFrameId: number | null = null;
   private visionStore: any = null;
+  private canvas: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
 
   // Track last calibration error for user feedback
   public lastCalibrationError: string | null = null; // Camera distortion parameters (optional enhancement)
@@ -75,6 +77,8 @@ export class CalibrationService {
       this.animationFrameId = null;
     }
     this.videoElement = null;
+    this.canvas = null;
+    this.ctx = null;
 
     // Reset preview state
     this.preview.value = {
@@ -141,6 +145,11 @@ export class CalibrationService {
   private startProcessing() {
     if (!this.videoElement) return;
 
+    if (!this.canvas) {
+      this.canvas = document.createElement("canvas");
+      this.ctx = this.canvas.getContext("2d");
+    }
+
     const processFrame = async () => {
       if (
         !this.videoElement ||
@@ -152,23 +161,19 @@ export class CalibrationService {
 
       const { videoWidth, videoHeight } = this.videoElement;
 
-      // Create a canvas to extract the current frame
-      const canvas = document.createElement("canvas");
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
-      const ctx = canvas.getContext("2d");
-
-      if (!ctx) {
-        console.error("Failed to get 2D context");
+      if (!this.canvas || !this.ctx) {
         this.animationFrameId = requestAnimationFrame(processFrame);
         return;
       }
 
+      this.canvas.width = videoWidth;
+      this.canvas.height = videoHeight;
+
       // Draw the current video frame to the canvas
-      ctx.drawImage(this.videoElement, 0, 0, videoWidth, videoHeight);
+      this.ctx.drawImage(this.videoElement, 0, 0, videoWidth, videoHeight);
 
       // Get image data for marker detection
-      const imageData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+      const imageData = this.ctx.getImageData(0, 0, videoWidth, videoHeight);
 
       // Detect ArUco markers
       const tags = await detectTags(imageData); // Update the vision store with the detected markers
