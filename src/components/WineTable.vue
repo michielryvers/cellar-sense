@@ -134,14 +134,14 @@ async function handleSaveConsumption(
   <div class="container mx-auto px-4 py-8">
     <!-- Responsive Table/List Section -->
     <div
-      class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden"
+      class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden"
     >
       <!-- Desktop Table -->
       <div class="hidden sm:block">
         <table class="min-w-full">
           <thead>
             <tr
-              class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-800 dark:to-gray-700"
+            class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-gray-900 dark:to-gray-800"
             >
               <th
                 class="py-3 px-4 text-left text-xs font-semibold text-purple-900 dark:text-purple-200"
@@ -343,12 +343,12 @@ async function handleSaveConsumption(
           <li
             v-for="wine in filteredWines"
             :key="wine.id"
-            class="group px-3 py-3 flex flex-col gap-1 bg-white hover:bg-purple-50 transition-colors cursor-pointer relative"
+            class="group px-3 py-3 flex flex-col gap-1 bg-white dark:bg-gray-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer relative"
             :class="{ 'opacity-60': wine.inventory?.bottles === 0 }"
             @click="handleRowClick(wine)"
           >
             <div class="flex items-center justify-between">
-              <div class="font-semibold text-gray-900 text-base">
+              <div class="font-semibold text-gray-900 dark:text-gray-100 text-base">
                 {{ wine.name }}
               </div>
               <span
@@ -366,7 +366,7 @@ async function handleSaveConsumption(
               </span>
             </div>
             <div
-              class="flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-600 mt-1"
+              class="flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-600 dark:text-gray-300 mt-1"
             >
               <span>{{ wine.vintner }}</span>
               <span>•</span>
@@ -403,7 +403,7 @@ async function handleSaveConsumption(
                 <button
                   v-if="wine.inventory?.bottles > 0"
                   @click.stop="handleDrink(wine, $event)"
-                  class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded-lg transition-colors"
+                  class="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1 rounded-lg transition-colors"
                   :aria-label="'Drink a bottle of ' + wine.name"
                   :title="
                     'Mark one bottle as consumed (' +
@@ -415,7 +415,7 @@ async function handleSaveConsumption(
                 </button>
                 <button
                   @click.stop="handleEdit(wine, $event)"
-                  class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-lg transition-colors"
+                  class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1 rounded-lg transition-colors"
                   :aria-label="'Edit ' + wine.name"
                   :title="'Edit details for ' + wine.name"
                 >
@@ -423,7 +423,7 @@ async function handleSaveConsumption(
                 </button>
                 <button
                   @click.stop="handleDelete(wine.id, $event)"
-                  class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                  class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded-lg transition-colors"
                   :aria-label="'Delete ' + wine.name"
                   :title="'Delete ' + wine.name + ' from inventory'"
                 >
