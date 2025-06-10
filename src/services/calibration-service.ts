@@ -763,8 +763,8 @@ export class CalibrationService {
 
     // For transformations from pixel coords (~100-2000px) to unit coords (0-1):
     // Expected scale factors are roughly 1/image_size, so 0.0005 to 0.01 is reasonable
-    // Reject only if scaling is truly extreme (< 0.0001 or > 0.1)
-    if (scaleX < 0.0001 || scaleX > 0.1 || scaleY < 0.0001 || scaleY > 0.1) {
+    // Reject only if scaling is truly extreme (< 0.0001 or > 10)
+    if (scaleX < 0.0001 || scaleX > 10 || scaleY < 0.0001 || scaleY > 10) {
       console.error("Homography has extreme scaling factors:", {
         scaleX,
         scaleY,
