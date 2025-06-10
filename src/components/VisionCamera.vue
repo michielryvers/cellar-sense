@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useVisionStore } from "../stores/vision";
-import { detectTags } from "../vision/aruco";
+import { detectTags, cleanupDetector } from "../vision/aruco";
 
 const props = defineProps({
   width: {
@@ -165,6 +165,7 @@ onUnmounted(() => {
     cancelAnimationFrame(animationFrameId.value);
   }
   stopCamera();
+  cleanupDetector();
 });
 </script>
 

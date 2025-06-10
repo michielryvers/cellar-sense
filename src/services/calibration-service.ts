@@ -5,7 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { ref } from "vue";
 import { useVisionStore } from "../stores/vision";
-import { detectTags } from "../vision/aruco";
+import { detectTags, cleanupDetector } from "../vision/aruco";
 import { loadOpenCV } from "../vision/opencv-loader";
 import type { RackDefinition, MarkerPosition } from "../shared/types/vision";
 import { db } from "./dexie-db";
@@ -75,6 +75,8 @@ export class CalibrationService {
       this.animationFrameId = null;
     }
     this.videoElement = null;
+
+    cleanupDetector();
 
     // Reset preview state
     this.preview.value = {

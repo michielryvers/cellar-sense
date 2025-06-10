@@ -44,7 +44,7 @@
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useVisionStore } from "../stores/vision";
-import { detectTags } from "../vision/aruco";
+import { detectTags, cleanupDetector } from "../vision/aruco";
 import { ARGuidanceService } from "../services/ar-guidance-service";
 import { db } from "../services/dexie-db";
 import type { Wine } from "../shared/Wine";
@@ -231,6 +231,7 @@ function closeView(): void {
 
 onUnmounted(() => {
   stopCamera();
+  cleanupDetector();
 });
 </script>
 
